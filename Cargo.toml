@@ -1,0 +1,19 @@
+[package]
+name = "for-mqtt"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+druid = { git = "https://github.com/linebender/druid.git", features = ["im", "serde"] }
+custom-utils = "0.10.4"
+log = "0.4.17"
+
+uuid = { version = "1.1.2", features = ["v4"] }
+anyhow = "1.0.64"
+sled = "0.34.7"
+rumqttc = "0.16.0"
+
+serde = {version ="1.0.144", features = ["derive", "rc"]}
+serde_json = "1.0.85"
