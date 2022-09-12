@@ -1,4 +1,5 @@
 use crate::data::AString;
+use crate::util::db::ArcDb;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
 
@@ -33,7 +34,7 @@ pub enum PublicStatus {
     Success,
 }
 
-#[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
+#[derive(Debug, Data, Clone, Eq, PartialEq, Lens, Default)]
 pub struct PublicMsgInput {
     pub topic: AString,
     pub msg: AString,
@@ -53,7 +54,7 @@ pub enum Qos {
     Qos1,
     Qos2,
 }
-#[derive(Data, Debug, Clone, Eq, PartialEq, Lens)]
+#[derive(Data, Debug, Clone, Eq, PartialEq, Lens, Default)]
 pub struct SubscribeInput {
     pub(crate) topic: AString,
     pub(crate) qos: AString,
@@ -63,4 +64,40 @@ pub enum SubscribeStatus {
     Ing,
     Success,
     Fail,
+}
+
+#[derive(Debug, Clone, Data)]
+pub struct TabStatus {
+    pub(crate) id: usize,
+    pub(crate) try_connect: bool,
+    pub(crate) connected: bool,
+    #[data(ignore)]
+    pub db: ArcDb,
+}
+
+#[derive(Data, Clone, Copy, Eq, PartialEq, Debug, Hash)]
+pub enum TabKind {
+    Connection,
+    Broker,
+}
+
+impl Msg {
+    pub fn qos(&self) -> &Qos {
+        match self {
+            Msg::Subscribe(msg) => &msg.qos,
+            Msg::Public(msg) => &msg.qos,
+        }
+    }
+    pub fn msg(&self) -> &AString {
+        match self {
+            Msg::Subscribe(msg) => &msg.msg,
+            Msg::Public(msg) => &msg.msg,
+        }
+    }
+    pub fn topic(&self) -> &AString {
+        match self {
+            Msg::Subscribe(msg) => &msg.topic,
+            Msg::Public(msg) => &msg.topic,
+        }
+    }
 }

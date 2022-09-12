@@ -1,7 +1,5 @@
-use crate::data::common::SubscribeHis;
 use crate::data::AString;
-use druid::im::Vector;
-use druid::{im::HashMap, Data, Lens};
+use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 use std::slice;
@@ -16,11 +14,11 @@ pub struct Broker {
     pub params: AString,
 }
 
-#[derive(Debug, Data, Clone, Eq, PartialEq, Default, Lens, Serialize, Deserialize)]
-pub struct SubscribeHises {
-    pub id: usize,
-    pub topics: Vector<SubscribeHis>,
-}
+// #[derive(Debug, Data, Clone, Eq, PartialEq, Default, Lens, Serialize, Deserialize)]
+// pub struct SubscribeHises {
+//     pub id: usize,
+//     pub topics: Vector<SubscribeHis>,
+// }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct SubscribeHisesKey {
@@ -40,14 +38,6 @@ impl AsRef<[u8]> for SubscribeHisesKey {
 impl From<usize> for SubscribeHisesKey {
     fn from(id: usize) -> Self {
         Self { id }
-    }
-}
-impl From<usize> for SubscribeHises {
-    fn from(id: usize) -> Self {
-        Self {
-            id,
-            topics: Default::default(),
-        }
     }
 }
 
