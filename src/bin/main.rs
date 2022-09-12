@@ -4,7 +4,8 @@ use for_mqtt::ui::init_layout;
 use for_mqtt::util::db::ArcDb;
 use std::thread;
 
-fn main() -> Result<(), PlatformError> {
+#[tokio::main]
+async fn main() -> Result<(), PlatformError> {
     custom_utils::logger::logger_stdout_debug();
     let win = WindowDesc::new(init_layout()); //.menu(menu);
 
@@ -14,7 +15,7 @@ fn main() -> Result<(), PlatformError> {
 
     let launcher = AppLauncher::with_window(win);
     let event_sink = launcher.get_external_handle();
-    thread::spawn(move || deal_event(event_sink, rx));
+    tokio::spawn(deal_event(event_sink, rx));
 
     launcher.launch(data)?;
     Ok(())

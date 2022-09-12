@@ -4,7 +4,7 @@ use crate::data::AppEvent;
 use druid::im::Vector;
 use std::sync::mpsc::Receiver;
 
-pub fn deal_event(event_sink: druid::ExtEventSink, rx: Receiver<AppEvent>) {
+pub async fn deal_event(event_sink: druid::ExtEventSink, rx: Receiver<AppEvent>) {
     loop {
         if let Ok(event) = rx.recv() {
             event_sink.add_idle_callback(move |data: &mut AppData| match event {
