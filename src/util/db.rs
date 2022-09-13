@@ -8,7 +8,6 @@ use crate::data::db::{Broker, SubscribeHisesKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use druid::im::{HashMap, Vector};
-use log::debug;
 
 #[derive(Clone, Debug)]
 pub struct ArcDb {
@@ -67,7 +66,6 @@ impl ArcDb {
         for broker in brokers_tmp.into_iter() {
             brokers.push_back(broker.into());
         }
-        debug!("{:?}", subscribe_hises);
         Ok(AppData {
             brokers,
             broker_tabs: Default::default(),
@@ -78,6 +76,7 @@ impl ArcDb {
             subscribe_ing: Default::default(),
             public_ing: Default::default(),
             db: self.clone(),
+            mqtt_clients: Default::default(),
         })
     }
 
@@ -88,12 +87,25 @@ impl ArcDb {
             id,
             client_id: Arc::new("".to_string()),
             name: Arc::new("".to_string()),
-            addr: Arc::new("".to_string()),
+            addr: Arc::new("broker-cn.emqx.io".to_string()),
             port: Arc::new("1883".to_string()),
-            params: Arc::new("".to_string()),
+            params: Arc::new(OPTION.to_string()),
+            use_credentials: false,
+            user_name: Arc::new("".to_string()),
+            password: Arc::new("".to_string()),
         }
     }
 }
+
+const OPTION: &str = r#"{
+	"keep_alive": 60,
+	"clean_session": true,
+	"max_incoming_packet_size": 10240,
+	"max_outgoing_packet_size": 10240,
+	"inflight": 100,
+	"conn_timeout": 5
+}
+        "#;
 
 #[cfg(test)]
 mod test {

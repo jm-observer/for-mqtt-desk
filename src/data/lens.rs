@@ -10,7 +10,7 @@ pub struct BrokerIndex(pub usize);
 
 impl druid::Lens<AppData, Arc<Broker>> for BrokerIndex {
     fn with<V, F: FnOnce(&Arc<Broker>) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.brokers.iter().find(|x| x.id == self.0) {
+        f(match data.find_broker(self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
         })
@@ -121,26 +121,32 @@ impl druid::Lens<AppData, TabStatus> for BrokerIndex {
     }
 }
 
-// pub struct DbIndex {
-//     db: ArcDb,
-//     index: usize,
-// }
-//
-// pub struct Index(pub usize);
-//
-// impl druid::Lens<AppData, DbIndex> for Index {
-//     fn with<V, F: FnOnce(&DbIndex) -> V>(&self, data: &AppData, f: F) -> V {
-//         let db_index = DbIndex {
-//             db: data.db.clone(),
-//             index: self.0,
-//         };
-//         f(&db_index)
-//     }
-//     fn with_mut<V, F: FnOnce(&mut DbIndex) -> V>(&self, data: &mut AppData, f: F) -> V {
-//         let mut db_index = DbIndex {
-//             db: data.db.clone(),
-//             index: self.0,
-//         };
-//         f(&mut db_index)
-//     }
-// }
+#[derive(Clone)]
+pub struct DbIndex {
+    pub data: AppData,
+    pub index: usize,
+}
+impl druid::Data for DbIndex {
+    fn same(&self, other: &Self) -> bool {
+        true
+    }
+}
+
+pub struct Index(pub usize);
+
+impl druid::Lens<AppData, DbIndex> for Index {
+    fn with<V, F: FnOnce(&DbIndex) -> V>(&self, data: &AppData, f: F) -> V {
+        let db_index = DbIndex {
+            data: data.clone(),
+            index: self.0,
+        };
+        f(&db_index)
+    }
+    fn with_mut<V, F: FnOnce(&mut DbIndex) -> V>(&self, data: &mut AppData, f: F) -> V {
+        let mut db_index = DbIndex {
+            data: data.clone(),
+            index: self.0,
+        };
+        f(&mut db_index)
+    }
+}

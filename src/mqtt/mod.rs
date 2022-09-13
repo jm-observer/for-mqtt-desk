@@ -1,27 +1,128 @@
+use std::sync::Arc;
 use crate::data::db::Broker;
 use crate::data::AppEvent;
-use anyhow::Result;
+use anyhow::{ Result};
 use druid::piet::TextStorage;
-use rumqttc::v5::{AsyncClient, MqttOptions};
+use log::{debug, error};
+use rumqttc::v5::{AsyncClient, ConnectReturnCode, MqttOptions, Packet};
+use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::task;
 
-pub async fn init(broker: Arc<Broker>, tx: Sender<AppEvent>) -> Result<AsyncClient> {
+pub async fn init_connect(broker: Arc<Broker>, tx: Sender<AppEvent>) -> Result<AsyncClient> {
     let mut mqttoptions = MqttOptions::new(
         broker.client_id.as_str(),
         broker.addr.as_str(),
         broker.port.parse()?,
     );
-    mqttoptions.set_keep_alive(Duration::from_secs(20));
+    if broker.use_credentials {
+        mqttoptions.set_credentials(&*broker.user_name, &*broker.password);
+    }
+    let some = serde_json::from_str(broker.params.as_str())?;
+    update_option(&mut mqttoptions, some);
 
+    debug!("{:?}", mqttoptions);
+    // let mut mqttoptions = MqttOptions::new("test-1", "broker-cn.emqx.io", 1883);
+    // debug!("{:?}", mqttoptions);
+    // mqttoptions.set_keep_alive(Duration::from_secs(5));
     let (client, mut notifier) = AsyncClient::connect(mqttoptions, 10).await;
     let _client_tmp = client.clone();
-    task::spawn(async move {
+    let id = broker.id;
+    debug!("start");
+    tokio::spawn(async move {
+        debug!("start");
         for event in notifier.iter() {
-            println!("{:?}", event);
+            let tx = tx.clone();
+            debug!("{:?}", event);
+            match event {
+                Packet::ConnAck(ack) => {
+                    deal_conn_ack(ack.code, tx, id);
+                }
+                _ => {}
+            }
         }
+        debug!("end");
     });
     Ok(client)
+}
+
+fn deal_conn_ack(ack_code: ConnectReturnCode, tx: Sender<AppEvent>, id: usize) {
+    match ack_code {
+        ConnectReturnCode::Success => {
+            debug!("connect success!");
+            if let Err(_) = tx.send(AppEvent::ConnectAckSuccess(id)) {
+                error!("fail to send event!");
+            }
+        }
+        error => {
+            if let Err(_) = tx.send(AppEvent::ConnectAckFail(id, format!("{:?}", error).into())) {
+                error!("fail to send event!");
+            }
+        }
+    }
+}
+
+fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
+    let SomeMqttOption {
+        keep_alive,
+        clean_session,
+        max_incoming_packet_size,
+        max_outgoing_packet_size,
+        inflight,
+        conn_timeout,
+    } = some;
+    option
+        .set_keep_alive(Duration::from_secs(keep_alive))
+        .set_clean_session(clean_session)
+        .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size)
+        .set_inflight(inflight)
+        .set_connection_timeout(conn_timeout);
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SomeMqttOption {
+    // seconds
+    keep_alive: u64,
+    clean_session: bool,
+    max_incoming_packet_size: usize,
+    max_outgoing_packet_size: usize,
+    inflight: u16,
+    // seconds
+    conn_timeout: u64,
+}
+
+impl Default for SomeMqttOption {
+    fn default() -> Self {
+        Self {
+            keep_alive: 60,
+            clean_session: true,
+            max_incoming_packet_size: 10 * 1024,
+            max_outgoing_packet_size: 10 * 1024,
+            inflight: 100,
+            conn_timeout: 5,
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::mqtt::SomeMqttOption;
+
+    #[test]
+    fn test_option() {
+        let option = SomeMqttOption::default();
+        println!("{}", serde_json::to_string(&option).unwrap());
+
+        let option_str = r#"{
+	"keep_alive": 60,
+	"clean_session": true,
+	"max_incoming_packet_size": 10240,
+	"max_outgoing_packet_size": 10240,
+	"inflight": 100,
+	"conn_timeout": 5
+}
+        "#;
+        let option: SomeMqttOption = serde_json::from_str(option_str).unwrap();
+        println!("{:?}", option);
+    }
 }
