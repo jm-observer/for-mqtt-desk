@@ -6,7 +6,6 @@ use druid::widget::{Container, Flex, Label, TextBox};
 use druid::LensExt;
 use druid::WidgetExt;
 use log::error;
-use std::sync::Arc;
 
 pub fn display_broker(id: usize) -> Container<AppData> {
     let connection = Flex::column()

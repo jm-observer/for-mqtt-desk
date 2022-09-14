@@ -1,5 +1,5 @@
 use crate::data::common::{
-    Msg, PublicMsgInput, SubscribeHis, SubscribeInput, SubscribeTopic, TabStatus,
+    Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic, TabStatus,
 };
 use crate::data::db::Broker;
 use crate::data::hierarchy::AppData;
@@ -91,14 +91,14 @@ impl druid::Lens<AppData, Arc<SubscribeInput>> for BrokerIndex {
     }
 }
 
-impl druid::Lens<AppData, Arc<PublicMsgInput>> for BrokerIndex {
-    fn with<V, F: FnOnce(&Arc<PublicMsgInput>) -> V>(&self, data: &AppData, f: F) -> V {
+impl druid::Lens<AppData, Arc<PublicInput>> for BrokerIndex {
+    fn with<V, F: FnOnce(&Arc<PublicInput>) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.public_ing.get(&self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
         })
     }
-    fn with_mut<V, F: FnOnce(&mut Arc<PublicMsgInput>) -> V>(&self, data: &mut AppData, f: F) -> V {
+    fn with_mut<V, F: FnOnce(&mut Arc<PublicInput>) -> V>(&self, data: &mut AppData, f: F) -> V {
         f(match data.public_ing.get_mut(&self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
@@ -127,7 +127,7 @@ pub struct DbIndex {
     pub index: usize,
 }
 impl druid::Data for DbIndex {
-    fn same(&self, other: &Self) -> bool {
+    fn same(&self, _other: &Self) -> bool {
         true
     }
 }

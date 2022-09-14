@@ -1,9 +1,8 @@
-use crate::data::{AString, AppEvent};
+use crate::data::AString;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 use std::slice;
-use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone, Data, Lens, Serialize, Deserialize)]
 pub struct Broker {

@@ -1,12 +1,17 @@
-use std::sync::Arc;
+pub mod data;
+
+use crate::data::common::SubscribeMsg;
 use crate::data::db::Broker;
 use crate::data::AppEvent;
-use anyhow::{ Result};
+use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
+use anyhow::{bail, Result};
 use druid::piet::TextStorage;
 use log::{debug, error};
-use rumqttc::v5::{AsyncClient, ConnectReturnCode, MqttOptions, Packet};
+use rumqttc::v5::{AsyncClient, ConnectReturnCode, MqttOptions, Packet, Publish};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
 use std::time::Duration;
 
 pub async fn init_connect(broker: Arc<Broker>, tx: Sender<AppEvent>) -> Result<AsyncClient> {
@@ -38,6 +43,28 @@ pub async fn init_connect(broker: Arc<Broker>, tx: Sender<AppEvent>) -> Result<A
                 Packet::ConnAck(ack) => {
                     deal_conn_ack(ack.code, tx, id);
                 }
+                Packet::Publish(msg) => {
+                    let Publish {
+                        dup: _,
+                        qos,
+                        retain: _,
+                        topic,
+                        pkid,
+                        properties: _,
+                        payload,
+                    } = msg;
+                    if let Err(_) = tx.send(AppEvent::ReceivePublic(
+                        id,
+                        SubscribeMsg {
+                            pkid,
+                            topic: topic.into(),
+                            msg: String::from_utf8_lossy(payload.as_ref()).to_string().into(),
+                            qos: qos.into(),
+                        },
+                    )) {
+                        error!("fail to send event!");
+                    };
+                }
                 _ => {}
             }
         }
@@ -60,6 +87,30 @@ fn deal_conn_ack(ack_code: ConnectReturnCode, tx: Sender<AppEvent>, id: usize) {
             }
         }
     }
+}
+
+pub async fn subscribe(
+    index: usize,
+    input: MqttSubscribeInput,
+    clients: &HashMap<usize, AsyncClient>,
+) -> Result<u16> {
+    let Some(client) = clients.get(&index) else {
+        bail!("can't get mqtt client: {}", index);
+    };
+    Ok(client.subscribe(input.topic, input.qos).await?)
+}
+
+pub async fn public(
+    index: usize,
+    input: MqttPublicInput,
+    clients: &HashMap<usize, AsyncClient>,
+) -> Result<u16> {
+    let Some(client) = clients.get(&index) else {
+        bail!("can't get mqtt client: {}", index);
+    };
+    Ok(client
+        .publish(input.topic, input.qos, input.retain, input.msg)
+        .await?)
 }
 
 fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {

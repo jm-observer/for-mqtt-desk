@@ -1,18 +1,24 @@
+mod impls;
+
 use crate::data::AString;
 use crate::util::db::ArcDb;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
 
-#[derive(Data, Clone, Debug, Eq, PartialEq)]
+#[derive(Data, Clone, Debug)]
 pub struct SubscribeTopic {
+    pub pkid: u16,
+    #[data(ignore)]
     pub topic: AString,
-    pub qos: Qos,
+    #[data(ignore)]
+    pub qos: QoS,
+    #[data(eq)]
     pub status: SubscribeStatus,
 }
-#[derive(Data, Debug, Clone, Eq, PartialEq, Lens, Deserialize, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Lens, Deserialize, Serialize)]
 pub struct SubscribeHis {
     pub(crate) topic: AString,
-    pub(crate) qos: Qos,
+    pub(crate) qos: QoS,
 }
 
 #[derive(Debug, Data, Clone, Eq, PartialEq)]
@@ -23,9 +29,10 @@ pub enum Msg {
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
 pub struct PublicMsg {
+    pub pkid: u16,
     pub topic: AString,
     pub msg: AString,
-    pub qos: Qos,
+    pub qos: QoS,
     pub status: PublicStatus,
 }
 #[derive(Debug, Data, Clone, Eq, PartialEq)]
@@ -35,25 +42,27 @@ pub enum PublicStatus {
 }
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens, Default)]
-pub struct PublicMsgInput {
+pub struct PublicInput {
     pub topic: AString,
     pub msg: AString,
     pub qos: AString,
+    pub retain: bool,
 }
 
 #[derive(Data, Clone, Debug, Eq, PartialEq)]
 pub struct SubscribeMsg {
+    pub pkid: u16,
     pub topic: AString,
     pub msg: AString,
-    pub qos: Qos,
+    pub qos: QoS,
 }
 
-#[derive(Data, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum Qos {
-    Qos0,
-    Qos1,
-    Qos2,
-}
+// #[derive(Data, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+// pub enum Qos {
+//     Qos0,
+//     Qos1,
+//     Qos2,
+// }
 #[derive(Data, Debug, Clone, Eq, PartialEq, Lens, Default)]
 pub struct SubscribeInput {
     pub(crate) topic: AString,
@@ -80,24 +89,9 @@ pub enum TabKind {
     Connection,
     Broker,
 }
-
-impl Msg {
-    pub fn qos(&self) -> &Qos {
-        match self {
-            Msg::Subscribe(msg) => &msg.qos,
-            Msg::Public(msg) => &msg.qos,
-        }
-    }
-    pub fn msg(&self) -> &AString {
-        match self {
-            Msg::Subscribe(msg) => &msg.msg,
-            Msg::Public(msg) => &msg.msg,
-        }
-    }
-    pub fn topic(&self) -> &AString {
-        match self {
-            Msg::Subscribe(msg) => &msg.topic,
-            Msg::Public(msg) => &msg.topic,
-        }
-    }
+#[derive(Debug, Data, Clone, Eq, PartialEq, Deserialize, Serialize)]
+pub enum QoS {
+    AtMostOnce = 0,
+    AtLeastOnce = 1,
+    ExactlyOnce = 2,
 }

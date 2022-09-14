@@ -1,10 +1,10 @@
-use crate::data::db::Broker;
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
-use crate::mqtt::init_connect;
+use crate::mqtt::{init_connect, public, subscribe};
 use log::{debug, error};
+use rumqttc::v5::AsyncClient;
+use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::Arc;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 pub async fn deal_event(
@@ -12,35 +12,61 @@ pub async fn deal_event(
     rx: Receiver<AppEvent>,
     tx: Sender<AppEvent>,
 ) {
+    let mut mqtt_clients: HashMap<usize, AsyncClient> = HashMap::new();
     loop {
         let event = match rx.recv() {
             Ok(event) => event,
             Err(_) => {
                 error!("RecvError");
-                break
+                break;
             }
         };
         debug!("{:?}", event);
         match event {
-            AppEvent::Connect(broker) => {
-                let tmp_broker = broker.clone();
-                let tmp_tx = tx.clone();
-                    match init_connect(tmp_broker, tmp_tx).await {
-                    Ok(client) => {
-                        let id = broker.id;
+            AppEvent::Connect(broker) => match init_connect(broker.clone(), tx.clone()).await {
+                Ok(client) => {
+                    let id = broker.id;
+                    mqtt_clients.insert(id, client.clone());
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        data.init_connection(id);
+                    });
+                }
+                Err(e) => {
+                    error!("{:?}", e);
+                }
+            },
+            AppEvent::Subscribe(input, index) => {
+                match subscribe(index, input.clone().into(), &mqtt_clients).await {
+                    Ok(id) => {
                         event_sink.add_idle_callback(move |data: &mut AppData| {
-                            data.init_connection(id);
-                            data.mqtt_clients.insert(id, client);
+                            data.subscribe(index, input, id);
                         });
                     }
                     Err(e) => {
                         error!("{:?}", e);
                     }
                 }
-            },
+            }
+            AppEvent::Public(input, index) => {
+                match public(index, input.clone().into(), &mqtt_clients).await {
+                    Ok(id) => {
+                        event_sink.add_idle_callback(move |data: &mut AppData| {
+                            data.public(index, input, id);
+                        });
+                    }
+                    Err(e) => {
+                        error!("{:?}", e);
+                    }
+                }
+            }
+            AppEvent::ReceivePublic(index, msg) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.receive_msg(index, msg);
+                });
+            }
             _ => {}
         }
     }
 }
 
-fn update_app_data_connection(data: &mut AppData, broker: Arc<Broker>) {}
+// fn update_app_data_connection(data: &mut AppData, broker: Arc<Broker>) {}
