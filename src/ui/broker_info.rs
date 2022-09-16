@@ -12,22 +12,22 @@ pub fn display_broker(id: usize) -> Container<AppData> {
         .with_child(
             Flex::row()
                 .with_child(Label::new("name").fix_width(80.0))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::name.in_arc()))),
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::name))),
         )
         .with_child(
             Flex::row()
                 .with_child(Label::new("client id").fix_width(80.0))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::client_id.in_arc()))),
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::client_id))),
         )
         .with_child(
             Flex::row()
                 .with_child(Label::new("addr").fix_width(80.0))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::addr.in_arc()))),
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::addr))),
         )
         .with_child(
             Flex::row()
                 .with_child(Label::new("port").fix_width(80.0))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::port.in_arc()))),
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::port))),
         )
         .with_child(
             Flex::row()
@@ -51,7 +51,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_flex_child(
                     TextBox::multiline()
                         .with_placeholder("Multi")
-                        .lens(BrokerIndex(id).then(Broker::params.in_arc()))
+                        .lens(BrokerIndex(id).then(Broker::params))
                         .fix_height(100.)
                         .expand_width(),
                     1.0,

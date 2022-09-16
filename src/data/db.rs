@@ -1,8 +1,7 @@
 use crate::data::AString;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
-use std::mem::size_of;
-use std::slice;
+use zerocopy::{AsBytes, FromBytes};
 
 #[derive(Debug, Clone, Data, Lens, Serialize, Deserialize)]
 pub struct Broker {
@@ -15,10 +14,10 @@ pub struct Broker {
     pub use_credentials: bool,
     pub user_name: AString,
     pub password: AString,
-    // #[serde(skip)]
-    // #[data(ignore)]
-    // #[lens(ignore)]
-    // pub tx: Sender<AppEvent>,
+    #[serde(skip, default = "default_true")]
+    #[data(ignore)]
+    #[lens(ignore)]
+    pub stored: bool,
 }
 
 // #[derive(Debug, Data, Clone, Eq, PartialEq, Default, Lens, Serialize, Deserialize)]
@@ -26,26 +25,46 @@ pub struct Broker {
 //     pub id: usize,
 //     pub topics: Vector<SubscribeHis>,
 // }
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[repr(transparent)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromBytes, AsBytes)]
+#[repr(C)]
+pub struct BrokerKey {
+    pub id: usize,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, FromBytes, AsBytes)]
+#[repr(C)]
 pub struct SubscribeHisesKey {
     pub id: usize,
 }
-
-impl AsRef<[u8]> for SubscribeHisesKey {
-    fn as_ref(&self) -> &[u8] {
-        unsafe {
-            slice::from_raw_parts(
-                (self as *const SubscribeHisesKey) as *const u8,
-                size_of::<usize>(),
-            )
-        }
-    }
-}
+// impl AsRef<[u8]> for BrokerKey {
+//     fn as_ref(&self) -> &[u8] {
+//         unsafe {
+//             slice::from_raw_parts((self as *const BrokerKey) as *const u8, size_of::<usize>())
+//         }
+//     }
+// }
+// impl AsRef<[u8]> for SubscribeHisesKey {
+//     fn as_ref(&self) -> &[u8] {
+//         unsafe {
+//             slice::from_raw_parts(
+//                 (self as *const SubscribeHisesKey) as *const u8,
+//                 size_of::<usize>(),
+//             )
+//         }
+//     }
+// }
 impl From<usize> for SubscribeHisesKey {
     fn from(id: usize) -> Self {
         Self { id }
     }
+}
+impl From<usize> for BrokerKey {
+    fn from(id: usize) -> Self {
+        Self { id }
+    }
+}
+
+pub fn default_true() -> bool {
+    true
 }
 
 #[cfg(test)]

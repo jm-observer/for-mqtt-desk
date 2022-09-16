@@ -4,10 +4,9 @@ use crate::data::common::{
 };
 use crate::data::AString;
 use druid::Data;
-use std::sync::Arc;
 
 impl SubscribeTopic {
-    pub fn from(val: Arc<SubscribeInput>, pkid: u16) -> Self {
+    pub fn from(val: SubscribeInput, pkid: u16) -> Self {
         Self {
             pkid,
             topic: val.topic.clone(),
@@ -18,7 +17,7 @@ impl SubscribeTopic {
 }
 
 impl PublicMsg {
-    pub fn from(val: Arc<PublicInput>, pkid: u16) -> Self {
+    pub fn from(val: PublicInput, pkid: u16) -> Self {
         Self {
             pkid,
             topic: val.topic.clone(),
@@ -29,8 +28,8 @@ impl PublicMsg {
     }
 }
 
-impl From<Arc<SubscribeInput>> for SubscribeHis {
-    fn from(val: Arc<SubscribeInput>) -> Self {
+impl From<SubscribeInput> for SubscribeHis {
+    fn from(val: SubscribeInput) -> Self {
         Self {
             topic: val.topic.clone(),
             qos: QoS::AtMostOnce,

@@ -1,41 +1,37 @@
 use crate::data::common::TabStatus;
 use crate::data::db::Broker;
 use crate::data::hierarchy::AppData;
+use crate::data::lens::BrokerStoredList;
 use druid::im::Vector;
 use druid::widget::{Button, CrossAxisAlignment, Flex, Label, List, Scroll};
 use druid::{theme, Env, EventCtx};
 use druid::{UnitPoint, WidgetExt};
 use log::debug;
-use std::sync::Arc;
 
 pub fn init_connect() -> Flex<AppData> {
     let name = || {
-        Label::dynamic(|data: &Arc<Broker>, _: &Env| format!("{}", data.name))
+        Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name))
             .align_vertical(UnitPoint::LEFT)
-            .padding(10.0)
-            .expand()
-            .height(50.0)
-            .fix_width(120f64)
+            .padding(1.0)
+        // .fix_width(80f64)
     };
     let addr = || {
-        Label::dynamic(|data: &Arc<Broker>, _: &Env| format!("{}:{}", data.addr, data.port))
+        Label::dynamic(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port))
             .align_vertical(UnitPoint::LEFT)
-            .padding(10.0)
-            .expand()
-            .height(50.0)
-            .fix_width(120f64)
+            .padding(1.0)
+            .expand_width()
     };
 
-    let list: List<Arc<Broker>> = List::new(move || {
+    let list: List<Broker> = List::new(move || {
         Flex::row()
-            .with_flex_child(name(), 1.0)
-            .with_child(addr())
-            .on_click(|_ctx: &mut EventCtx, data: &mut Arc<Broker>, _env: &Env| {
+            .with_child(name())
+            .with_flex_child(addr(), 1.0)
+            .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
                 debug!("onlick: {}", data.id)
             })
     });
 
-    let scroll = Scroll::<Vector<Arc<Broker>>, List<Arc<Broker>>>::new(list);
+    let scroll = Scroll::<Vector<Broker>, List<Broker>>::new(list);
 
     let buttons = Flex::row()
         .cross_axis_alignment(CrossAxisAlignment::Start)
@@ -67,7 +63,7 @@ pub fn init_connect() -> Flex<AppData> {
     let flex = flex.with_child(buttons).with_child(
         scroll
             .vertical()
-            .lens(AppData::brokers)
+            .lens(BrokerStoredList)
             .fix_height(200.0)
             .fix_width(300.0),
     );

@@ -11,10 +11,9 @@ use rumqttc::v5::{AsyncClient, ConnectReturnCode, MqttOptions, Packet, Publish};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
 use std::time::Duration;
 
-pub async fn init_connect(broker: Arc<Broker>, tx: Sender<AppEvent>) -> Result<AsyncClient> {
+pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncClient> {
     let mut mqttoptions = MqttOptions::new(
         broker.client_id.as_str(),
         broker.addr.as_str(),
@@ -27,9 +26,6 @@ pub async fn init_connect(broker: Arc<Broker>, tx: Sender<AppEvent>) -> Result<A
     update_option(&mut mqttoptions, some);
 
     debug!("{:?}", mqttoptions);
-    // let mut mqttoptions = MqttOptions::new("test-1", "broker-cn.emqx.io", 1883);
-    // debug!("{:?}", mqttoptions);
-    // mqttoptions.set_keep_alive(Duration::from_secs(5));
     let (client, mut notifier) = AsyncClient::connect(mqttoptions, 10).await;
     let _client_tmp = client.clone();
     let id = broker.id;

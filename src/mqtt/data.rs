@@ -1,6 +1,5 @@
 use crate::data::common::{PublicInput, SubscribeInput};
 use rumqttc::v5::QoS;
-use std::sync::Arc;
 
 pub struct MqttPublicInput {
     pub topic: String,
@@ -14,8 +13,8 @@ pub struct MqttSubscribeInput {
     pub qos: QoS,
 }
 
-impl From<Arc<PublicInput>> for MqttPublicInput {
-    fn from(val: Arc<PublicInput>) -> Self {
+impl From<PublicInput> for MqttPublicInput {
+    fn from(val: PublicInput) -> Self {
         Self {
             topic: val.topic.as_ref().clone(),
             msg: val.msg.as_ref().clone(),
@@ -24,8 +23,8 @@ impl From<Arc<PublicInput>> for MqttPublicInput {
         }
     }
 }
-impl From<Arc<SubscribeInput>> for MqttSubscribeInput {
-    fn from(val: Arc<SubscribeInput>) -> Self {
+impl From<SubscribeInput> for MqttSubscribeInput {
+    fn from(val: SubscribeInput) -> Self {
         Self {
             topic: val.topic.as_ref().clone(),
             qos: QoS::AtLeastOnce,

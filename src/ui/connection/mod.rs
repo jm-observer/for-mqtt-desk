@@ -10,7 +10,6 @@ use druid::widget::{
 use druid::LensExt;
 use druid::{Color, Env, UnitPoint, Widget, WidgetExt};
 use log::{debug, error};
-use std::sync::Arc;
 
 pub fn display_connection(id: usize) -> Container<AppData> {
     let subscribe_list = Padding::new(
@@ -57,7 +56,7 @@ pub fn display_connection(id: usize) -> Container<AppData> {
 
 fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
     let topic = || {
-        Label::dynamic(|data: &Arc<SubscribeTopic>, _: &Env| {
+        Label::dynamic(|data: &SubscribeTopic, _: &Env| {
             debug!("{:?}", data);
             format!("{}", data.topic)
         })
@@ -65,24 +64,24 @@ fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
         .fix_width(20f64)
     };
     let qos = || {
-        Label::dynamic(|data: &Arc<SubscribeTopic>, _: &Env| format!("{:?}", data.qos))
+        Label::dynamic(|data: &SubscribeTopic, _: &Env| format!("{:?}", data.qos))
             .align_vertical(UnitPoint::LEFT)
             .fix_width(20f64)
     };
     let status = || {
-        Label::dynamic(|data: &Arc<SubscribeTopic>, _: &Env| format!("{:?}", data.status))
+        Label::dynamic(|data: &SubscribeTopic, _: &Env| format!("{:?}", data.status))
             .align_vertical(UnitPoint::LEFT)
             .fix_width(20f64)
     };
 
-    let list: List<Arc<SubscribeTopic>> = List::new(move || {
+    let list: List<SubscribeTopic> = List::new(move || {
         Flex::row()
             .with_flex_child(topic(), 1.0)
             .with_child(qos())
             .with_child(status())
     });
 
-    let scroll = Scroll::<Vector<Arc<SubscribeTopic>>, List<Arc<SubscribeTopic>>>::new(list);
+    let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list);
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     let flex = flex.with_child(
@@ -97,7 +96,7 @@ fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
 
 fn init_msgs_list(id: usize) -> impl Widget<AppData> {
     let topic = || {
-        Label::dynamic(|data: &Arc<Msg>, _: &Env| {
+        Label::dynamic(|data: &Msg, _: &Env| {
             debug!("{:?}", data);
             format!("{}", data.topic())
         })
@@ -105,24 +104,24 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
         .fix_width(20f64)
     };
     let qos = || {
-        Label::dynamic(|data: &Arc<Msg>, _: &Env| format!("{:?}", data.qos()))
+        Label::dynamic(|data: &Msg, _: &Env| format!("{:?}", data.qos()))
             .align_vertical(UnitPoint::LEFT)
             .fix_width(20f64)
     };
     let msg = || {
-        Label::dynamic(|data: &Arc<Msg>, _: &Env| format!("{:?}", data.msg()))
+        Label::dynamic(|data: &Msg, _: &Env| format!("{:?}", data.msg()))
             .align_vertical(UnitPoint::LEFT)
             .fix_width(20f64)
     };
 
-    let list: List<Arc<Msg>> = List::new(move || {
+    let list: List<Msg> = List::new(move || {
         Flex::row()
             .with_flex_child(topic(), 1.0)
             .with_child(qos())
             .with_child(msg())
     });
 
-    let scroll = Scroll::<Vector<Arc<Msg>>, List<Arc<Msg>>>::new(list);
+    let scroll = Scroll::<Vector<Msg>, List<Msg>>::new(list);
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     let flex = flex.with_child(
@@ -137,7 +136,7 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
 
 fn init_subscribe_his_list(id: usize) -> impl Widget<AppData> {
     let topic = || {
-        Label::dynamic(|data: &Arc<SubscribeHis>, _: &Env| {
+        Label::dynamic(|data: &SubscribeHis, _: &Env| {
             debug!("{:?}", data);
             format!("{}", data.topic)
         })
@@ -145,15 +144,15 @@ fn init_subscribe_his_list(id: usize) -> impl Widget<AppData> {
         .fix_width(20f64)
     };
     let qos = || {
-        Label::dynamic(|data: &Arc<SubscribeHis>, _: &Env| format!("{:?}", data.qos))
+        Label::dynamic(|data: &SubscribeHis, _: &Env| format!("{:?}", data.qos))
             .align_vertical(UnitPoint::LEFT)
             .fix_width(20f64)
     };
 
-    let list: List<Arc<SubscribeHis>> =
+    let list: List<SubscribeHis> =
         List::new(move || Flex::row().with_flex_child(topic(), 1.0).with_child(qos()));
 
-    let scroll = Scroll::<Vector<Arc<SubscribeHis>>, List<Arc<SubscribeHis>>>::new(list);
+    let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list);
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     let flex = flex.with_child(
@@ -176,10 +175,8 @@ pub fn init_subscribe_input(id: usize) -> Container<AppData> {
         )
         .with_child(
             Flex::column()
-                .with_child(
-                    TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::topic.in_arc())),
-                )
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::qos.in_arc())))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::topic)))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::qos)))
                 .with_child(
                     Button::new("订阅")
                         .on_click(move |_ctx, data: &mut DbIndex, _env| {
@@ -212,9 +209,9 @@ pub fn init_public_input(id: usize) -> Container<AppData> {
         )
         .with_child(
             Flex::column()
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::topic.in_arc())))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::msg.in_arc())))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::qos.in_arc())))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::topic)))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::msg)))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::qos)))
                 .with_child(
                     Button::new("发布")
                         .on_click(move |_ctx, data: &mut DbIndex, _env| {

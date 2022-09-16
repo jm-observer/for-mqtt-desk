@@ -11,10 +11,10 @@ pub type AString = Arc<String>;
 
 #[derive(Debug)]
 pub enum AppEvent {
-    Connect(Arc<Broker>),
-    Subscribe(Arc<SubscribeInput>, usize),
+    Connect(Broker),
+    Subscribe(SubscribeInput, usize),
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
-    Public(Arc<PublicInput>, usize),
+    Public(PublicInput, usize),
     ReceivePublic(usize, SubscribeMsg),
 }

@@ -6,7 +6,6 @@ use druid::widget::{Axis, Label, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransi
 use druid::{Data, Env};
 use druid::{Widget, WidgetExt};
 use log::debug;
-use std::sync::Arc;
 
 #[derive(Clone, Data)]
 pub struct BrokersTabs;
@@ -62,7 +61,6 @@ impl TabsPolicy for BrokersTabs {
         _info: TabInfo<Self::Input>,
         _data: &Self::Input,
     ) -> Self::LabelWidget {
-        Label::dynamic(|data: &Arc<Broker>, _: &Env| format!("{}", data.name))
-            .lens(BrokerIndex(_key))
+        Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name)).lens(BrokerIndex(_key))
     }
 }

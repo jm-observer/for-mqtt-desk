@@ -28,7 +28,9 @@ pub async fn deal_event(
                     let id = broker.id;
                     mqtt_clients.insert(id, client.clone());
                     event_sink.add_idle_callback(move |data: &mut AppData| {
-                        data.init_connection(id);
+                        if let Err(e) = data.init_connection(id) {
+                            error!("{:?}", e);
+                        }
                     });
                 }
                 Err(e) => {

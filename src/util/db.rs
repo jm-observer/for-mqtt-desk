@@ -4,16 +4,19 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 
 use crate::data::common::SubscribeHis;
-use crate::data::db::{Broker, SubscribeHisesKey};
+use crate::data::db::{Broker, BrokerKey, SubscribeHisesKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use druid::im::{HashMap, Vector};
+use log::warn;
+use zerocopy::AsBytes;
 
 #[derive(Clone, Debug)]
 pub struct ArcDb {
     pub index: usize,
     pub db: Db,
     pub tx: Sender<AppEvent>,
+    pub ids: Vector<usize>,
 }
 
 const BROKERS: &[u8; 7] = b"brokers";
@@ -24,47 +27,53 @@ impl ArcDb {
             index: 0,
             db: config.open()?,
             tx,
+            ids: Default::default(),
         })
     }
 
     pub fn read_app_data(&mut self) -> Result<AppData> {
-        let (brokers_tmp, subscribe_hises_tmp) = if let Some(val) = self.db.remove(BROKERS)? {
-            let db_brokers: Vector<Broker> = serde_json::from_slice(&val)?;
+        let (brokers, subscribe_hises) = if let Some(val) = self.db.remove(BROKERS)? {
+            let db_brokers_ids: Vector<usize> = serde_json::from_slice(&val)?;
             let mut brokers = Vector::new();
             let mut subscribe_hises = HashMap::new();
-            for (index, mut broker) in db_brokers.into_iter().enumerate() {
-                let old_id = broker.id;
-                broker.id = index;
-                brokers.push_back(broker);
-                let hises = if let Some(val) = self.db.remove(SubscribeHisesKey::from(old_id))? {
-                    let hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
-                    hises
+            self.index = db_brokers_ids.len();
+            for (index, id) in db_brokers_ids.into_iter().enumerate() {
+                if let Some(val) = self.db.remove(BrokerKey::from(id).as_bytes())? {
+                    let mut broker: Broker = serde_json::from_slice(&val)?;
+                    broker.id = index;
+                    let hises = if let Some(val) =
+                        self.db.remove(SubscribeHisesKey::from(id).as_bytes())?
+                    {
+                        let hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
+                        hises
+                    } else {
+                        Vector::new()
+                    };
+                    brokers.push_back(broker);
+                    subscribe_hises.insert(index, hises);
+                    self.ids.push_back(index);
                 } else {
-                    Vector::new()
+                    warn!("can't find id: {}", id);
                 };
-                subscribe_hises.insert(index, hises);
             }
             (brokers, subscribe_hises)
         } else {
             (Vector::new(), HashMap::new())
         };
-        self.db.insert(BROKERS, serde_json::to_vec(&brokers_tmp)?)?;
-        self.index = brokers_tmp.len();
-        let mut subscribe_hises = HashMap::new();
-        for (index, his_tmp) in subscribe_hises_tmp.into_iter() {
-            self.db.insert(
-                SubscribeHisesKey::from(index),
-                serde_json::to_vec(&his_tmp)?,
-            )?;
-            let mut his = Vector::new();
-            for item in his_tmp {
-                his.push_back(item.into());
+        {
+            self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
+            for (index, his_tmp) in subscribe_hises.iter() {
+                self.db.insert(
+                    SubscribeHisesKey::from(*index).as_bytes(),
+                    serde_json::to_vec(&his_tmp)?,
+                )?;
             }
-            subscribe_hises.insert(index, his);
-        }
-        let mut brokers = Vector::new();
-        for broker in brokers_tmp.into_iter() {
-            brokers.push_back(broker.into());
+            for tmp_broker in brokers.iter() {
+                self.db.insert(
+                    BrokerKey::from(tmp_broker.id).as_bytes(),
+                    serde_json::to_vec(tmp_broker)?,
+                )?;
+            }
         }
         Ok(AppData {
             brokers,
@@ -93,7 +102,18 @@ impl ArcDb {
             use_credentials: false,
             user_name: Arc::new("".to_string()),
             password: Arc::new("".to_string()),
+            stored: false,
         }
+    }
+
+    pub fn save_broker(&mut self, id: usize, broker: &Broker) -> Result<()> {
+        if self.ids.iter().find(|x| **x == id).is_none() {
+            self.ids.push_back(id);
+            self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
+        }
+        self.db
+            .insert(BrokerKey::from(id).as_bytes(), serde_json::to_vec(&broker)?)?;
+        Ok(())
     }
 }
 
