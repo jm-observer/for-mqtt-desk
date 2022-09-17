@@ -22,7 +22,7 @@ pub struct ArcDb {
 const BROKERS: &[u8; 7] = b"brokers";
 impl ArcDb {
     pub fn init_db(tx: Sender<AppEvent>) -> Result<Self> {
-        let config = Config::new().path("./resource/db");
+        let config = Config::new().path("./resources/db");
         Ok(ArcDb {
             index: 0,
             db: config.open()?,

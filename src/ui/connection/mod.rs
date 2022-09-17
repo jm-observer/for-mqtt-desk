@@ -3,12 +3,13 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerIndex, DbIndex, Index};
 use crate::data::AppEvent;
 use druid::im::Vector;
+use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
     Align, Button, Container, CrossAxisAlignment, Flex, Label, List, Padding, Scroll, Split,
     TextBox,
 };
 use druid::LensExt;
-use druid::{Color, Env, UnitPoint, Widget, WidgetExt};
+use druid::{Env, UnitPoint, Widget, WidgetExt};
 use log::{debug, error};
 
 pub fn display_connection(id: usize) -> Container<AppData> {
@@ -22,7 +23,7 @@ pub fn display_connection(id: usize) -> Container<AppData> {
             .split_point(0.75)
             .bar_size(3.0),
         )
-        .border(Color::WHITE, 1.0),
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
     let subscribe = Padding::new(
         10.0,
@@ -31,7 +32,7 @@ pub fn display_connection(id: usize) -> Container<AppData> {
                 .split_point(0.75)
                 .bar_size(3.0),
         )
-        .border(Color::WHITE, 1.0),
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
 
     let msg = Padding::new(
@@ -44,7 +45,7 @@ pub fn display_connection(id: usize) -> Container<AppData> {
             .split_point(0.75)
             .bar_size(3.0),
         )
-        .border(Color::WHITE, 1.0),
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
     Container::new(
         Split::columns(subscribe, msg)

@@ -1,8 +1,9 @@
 use crate::data::hierarchy::AppData;
 use crate::ui::broker_list::init_connect;
 use crate::ui::tabs::init_brokers_tabs;
+use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Container, Padding, Split};
-use druid::{Color, Widget};
+use druid::Widget;
 
 mod broker_info;
 mod broker_list;
@@ -17,6 +18,6 @@ pub fn init_layout() -> impl Widget<AppData> {
                 .split_point(0.25)
                 .draggable(true),
         )
-        .border(Color::WHITE, 1.0),
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     )
 }
