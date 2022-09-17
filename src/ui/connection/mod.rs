@@ -2,6 +2,7 @@ use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, Subscr
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerIndex, DbIndex, Index};
 use crate::data::AppEvent;
+use crate::ui::common::label_static;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
@@ -168,69 +169,81 @@ fn init_subscribe_his_list(id: usize) -> impl Widget<AppData> {
 
 //
 pub fn init_subscribe_input(id: usize) -> Container<AppData> {
-    let connection = Flex::row()
+    let connection = Flex::column()
         .with_child(
-            Flex::column()
-                .with_child(Label::new("topic").fix_width(80.0))
-                .with_child(Label::new("qos").fix_width(80.0)),
+            Flex::row()
+                .with_child(label_static("topic"))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::topic)))
+                .align_left(),
         )
         .with_child(
-            Flex::column()
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::topic)))
+            Flex::row()
+                .with_child(label_static("qos"))
                 .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::qos)))
-                .with_child(
-                    Button::new("订阅")
-                        .on_click(move |_ctx, data: &mut DbIndex, _env| {
-                            if let Some(broker) = data.data.subscribe_ing.get(&data.index) {
-                                if let Err(e) = data
-                                    .data
-                                    .db
-                                    .tx
-                                    .send(AppEvent::Subscribe(broker.clone(), data.index))
-                                {
-                                    error!("{:?}", e);
-                                }
-                            } else {
-                                error!("can't get the broker");
+                .align_left(),
+        )
+        .with_child(
+            Flex::row().with_child(
+                Button::new("订阅")
+                    .on_click(move |_ctx, data: &mut DbIndex, _env| {
+                        if let Some(broker) = data.data.subscribe_ing.get(&data.index) {
+                            if let Err(e) = data
+                                .data
+                                .db
+                                .tx
+                                .send(AppEvent::Subscribe(broker.clone(), data.index))
+                            {
+                                error!("{:?}", e);
                             }
-                        })
-                        .lens(Index(id)),
-                ),
+                        } else {
+                            error!("can't get the broker");
+                        }
+                    })
+                    .lens(Index(id)),
+            ),
         );
     Container::new(connection)
 }
 
 pub fn init_public_input(id: usize) -> Container<AppData> {
-    let connection = Flex::row()
+    let connection = Flex::column()
         .with_child(
-            Flex::column()
-                .with_child(Label::new("topic").fix_width(80.0))
-                .with_child(Label::new("qos").fix_width(80.0))
-                .with_child(Label::new("msg").fix_width(80.0)),
+            Flex::row()
+                .with_child(label_static("topic"))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::topic)))
+                .align_left(),
         )
         .with_child(
-            Flex::column()
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::topic)))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::msg)))
+            Flex::row()
+                .with_child(label_static("qos"))
                 .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::qos)))
-                .with_child(
-                    Button::new("发布")
-                        .on_click(move |_ctx, data: &mut DbIndex, _env| {
-                            if let Some(broker) = data.data.public_ing.get(&data.index) {
-                                if let Err(e) = data
-                                    .data
-                                    .db
-                                    .tx
-                                    .send(AppEvent::Public(broker.clone(), data.index))
-                                {
-                                    error!("{:?}", e);
-                                }
-                            } else {
-                                error!("can't get the broker");
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("msg"))
+                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::msg)))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row().with_child(
+                Button::new("发布")
+                    .on_click(move |_ctx, data: &mut DbIndex, _env| {
+                        if let Some(broker) = data.data.public_ing.get(&data.index) {
+                            if let Err(e) = data
+                                .data
+                                .db
+                                .tx
+                                .send(AppEvent::Public(broker.clone(), data.index))
+                            {
+                                error!("{:?}", e);
                             }
-                        })
-                        .lens(Index(id)),
-                ),
+                        } else {
+                            error!("can't get the broker");
+                        }
+                    })
+                    .lens(Index(id)),
+            ),
         );
     Container::new(connection)
 }

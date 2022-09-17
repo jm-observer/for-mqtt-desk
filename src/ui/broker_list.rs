@@ -2,7 +2,9 @@ use crate::data::common::TabStatus;
 use crate::data::db::Broker;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerStoredList;
+use crate::ui::common::{label_dy, label_dy_expand_width};
 use druid::im::Vector;
+use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Button, CrossAxisAlignment, Flex, Label, List, Scroll};
 use druid::{theme, Env, EventCtx};
 use druid::{UnitPoint, WidgetExt};
@@ -10,16 +12,20 @@ use log::debug;
 
 pub fn init_connect() -> Flex<AppData> {
     let name = || {
-        Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name))
-            .align_vertical(UnitPoint::LEFT)
-            .padding(1.0)
-        // .fix_width(80f64)
+        label_dy(|data: &Broker, _: &Env| format!("{}", data.name))
+        // Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name))
+        //     .align_vertical(UnitPoint::LEFT)
+        //     .padding(1.0)
+        //     .fix_width(80f64)
+        //     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
     };
     let addr = || {
-        Label::dynamic(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port))
-            .align_vertical(UnitPoint::LEFT)
-            .padding(1.0)
-            .expand_width()
+        label_dy_expand_width(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port))
+        // Label::dynamic(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port))
+        //     .align_vertical(UnitPoint::LEFT)
+        //     .padding(1.0)
+        //     .expand_width()
+        //     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
     };
 
     let list: List<Broker> = List::new(move || {
