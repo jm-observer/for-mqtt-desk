@@ -5,7 +5,7 @@ use crate::util::db::ArcDb;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
 
-#[derive(Data, Clone, Debug)]
+#[derive(Data, Clone, Debug, Lens)]
 pub struct SubscribeTopic {
     pub pkid: u16,
     #[data(ignore)]
@@ -25,6 +25,15 @@ pub struct SubscribeHis {
 pub enum Msg {
     Public(PublicMsg),
     Subscribe(SubscribeMsg),
+}
+
+impl Msg {
+    pub fn is_public(&self) -> bool {
+        if let Msg::Public(_) = self {
+            return true;
+        }
+        false
+    }
 }
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
@@ -57,12 +66,6 @@ pub struct SubscribeMsg {
     pub qos: QoS,
 }
 
-// #[derive(Data, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-// pub enum Qos {
-//     Qos0,
-//     Qos1,
-//     Qos2,
-// }
 #[derive(Data, Debug, Clone, Eq, PartialEq, Lens, Default)]
 pub struct SubscribeInput {
     pub(crate) topic: AString,
@@ -90,6 +93,7 @@ pub enum TabKind {
     Broker,
 }
 #[derive(Debug, Data, Clone, Eq, PartialEq, Deserialize, Serialize)]
+#[repr(u8)]
 pub enum QoS {
     AtMostOnce = 0,
     AtLeastOnce = 1,

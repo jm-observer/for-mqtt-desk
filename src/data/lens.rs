@@ -1,9 +1,11 @@
 use crate::data::common::{
-    Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic, TabStatus,
+    Msg, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeTopic, TabStatus,
 };
 use crate::data::db::Broker;
 use crate::data::hierarchy::AppData;
+use crate::data::AString;
 use druid::im::Vector;
+use druid::Lens;
 
 pub struct BrokerIndex(pub usize);
 
@@ -170,5 +172,56 @@ impl druid::Lens<AppData, Vector<Broker>> for BrokerStoredList {
             .map(|x| x.clone())
             .collect();
         f(&mut broker_list)
+    }
+}
+
+pub struct MsgMsgLens;
+
+impl Lens<Msg, AString> for MsgMsgLens {
+    fn with<V, F: FnOnce(&AString) -> V>(&self, data: &Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &msg.msg,
+            Msg::Subscribe(msg) => &msg.msg,
+        })
+    }
+
+    fn with_mut<V, F: FnOnce(&mut AString) -> V>(&self, data: &mut Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &mut msg.msg,
+            Msg::Subscribe(msg) => &mut msg.msg,
+        })
+    }
+}
+
+pub struct MsgTopicLens;
+
+impl Lens<Msg, AString> for MsgTopicLens {
+    fn with<V, F: FnOnce(&AString) -> V>(&self, data: &Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &msg.topic,
+            Msg::Subscribe(msg) => &msg.topic,
+        })
+    }
+
+    fn with_mut<V, F: FnOnce(&mut AString) -> V>(&self, data: &mut Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &mut msg.topic,
+            Msg::Subscribe(msg) => &mut msg.topic,
+        })
+    }
+}
+impl Lens<Msg, QoS> for MsgTopicLens {
+    fn with<V, F: FnOnce(&QoS) -> V>(&self, data: &Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &msg.qos,
+            Msg::Subscribe(msg) => &msg.qos,
+        })
+    }
+
+    fn with_mut<V, F: FnOnce(&mut QoS) -> V>(&self, data: &mut Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &mut msg.qos,
+            Msg::Subscribe(msg) => &mut msg.qos,
+        })
     }
 }

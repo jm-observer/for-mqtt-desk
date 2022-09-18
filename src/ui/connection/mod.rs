@@ -1,13 +1,13 @@
-use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Msg, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
-use crate::data::lens::{BrokerIndex, DbIndex, Index};
-use crate::data::AppEvent;
-use crate::ui::common::label_static;
+use crate::data::lens::{BrokerIndex, DbIndex, Index, MsgMsgLens, MsgTopicLens};
+use crate::data::{AString, AppEvent};
+use crate::ui::common::{label_static, MSG, QOS, TOPIC};
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
-    Align, Button, Container, CrossAxisAlignment, Flex, Label, List, Padding, Scroll, Split,
-    TextBox,
+    Align, Button, Container, CrossAxisAlignment, Either, Flex, Label, List, Padding, Scroll,
+    Split, TextBox,
 };
 use druid::LensExt;
 use druid::{Env, UnitPoint, Widget, WidgetExt};
@@ -15,160 +15,120 @@ use log::{debug, error};
 
 pub fn display_connection(id: usize) -> Container<AppData> {
     let subscribe_list = Padding::new(
-        10.0,
+        1.0,
         Container::new(
-            Split::rows(
-                Align::centered(init_subscribe_list(id)),
-                Align::centered(init_subscribe_his_list(id)),
-            )
-            .split_point(0.75)
-            .bar_size(3.0),
+            Split::rows(init_subscribe_list(id), init_subscribe_his_list(id))
+                .split_point(0.75)
+                .bar_size(1.0),
         )
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
     let subscribe = Padding::new(
-        10.0,
+        1.0,
         Container::new(
-            Split::rows(subscribe_list, Align::centered(init_subscribe_input(id)))
-                .split_point(0.75)
-                .bar_size(3.0),
+            Split::rows(subscribe_list, init_subscribe_input(id))
+                .split_point(0.65)
+                .bar_size(1.0),
         )
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
 
     let msg = Padding::new(
-        10.0,
+        1.0,
         Container::new(
             Split::rows(
                 Align::centered(init_msgs_list(id)),
                 Align::centered(init_public_input(id)),
             )
-            .split_point(0.75)
-            .bar_size(3.0),
+            .split_point(0.65)
+            .bar_size(1.0),
         )
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
     Container::new(
         Split::columns(subscribe, msg)
-            .split_point(0.2)
+            .split_point(0.3)
             .draggable(true),
     )
     // .debug_paint_layout()
 }
 
 fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
-    let topic = || {
-        Label::dynamic(|data: &SubscribeTopic, _: &Env| {
-            debug!("{:?}", data);
-            format!("{}", data.topic)
-        })
-        .align_vertical(UnitPoint::LEFT)
-        .fix_width(20f64)
-    };
-    let qos = || {
-        Label::dynamic(|data: &SubscribeTopic, _: &Env| format!("{:?}", data.qos))
-            .align_vertical(UnitPoint::LEFT)
-            .fix_width(20f64)
-    };
-    let status = || {
-        Label::dynamic(|data: &SubscribeTopic, _: &Env| format!("{:?}", data.status))
-            .align_vertical(UnitPoint::LEFT)
-            .fix_width(20f64)
-    };
-
     let list: List<SubscribeTopic> = List::new(move || {
         Flex::row()
-            .with_flex_child(topic(), 1.0)
-            .with_child(qos())
-            .with_child(status())
+            .with_child(QOS().lens(SubscribeTopic::qos))
+            .with_child(TOPIC().lens(SubscribeTopic::topic))
+            .align_left()
+            .expand_width()
     });
 
-    let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list);
-
-    let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    let flex = flex.with_child(
-        scroll
-            .vertical()
-            .fix_height(200.0)
-            .fix_width(300.0)
-            .lens(BrokerIndex(id)),
-    );
-    flex
-}
-
-fn init_msgs_list(id: usize) -> impl Widget<AppData> {
-    let topic = || {
-        Label::dynamic(|data: &Msg, _: &Env| {
-            debug!("{:?}", data);
-            format!("{}", data.topic())
-        })
-        .align_vertical(UnitPoint::LEFT)
-        .fix_width(20f64)
-    };
-    let qos = || {
-        Label::dynamic(|data: &Msg, _: &Env| format!("{:?}", data.qos()))
-            .align_vertical(UnitPoint::LEFT)
-            .fix_width(20f64)
-    };
-    let msg = || {
-        Label::dynamic(|data: &Msg, _: &Env| format!("{:?}", data.msg()))
-            .align_vertical(UnitPoint::LEFT)
-            .fix_width(20f64)
-    };
-
-    let list: List<Msg> = List::new(move || {
-        Flex::row()
-            .with_flex_child(topic(), 1.0)
-            .with_child(qos())
-            .with_child(msg())
-    });
-
-    let scroll = Scroll::<Vector<Msg>, List<Msg>>::new(list);
-
-    let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    let flex = flex.with_child(
-        scroll
-            .vertical()
-            .fix_height(200.0)
-            .fix_width(300.0)
-            .lens(BrokerIndex(id)),
-    );
-    flex
+    let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list)
+        .vertical()
+        .lens(BrokerIndex(id));
+    scroll
+    // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
+    // let flex = flex
+    //     .with_child(scroll)
+    //     .expand_width()
+    //     .align_vertical(UnitPoint::TOP);
+    // flex
 }
 
 fn init_subscribe_his_list(id: usize) -> impl Widget<AppData> {
-    let topic = || {
-        Label::dynamic(|data: &SubscribeHis, _: &Env| {
-            debug!("{:?}", data);
-            format!("{}", data.topic)
-        })
-        .align_vertical(UnitPoint::LEFT)
-        .fix_width(20f64)
-    };
-    let qos = || {
-        Label::dynamic(|data: &SubscribeHis, _: &Env| format!("{:?}", data.qos))
-            .align_vertical(UnitPoint::LEFT)
-            .fix_width(20f64)
-    };
+    let list: List<SubscribeHis> = List::new(move || {
+        Flex::row()
+            .with_child(QOS().lens(SubscribeHis::qos))
+            .with_child(TOPIC().lens(SubscribeHis::topic))
+            .expand_width()
+    });
+    let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
+        .vertical()
+        .lens(BrokerIndex(id));
+    scroll
 
-    let list: List<SubscribeHis> =
-        List::new(move || Flex::row().with_flex_child(topic(), 1.0).with_child(qos()));
+    // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
+    // let flex = flex
+    //     .with_child(scroll.vertical().lens(BrokerIndex(id)))
+    //     .align_vertical(UnitPoint::TOP);
+    // flex
+}
 
-    let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list);
-
+fn init_msgs_list(id: usize) -> impl Widget<AppData> {
+    let list: List<Msg> = List::new(move || {
+        Either::new(
+            |data: &Msg, _env| data.is_public(),
+            Flex::column()
+                .with_child(
+                    Flex::row()
+                        .with_child(QOS().lens(MsgTopicLens))
+                        .with_child(TOPIC().lens(MsgTopicLens))
+                        .align_horizontal(UnitPoint::RIGHT),
+                )
+                .with_child(MSG().lens(MsgMsgLens).align_horizontal(UnitPoint::RIGHT)),
+            Flex::column()
+                .with_child(
+                    Flex::row()
+                        .with_child(QOS().lens(MsgTopicLens))
+                        .with_child(TOPIC().lens(MsgTopicLens))
+                        .align_horizontal(UnitPoint::LEFT),
+                )
+                .with_child(MSG().lens(MsgMsgLens).align_horizontal(UnitPoint::LEFT)),
+        )
+        .fix_width(380.)
+        .align_horizontal(UnitPoint::LEFT)
+    });
+    let scroll = Scroll::<Vector<Msg>, List<Msg>>::new(list);
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    let flex = flex.with_child(
-        scroll
-            .vertical()
-            .fix_height(200.0)
-            .fix_width(300.0)
-            .lens(BrokerIndex(id)),
-    );
+    let flex = flex
+        .with_child(scroll.vertical().lens(BrokerIndex(id)))
+        .align_vertical(UnitPoint::TOP)
+        .expand_width()
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
     flex
 }
 
 //
-pub fn init_subscribe_input(id: usize) -> Container<AppData> {
+pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
@@ -202,27 +162,40 @@ pub fn init_subscribe_input(id: usize) -> Container<AppData> {
                     .lens(Index(id)),
             ),
         );
-    Container::new(connection)
+    connection
 }
 
-pub fn init_public_input(id: usize) -> Container<AppData> {
+pub fn init_public_input(id: usize) -> impl Widget<AppData> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
                 .with_child(label_static("topic"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::topic)))
+                .with_child(
+                    TextBox::new()
+                        .lens(BrokerIndex(id).then(PublicInput::topic))
+                        .fix_width(300.),
+                )
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("qos"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::qos)))
+                .with_child(
+                    TextBox::new()
+                        .lens(BrokerIndex(id).then(PublicInput::qos))
+                        .fix_width(300.),
+                )
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("msg"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(PublicInput::msg)))
+                .with_child(
+                    TextBox::multiline()
+                        .fix_height(60.)
+                        .fix_width(300.)
+                        .lens(BrokerIndex(id).then(PublicInput::msg)),
+                )
                 .align_left(),
         )
         .with_child(
@@ -245,5 +218,5 @@ pub fn init_public_input(id: usize) -> Container<AppData> {
                     .lens(Index(id)),
             ),
         );
-    Container::new(connection)
+    connection
 }

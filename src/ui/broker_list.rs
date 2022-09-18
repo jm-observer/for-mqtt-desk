@@ -59,16 +59,11 @@ pub fn init_connect() -> Flex<AppData> {
             },
         ))
         .with_child(Button::new("删"))
-        .with_child(Button::new("复制"))
-        .background(theme::PLACEHOLDER_COLOR);
+        .with_child(Button::new("复制"));
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    let flex = flex.with_child(buttons).with_child(
-        scroll
-            .vertical()
-            .lens(BrokerStoredList)
-            .fix_height(200.0)
-            .fix_width(300.0),
-    );
+    let flex = flex
+        .with_child(buttons)
+        .with_flex_child(scroll.vertical().expand().lens(BrokerStoredList), 1.0);
     flex
 }
