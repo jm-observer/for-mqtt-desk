@@ -4,7 +4,7 @@ pub mod hierarchy;
 pub mod lens;
 
 use crate::data::common::{PublicInput, SubscribeInput, SubscribeMsg};
-use crate::data::db::Broker;
+use common::Broker;
 use rumqttc::v5::{PubAck, SubAck};
 use std::sync::Arc;
 
@@ -20,4 +20,6 @@ pub enum AppEvent {
     ReceivePublic(usize, SubscribeMsg),
     PubAck(usize, PubAck),
     SubAck(usize, SubAck),
+    ClickBroker(usize),
+    DbClickCheck(usize),
 }

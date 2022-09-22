@@ -1,8 +1,8 @@
+use crate::data::common::Broker;
 use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
 };
-use crate::data::db::Broker;
 use crate::util::db::ArcDb;
 use anyhow::Result;
 use druid::im::Vector;
@@ -11,6 +11,7 @@ use rumqttc::v5::{AsyncClient, PubAck, PubAckReason, SubAck};
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
+    pub broker_selected: usize,
     pub brokers: Vector<Broker>,
     pub broker_tabs: Vector<usize>,
     pub tab_statuses: HashMap<usize, TabStatus>,
@@ -77,6 +78,22 @@ impl AppData {
         if let Some(msgs) = self.msgs.get_mut(&id) {
             let sub: Msg = PublicMsg::from(input.clone(), pkid).into();
             msgs.push_back(sub.into());
+        }
+    }
+    pub fn click_broker(&mut self, id: usize) {
+        self.select_broker(id);
+    }
+    pub fn db_click_broker(&mut self, id: usize) {
+        // todo
+        self.select_broker(id);
+    }
+    fn select_broker(&mut self, id: usize) {
+        for broker in self.brokers.iter_mut() {
+            if broker.id == id {
+                broker.selected = true;
+            } else {
+                broker.selected = false;
+            }
         }
     }
     pub fn puback(&mut self, id: usize, input: PubAck) {

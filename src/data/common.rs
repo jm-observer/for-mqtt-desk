@@ -1,9 +1,11 @@
 mod impls;
 
-use crate::data::AString;
+use crate::data::db::BrokerDB;
+use crate::data::{AString, AppEvent};
 use crate::util::db::ArcDb;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc::Sender;
 
 #[derive(Data, Clone, Debug, Lens)]
 pub struct SubscribeTopic {
@@ -109,4 +111,41 @@ pub enum QoS {
     AtMostOnce = 0,
     AtLeastOnce = 1,
     ExactlyOnce = 2,
+}
+
+#[derive(Debug, Clone, Data, Lens)]
+pub struct Broker {
+    pub id: usize,
+    pub client_id: AString,
+    pub name: AString,
+    pub addr: AString,
+    pub port: AString,
+    pub params: AString,
+    pub use_credentials: bool,
+    pub user_name: AString,
+    pub password: AString,
+    #[data(ignore)]
+    #[lens(ignore)]
+    pub stored: bool,
+    #[data(ignore)]
+    #[lens(ignore)]
+    pub tx: Sender<AppEvent>,
+    #[lens(ignore)]
+    pub selected: bool,
+}
+
+impl Broker {
+    pub fn clone_to_db(&self) -> BrokerDB {
+        BrokerDB {
+            id: self.id,
+            client_id: self.client_id.clone(),
+            name: self.name.clone(),
+            addr: self.addr.clone(),
+            port: self.port.clone(),
+            params: self.params.clone(),
+            use_credentials: self.use_credentials,
+            user_name: self.user_name.clone(),
+            password: self.password.clone(),
+        }
+    }
 }

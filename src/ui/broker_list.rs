@@ -1,41 +1,42 @@
+use crate::data::common::Broker;
 use crate::data::common::TabStatus;
-use crate::data::db::Broker;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerStoredList;
-use crate::ui::common::{label_dy, label_dy_expand_width};
+use crate::data::AppEvent;
+use crate::ui::common::{label_dy, label_dy_expand_width, SILVER};
 use druid::im::Vector;
-use druid::widget::{Button, CrossAxisAlignment, Flex, Label, List, Scroll};
+use druid::widget::{Button, CrossAxisAlignment, Either, Flex, Label, List, Scroll};
 use druid::WidgetExt;
 use druid::{Env, EventCtx};
-use log::debug;
+use log::{debug, error};
 
 pub fn init_connect() -> Flex<AppData> {
-    let name = || {
-        label_dy(|data: &Broker, _: &Env| format!("{}", data.name))
-        // Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name))
-        //     .align_vertical(UnitPoint::LEFT)
-        //     .padding(1.0)
-        //     .fix_width(80f64)
-        //     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-    };
-    let addr = || {
-        label_dy_expand_width(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port))
-        // Label::dynamic(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port))
-        //     .align_vertical(UnitPoint::LEFT)
-        //     .padding(1.0)
-        //     .expand_width()
-        //     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-    };
+    let name = || label_dy(|data: &Broker, _: &Env| format!("{}", data.name));
+    let addr =
+        || label_dy_expand_width(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port));
 
     let list: List<Broker> = List::new(move || {
-        Flex::row()
-            .with_child(name())
-            .with_flex_child(addr(), 1.0)
-            .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
-                debug!("onlick: {}", data.id)
-            })
+        Either::new(
+            |data: &Broker, _env| data.selected,
+            Flex::row()
+                .with_child(name())
+                .with_flex_child(addr(), 1.0)
+                .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
+                    if let Err(e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
+                        error!("fail to send");
+                    }
+                })
+                .background(SILVER),
+            Flex::row()
+                .with_child(name())
+                .with_flex_child(addr(), 1.0)
+                .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
+                    if let Err(e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
+                        error!("fail to send");
+                    }
+                }),
+        )
     });
-
     let scroll = Scroll::<Vector<Broker>, List<Broker>>::new(list);
 
     let buttons = Flex::row()

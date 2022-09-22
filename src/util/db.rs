@@ -3,8 +3,8 @@ use sled::{Config, Db};
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
 
-use crate::data::common::SubscribeHis;
-use crate::data::db::{Broker, BrokerKey, SubscribeHisesKey};
+use crate::data::common::{Broker, SubscribeHis};
+use crate::data::db::{BrokerDB, BrokerKey, SubscribeHisesKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use druid::im::{HashMap, Vector};
@@ -32,14 +32,14 @@ impl ArcDb {
     }
 
     pub fn read_app_data(&mut self) -> Result<AppData> {
-        let (brokers, subscribe_hises) = if let Some(val) = self.db.remove(BROKERS)? {
+        let (db_brokers, subscribe_hises) = if let Some(val) = self.db.remove(BROKERS)? {
             let db_brokers_ids: Vector<usize> = serde_json::from_slice(&val)?;
             let mut brokers = Vector::new();
             let mut subscribe_hises = HashMap::new();
             self.index = db_brokers_ids.len();
             for (index, id) in db_brokers_ids.into_iter().enumerate() {
                 if let Some(val) = self.db.remove(BrokerKey::from(id).as_bytes())? {
-                    let mut broker: Broker = serde_json::from_slice(&val)?;
+                    let mut broker: BrokerDB = serde_json::from_slice(&val)?;
                     broker.id = index;
                     let hises = if let Some(val) =
                         self.db.remove(SubscribeHisesKey::from(id).as_bytes())?
@@ -60,6 +60,7 @@ impl ArcDb {
         } else {
             (Vector::new(), HashMap::new())
         };
+        let mut brokers = Vector::new();
         {
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
             for (index, his_tmp) in subscribe_hises.iter() {
@@ -68,14 +69,17 @@ impl ArcDb {
                     serde_json::to_vec(&his_tmp)?,
                 )?;
             }
-            for tmp_broker in brokers.iter() {
+
+            for tmp_broker in db_brokers.into_iter() {
                 self.db.insert(
                     BrokerKey::from(tmp_broker.id).as_bytes(),
-                    serde_json::to_vec(tmp_broker)?,
+                    serde_json::to_vec(&tmp_broker)?,
                 )?;
+                brokers.push_back(tmp_broker.to_broker(self.tx.clone()));
             }
         }
         Ok(AppData {
+            broker_selected: 0,
             brokers,
             broker_tabs: Default::default(),
             tab_statuses: Default::default(),
@@ -103,6 +107,8 @@ impl ArcDb {
             user_name: Arc::new("".to_string()),
             password: Arc::new("".to_string()),
             stored: false,
+            tx: self.tx.clone(),
+            selected: false,
         }
     }
 
@@ -111,8 +117,10 @@ impl ArcDb {
             self.ids.push_back(id);
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
         }
-        self.db
-            .insert(BrokerKey::from(id).as_bytes(), serde_json::to_vec(&broker)?)?;
+        self.db.insert(
+            BrokerKey::from(id).as_bytes(),
+            serde_json::to_vec(&broker.clone_to_db())?,
+        )?;
         Ok(())
     }
 }
@@ -129,7 +137,7 @@ const OPTION: &str = r#"{
 
 #[cfg(test)]
 mod test {
-    use crate::data::db::Broker;
+    use crate::data::common::Broker;
     use crate::util::db::BROKERS;
     use druid::im::vector;
     use sled::Config;

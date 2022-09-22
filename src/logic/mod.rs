@@ -5,6 +5,7 @@ use log::{debug, error};
 use rumqttc::v5::AsyncClient;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender};
+use std::time::{Duration, Instant};
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 pub async fn deal_event(
@@ -13,6 +14,7 @@ pub async fn deal_event(
     tx: Sender<AppEvent>,
 ) {
     let mut mqtt_clients: HashMap<usize, AsyncClient> = HashMap::new();
+    let mut clicks: HashMap<usize, usize> = HashMap::new();
     loop {
         let event = match rx.recv() {
             Ok(event) => event,
@@ -75,6 +77,29 @@ pub async fn deal_event(
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     data.suback(id, ack);
                 });
+            }
+            AppEvent::ClickBroker(id) => {
+                if let Some(previous) = clicks.remove(&id) {
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        data.db_click_broker(id);
+                    });
+                } else {
+                    clicks.insert(id, id);
+                    let async_tx = tx.clone();
+                    tokio::spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(280)).await;
+                        if let Err(e) = async_tx.send(AppEvent::DbClickCheck(id)) {
+                            error!("{:?}", e);
+                        }
+                    });
+                }
+            }
+            AppEvent::DbClickCheck(id) => {
+                if let Some(previous) = clicks.remove(&id) {
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        data.click_broker(id);
+                    });
+                }
             }
             _ => {}
         }

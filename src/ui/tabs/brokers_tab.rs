@@ -1,4 +1,4 @@
-use crate::data::db::Broker;
+use crate::data::common::Broker;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIndex;
 use crate::ui::tabs::broker_tab::BrokerTabPolicy;

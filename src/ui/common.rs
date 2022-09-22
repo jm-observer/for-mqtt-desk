@@ -46,3 +46,4 @@ pub const MSG: fn() -> SizedBox<AString> =
 pub const GREEN: Color = Color::rgb8(0, 128, 0);
 /// Opaque yellow.
 pub const YELLOW: Color = Color::rgb8(255, 255, 0);
+pub const SILVER: Color = Color::grey8(192);

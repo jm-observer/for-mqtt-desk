@@ -1,7 +1,7 @@
 pub mod data;
 
+use crate::data::common::Broker;
 use crate::data::common::SubscribeMsg;
-use crate::data::db::Broker;
 use crate::data::AppEvent;
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
 use anyhow::{bail, Result};
