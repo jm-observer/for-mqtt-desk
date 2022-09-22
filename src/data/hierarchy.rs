@@ -1,13 +1,13 @@
 use crate::data::common::{
-    Msg, PublicInput, PublicMsg, SubscribeHis, SubscribeInput, SubscribeMsg, SubscribeTopic,
-    TabStatus,
+    Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
+    SubscribeStatus, SubscribeTopic, TabStatus,
 };
 use crate::data::db::Broker;
 use crate::util::db::ArcDb;
 use anyhow::Result;
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
-use rumqttc::v5::AsyncClient;
+use rumqttc::v5::{AsyncClient, PubAck, PubAckReason, SubAck};
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
@@ -61,10 +61,35 @@ impl AppData {
             }
         }
     }
+    pub fn suback(&mut self, id: usize, input: SubAck) {
+        if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
+            for msg in subscribe_topics.iter_mut() {
+                if msg.pkid == input.pkid {
+                    let code = input.return_codes[0] as u8;
+                    if code == 0 || code == 1 || code == 2 {
+                        msg.status = SubscribeStatus::Success;
+                    }
+                }
+            }
+        }
+    }
     pub fn public(&mut self, id: usize, input: PublicInput, pkid: u16) {
         if let Some(msgs) = self.msgs.get_mut(&id) {
             let sub: Msg = PublicMsg::from(input.clone(), pkid).into();
             msgs.push_back(sub.into());
+        }
+    }
+    pub fn puback(&mut self, id: usize, input: PubAck) {
+        if let Some(msgs) = self.msgs.get_mut(&id) {
+            for msg in msgs.iter_mut() {
+                if let Msg::Public(msg) = msg {
+                    if msg.pkid == input.pkid {
+                        if input.reason == PubAckReason::Success {
+                            msg.status = PublicStatus::Success;
+                        }
+                    }
+                }
+            }
         }
     }
     pub fn receive_msg(&mut self, id: usize, input: SubscribeMsg) {

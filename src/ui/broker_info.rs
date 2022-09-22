@@ -3,7 +3,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerIndex, DbIndex, Index};
 use crate::data::AppEvent;
 use crate::ui::common::label_static;
-use druid::widget::{Container, Flex, Label, TextBox};
+use druid::widget::{Container, Flex, TextBox};
 use druid::LensExt;
 use druid::WidgetExt;
 use log::error;

@@ -39,6 +39,16 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncC
                 Packet::ConnAck(ack) => {
                     deal_conn_ack(ack.code, tx, id);
                 }
+                Packet::PubAck(ack) => {
+                    if let Err(_) = tx.send(AppEvent::PubAck(id, ack)) {
+                        error!("fail to send event!");
+                    };
+                }
+                Packet::SubAck(ack) => {
+                    if let Err(_) = tx.send(AppEvent::SubAck(id, ack)) {
+                        error!("fail to send event!");
+                    };
+                }
                 Packet::Publish(msg) => {
                     let Publish {
                         dup: _,

@@ -1,17 +1,17 @@
-use crate::data::common::{Msg, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerIndex, DbIndex, Index, MsgMsgLens, MsgTopicLens};
-use crate::data::{AString, AppEvent};
-use crate::ui::common::{label_static, MSG, QOS, TOPIC};
+use crate::data::AppEvent;
+use crate::ui::common::{label_static, GREEN, MSG, QOS, TOPIC, YELLOW};
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
-    Align, Button, Container, CrossAxisAlignment, Either, Flex, Label, List, Padding, Scroll,
-    Split, TextBox,
+    Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split,
+    TextBox,
 };
 use druid::LensExt;
-use druid::{Env, UnitPoint, Widget, WidgetExt};
-use log::{debug, error};
+use druid::{UnitPoint, Widget, WidgetExt};
+use log::error;
 
 pub fn display_connection(id: usize) -> Container<AppData> {
     let subscribe_list = Padding::new(
@@ -56,7 +56,11 @@ pub fn display_connection(id: usize) -> Container<AppData> {
 fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
     let list: List<SubscribeTopic> = List::new(move || {
         Flex::row()
-            .with_child(QOS().lens(SubscribeTopic::qos))
+            .with_child(Either::new(
+                |data: &SubscribeTopic, _env| data.is_sucess(),
+                QOS().background(GREEN).lens(SubscribeTopic::qos),
+                QOS().background(YELLOW).lens(SubscribeTopic::qos),
+            ))
             .with_child(TOPIC().lens(SubscribeTopic::topic))
             .align_left()
             .expand_width()
@@ -100,7 +104,11 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
             Flex::column()
                 .with_child(
                     Flex::row()
-                        .with_child(QOS().lens(MsgTopicLens))
+                        .with_child(Either::new(
+                            |data: &Msg, _env| data.is_sucess(),
+                            QOS().background(GREEN).lens(MsgTopicLens),
+                            QOS().background(YELLOW).lens(MsgTopicLens),
+                        ))
                         .with_child(TOPIC().lens(MsgTopicLens))
                         .align_horizontal(UnitPoint::RIGHT),
                 )
@@ -108,7 +116,7 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
             Flex::column()
                 .with_child(
                     Flex::row()
-                        .with_child(QOS().lens(MsgTopicLens))
+                        .with_child(QOS().background(GREEN).lens(MsgTopicLens))
                         .with_child(TOPIC().lens(MsgTopicLens))
                         .align_horizontal(UnitPoint::LEFT),
                 )

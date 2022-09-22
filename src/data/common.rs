@@ -34,6 +34,17 @@ impl Msg {
         }
         false
     }
+    pub fn is_sucess(&self) -> bool {
+        if let Msg::Public(msg) = self {
+            if msg.status == PublicStatus::Success {
+                true
+            } else {
+                false
+            }
+        } else {
+            true
+        }
+    }
 }
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]

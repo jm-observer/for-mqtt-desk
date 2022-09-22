@@ -14,6 +14,13 @@ impl SubscribeTopic {
             status: SubscribeStatus::Ing,
         }
     }
+    pub fn is_sucess(&self) -> bool {
+        if self.status == SubscribeStatus::Success {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl PublicMsg {

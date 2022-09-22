@@ -66,6 +66,16 @@ pub async fn deal_event(
                     data.receive_msg(index, msg);
                 });
             }
+            AppEvent::PubAck(id, ack) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.puback(id, ack);
+                });
+            }
+            AppEvent::SubAck(id, ack) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.suback(id, ack);
+                });
+            }
             _ => {}
         }
     }

@@ -5,6 +5,7 @@ pub mod lens;
 
 use crate::data::common::{PublicInput, SubscribeInput, SubscribeMsg};
 use crate::data::db::Broker;
+use rumqttc::v5::{PubAck, SubAck};
 use std::sync::Arc;
 
 pub type AString = Arc<String>;
@@ -17,4 +18,6 @@ pub enum AppEvent {
     ConnectAckFail(usize, Arc<String>),
     Public(PublicInput, usize),
     ReceivePublic(usize, SubscribeMsg),
+    PubAck(usize, PubAck),
+    SubAck(usize, SubAck),
 }

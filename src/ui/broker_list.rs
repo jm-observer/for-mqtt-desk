@@ -4,10 +4,9 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerStoredList;
 use crate::ui::common::{label_dy, label_dy_expand_width};
 use druid::im::Vector;
-use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Button, CrossAxisAlignment, Flex, Label, List, Scroll};
-use druid::{theme, Env, EventCtx};
-use druid::{UnitPoint, WidgetExt};
+use druid::WidgetExt;
+use druid::{Env, EventCtx};
 use log::debug;
 
 pub fn init_connect() -> Flex<AppData> {
