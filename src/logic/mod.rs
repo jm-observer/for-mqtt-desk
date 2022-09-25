@@ -1,7 +1,6 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::mqtt::{init_connect, public, subscribe};
-use crate::ui::init_layout;
 use crate::ui::tabs::init_brokers_tabs;
 use druid::Widget;
 use log::{debug, error};
@@ -28,6 +27,11 @@ pub async fn deal_event(
         };
         debug!("{:?}", event);
         match event {
+            AppEvent::AddBroker => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.add_broker();
+                });
+            }
             AppEvent::Connect(broker) => match init_connect(broker.clone(), tx.clone()).await {
                 Ok(client) => {
                     let id = broker.id;
@@ -114,13 +118,25 @@ pub async fn deal_event(
                     }
                 }
             }
-            AppEvent::CloseTab(id) => {
+            AppEvent::CloseBrokerTab(id) => {
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     if let Err(e) = data.close_tab(id) {
                         error!("{:?}", e);
                     }
                     let root = init_brokers_tabs();
                     println!("{:?}", root.debug_state(&data));
+                });
+            }
+            AppEvent::CloseConnectionTab(id) => {
+                if let Some(client) = mqtt_clients.get(&id) {
+                    if let Err(e) = client.disconnect().await {
+                        error!("{:?}", e);
+                    }
+                } else {
+                    error!("can't find client");
+                }
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.close_connection(id);
                 });
             }
             AppEvent::DeleteBroker => {

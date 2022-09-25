@@ -12,6 +12,7 @@ pub type AString = Arc<String>;
 
 #[derive(Debug)]
 pub enum AppEvent {
+    AddBroker,
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
     ConnectAckSuccess(usize),
@@ -22,7 +23,8 @@ pub enum AppEvent {
     SubAck(usize, SubAck),
     ClickBroker(usize),
     DbClickCheck(usize),
-    CloseTab(usize),
+    CloseBrokerTab(usize),
+    CloseConnectionTab(usize),
     DeleteBroker,
     Disconnect(usize),
 }

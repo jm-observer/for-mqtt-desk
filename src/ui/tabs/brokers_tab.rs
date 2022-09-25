@@ -19,7 +19,17 @@ impl TabsPolicy for BrokersTabs {
     type BodyWidget = impl Widget<AppData>;
 
     fn tabs_changed(&self, old_data: &Self::Input, data: &Self::Input) -> bool {
-        !(data.broker_tabs == old_data.broker_tabs)
+        if !(data.broker_tabs == old_data.broker_tabs) {
+            return true;
+        }
+        for id in &old_data.broker_tabs {
+            let old_broker = old_data.brokers.iter().find(|x| x.id == *id).unwrap();
+            let broker = data.brokers.iter().find(|x| x.id == *id).unwrap();
+            if !old_broker.same(broker) {
+                return true;
+            }
+        }
+        false
     }
 
     fn tabs(&self, data: &Self::Input) -> Vec<Self::Key> {
@@ -43,7 +53,7 @@ impl TabsPolicy for BrokersTabs {
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {
-        if let Err(_) = data.db.tx.send(AppEvent::CloseTab(key)) {
+        if let Err(_) = data.db.tx.send(AppEvent::CloseBrokerTab(key)) {
             error!("fail to send event");
         }
         // if let Err(e) = data.close_tab(key) {
@@ -68,7 +78,16 @@ impl TabsPolicy for BrokersTabs {
         _info: TabInfo<Self::Input>,
         _data: &Self::Input,
     ) -> Self::LabelWidget {
-        Self::default_make_label(_info)
-        // Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name)).lens(BrokerIndex(_key))
+        // Self::default_make_label(_info)
+        Label::dynamic(|data: &Broker, _: &Env| {
+            debug!("data.name={}", data.name);
+            format!("{}", data.name)
+        })
+        .lens(BrokerIndex(_key))
+        // if let Some(tabs) = _data.brokers.iter().find(|x| (*x).id == _key) {
+        //     debug!("{}", tabs.name);
+        //     return Label::new(tabs.name.as_str());
+        // }
+        // unreachable!()
     }
 }

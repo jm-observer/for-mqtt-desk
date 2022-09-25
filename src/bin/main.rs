@@ -1,4 +1,3 @@
-use druid::Widget;
 use druid::{AppLauncher, LocalizedString, PlatformError, WindowDesc};
 use for_mqtt::logic::deal_event;
 use for_mqtt::ui::init_layout;

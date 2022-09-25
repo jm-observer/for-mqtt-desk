@@ -1,5 +1,4 @@
 use crate::data::common::Broker;
-use crate::data::common::TabStatus;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerStoredList;
 use crate::data::AppEvent;
@@ -8,7 +7,7 @@ use druid::im::Vector;
 use druid::widget::{Button, CrossAxisAlignment, Either, Flex, Label, List, Scroll};
 use druid::WidgetExt;
 use druid::{Env, EventCtx};
-use log::{debug, error};
+use log::error;
 
 pub fn init_connect() -> Flex<AppData> {
     let name = || label_dy(|data: &Broker, _: &Env| format!("{}", data.name));
@@ -43,19 +42,9 @@ pub fn init_connect() -> Flex<AppData> {
         .cross_axis_alignment(CrossAxisAlignment::Start)
         .with_child(
             Label::new("新增").on_click(move |_ctx, data: &mut AppData, _env| {
-                let broker = data.db.new_broker();
-                debug!("{:?}", broker);
-                data.broker_tabs.push_front(broker.id);
-                data.tab_statuses.insert(
-                    broker.id,
-                    TabStatus {
-                        id: broker.id,
-                        try_connect: false,
-                        connected: false,
-                        db: data.db.clone(),
-                    },
-                );
-                data.brokers.push_back(broker.into());
+                if let Err(_) = data.db.tx.send(AppEvent::AddBroker) {
+                    error!("fail to send event")
+                }
             }),
         )
         .with_child(

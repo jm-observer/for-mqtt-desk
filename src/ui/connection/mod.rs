@@ -1,7 +1,7 @@
-use crate::data::common::{Broker, Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
-    BrokerIndex, BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
+    BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
     BrokerIndexLensVecSubscribeHis, BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens,
     MsgTopicLens,
 };

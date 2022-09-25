@@ -1,10 +1,11 @@
 use crate::data::common::TabKind;
 use crate::data::hierarchy::AppData;
+use crate::data::AppEvent;
 use crate::ui::broker_info::display_broker;
 use crate::ui::connection::display_connection;
-use crate::ui::debug::debug_label_appdata;
 use druid::widget::{TabInfo, TabsPolicy};
 use druid::{Data, Widget};
+use log::error;
 
 #[derive(Data, Clone)]
 pub struct BrokerTabPolicy(pub usize);
@@ -59,7 +60,9 @@ impl TabsPolicy for BrokerTabPolicy {
     }
 
     fn close_tab(&self, _key: Self::Key, _data: &mut AppData) {
-        todo!()
+        if let Err(_) = _data.db.tx.send(AppEvent::CloseConnectionTab(self.0)) {
+            error!("fail to send event")
+        }
     }
 
     fn tab_label(

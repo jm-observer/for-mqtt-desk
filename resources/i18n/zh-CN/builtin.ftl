@@ -1,4 +1,4 @@
--app-name = 追寻
+-app-name = 致mqtt
 app-names = { -app-name }
 hello-counter = Current value is { $count }
 

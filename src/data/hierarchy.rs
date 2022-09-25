@@ -31,6 +31,22 @@ pub struct AppData {
 }
 
 impl AppData {
+    pub fn add_broker(&mut self) {
+        let broker = self.db.new_broker();
+        self.init_broker_tab(broker.id);
+        self.brokers.push_back(broker);
+    }
+    fn init_broker_tab(&mut self, id: usize) {
+        self.broker_tabs.push_front(id);
+        self.tab_statuses.insert(
+            id,
+            TabStatus {
+                id: id,
+                try_connect: false,
+                connected: false,
+            },
+        );
+    }
     pub fn find_broker(&self, id: usize) -> Option<&Broker> {
         self.brokers.iter().find(|x| (*x).id == id)
     }
@@ -51,6 +67,14 @@ impl AppData {
             .insert(id, SubscribeInput::default().into());
         self.public_ing.insert(id, PublicInput::default().into());
         Ok(())
+    }
+    pub fn close_connection(&mut self, id: usize) {
+        if let Some(status) = self.tab_statuses.get_mut(&id) {
+            status.try_connect = false;
+            status.connected = false;
+        } else {
+            error!("can't find the connection");
+        }
     }
     pub fn subscribe(&mut self, id: usize, input: SubscribeInput, pkid: u16) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
@@ -86,8 +110,18 @@ impl AppData {
         self.select_broker(id);
     }
     pub fn db_click_broker(&mut self, id: usize) {
-        // todo
-        self.select_broker(id);
+        self.init_broker_tab(id);
+        if let Some(broker) = self.find_broker(id) {
+            if let Err(e) = self.db.tx.send(AppEvent::Connect(broker.clone())) {
+                error!("{:?}", e);
+            }
+        } else {
+            error!("can't find broker");
+        }
+
+        // if let Err(e) = self.init_connection(id) {
+        //     error!("{:?}", e);
+        // }
     }
     fn select_broker(&mut self, id: usize) {
         for broker in self.brokers.iter_mut() {
@@ -112,7 +146,7 @@ impl AppData {
             if self.db.tx.send(AppEvent::Disconnect(index)).is_err() {
                 error!("fail to send event");
             }
-            if self.db.tx.send(AppEvent::CloseTab(index)).is_err() {
+            if self.db.tx.send(AppEvent::CloseBrokerTab(index)).is_err() {
                 error!("fail to send event");
             }
         } else {
@@ -124,14 +158,14 @@ impl AppData {
         if let Some((index, _)) = self.broker_tabs.iter().enumerate().find(|x| *(*x).1 == id) {
             debug!("close_tab：{} {}", index, self.broker_tabs.len());
             self.broker_tabs.remove(index);
-            // 删除未保存的broker
-            if let Some((index, _broker)) = self.brokers.iter().enumerate().find(|x| {
-                let broker = (*x).1;
-                broker.id == id && broker.stored == false
-            }) {
-                self.brokers.remove(index);
-                self.tab_statuses.remove(&id);
-            }
+            // 删除未保存的broker todo 会导致tab的label panic
+            // if let Some((index, _broker)) = self.brokers.iter().enumerate().find(|x| {
+            //     let broker = (*x).1;
+            //     broker.id == id && broker.stored == false
+            // }) {
+            //     self.brokers.remove(index);
+            //     self.tab_statuses.remove(&id);
+            // }
             if self.db.tx.send(AppEvent::Disconnect(id)).is_err() {
                 error!("fail to send event");
             }

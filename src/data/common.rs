@@ -2,7 +2,6 @@ mod impls;
 
 use crate::data::db::BrokerDB;
 use crate::data::{AString, AppEvent};
-use crate::util::db::ArcDb;
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
@@ -96,8 +95,6 @@ pub struct TabStatus {
     pub(crate) id: usize,
     pub(crate) try_connect: bool,
     pub(crate) connected: bool,
-    #[data(ignore)]
-    pub db: ArcDb,
 }
 
 #[derive(Data, Clone, Copy, Eq, PartialEq, Debug, Hash)]
