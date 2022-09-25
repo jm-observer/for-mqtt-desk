@@ -38,7 +38,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
             Flex::row()
                 .with_child(
                     label_static("连接").on_click(move |_ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.brokers.get(data.index) {
+                        if let Some(broker) = data.data.brokers.iter().find(|x| x.id == data.id) {
                             if let Err(e) = data.data.db.tx.send(AppEvent::Connect(broker.clone()))
                             {
                                 error!("{:?}", e);

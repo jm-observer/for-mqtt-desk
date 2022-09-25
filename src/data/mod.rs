@@ -22,4 +22,7 @@ pub enum AppEvent {
     SubAck(usize, SubAck),
     ClickBroker(usize),
     DbClickCheck(usize),
+    CloseTab(usize),
+    DeleteBroker,
+    Disconnect(usize),
 }

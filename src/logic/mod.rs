@@ -1,11 +1,14 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::mqtt::{init_connect, public, subscribe};
+use crate::ui::init_layout;
+use crate::ui::tabs::init_brokers_tabs;
+use druid::Widget;
 use log::{debug, error};
 use rumqttc::v5::AsyncClient;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 pub async fn deal_event(
@@ -79,13 +82,16 @@ pub async fn deal_event(
                 });
             }
             AppEvent::ClickBroker(id) => {
-                if let Some(previous) = clicks.remove(&id) {
+                if let Some(_previous) = clicks.remove(&id) {
                     event_sink.add_idle_callback(move |data: &mut AppData| {
                         data.db_click_broker(id);
                     });
                 } else {
                     clicks.insert(id, id);
                     let async_tx = tx.clone();
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        data.click_broker(id);
+                    });
                     tokio::spawn(async move {
                         tokio::time::sleep(Duration::from_millis(280)).await;
                         if let Err(e) = async_tx.send(AppEvent::DbClickCheck(id)) {
@@ -95,11 +101,34 @@ pub async fn deal_event(
                 }
             }
             AppEvent::DbClickCheck(id) => {
-                if let Some(previous) = clicks.remove(&id) {
-                    event_sink.add_idle_callback(move |data: &mut AppData| {
-                        data.click_broker(id);
-                    });
+                if let Some(_previous) = clicks.remove(&id) {
+                    // event_sink.add_idle_callback(move |data: &mut AppData| {
+                    //     data.click_broker(id);
+                    // });
                 }
+            }
+            AppEvent::Disconnect(id) => {
+                if let Some(client) = mqtt_clients.remove(&id) {
+                    if let Err(e) = client.disconnect().await {
+                        error!("{:?}", e);
+                    }
+                }
+            }
+            AppEvent::CloseTab(id) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.close_tab(id) {
+                        error!("{:?}", e);
+                    }
+                    let root = init_brokers_tabs();
+                    println!("{:?}", root.debug_state(&data));
+                });
+            }
+            AppEvent::DeleteBroker => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.delete_broker() {
+                        error!("{:?}", e);
+                    }
+                });
             }
             _ => {}
         }

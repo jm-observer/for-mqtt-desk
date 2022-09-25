@@ -22,7 +22,7 @@ pub fn init_connect() -> Flex<AppData> {
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
-                    if let Err(e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
+                    if let Err(_e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
                         error!("fail to send");
                     }
                 })
@@ -31,7 +31,7 @@ pub fn init_connect() -> Flex<AppData> {
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
-                    if let Err(e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
+                    if let Err(_e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
                         error!("fail to send");
                     }
                 }),
@@ -41,8 +41,8 @@ pub fn init_connect() -> Flex<AppData> {
 
     let buttons = Flex::row()
         .cross_axis_alignment(CrossAxisAlignment::Start)
-        .with_child(Label::new("新增").with_text_size(12.).on_click(
-            move |_ctx, data: &mut AppData, _env| {
+        .with_child(
+            Label::new("新增").on_click(move |_ctx, data: &mut AppData, _env| {
                 let broker = data.db.new_broker();
                 debug!("{:?}", broker);
                 data.broker_tabs.push_front(broker.id);
@@ -56,10 +56,15 @@ pub fn init_connect() -> Flex<AppData> {
                     },
                 );
                 data.brokers.push_back(broker.into());
-            },
-        ))
-        .with_child(Button::new("删"))
-        .with_child(Button::new("复制"));
+            }),
+        )
+        .with_child(
+            Button::new("删").on_click(move |_ctx, data: &mut AppData, _env| {
+                if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {
+                    error!("fail to send event")
+                }
+            }),
+        );
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     let flex = flex

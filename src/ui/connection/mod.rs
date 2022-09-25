@@ -1,6 +1,10 @@
-use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Broker, Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
-use crate::data::lens::{BrokerIndex, DbIndex, Index, MsgMsgLens, MsgTopicLens};
+use crate::data::lens::{
+    BrokerIndex, BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
+    BrokerIndexLensVecSubscribeHis, BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens,
+    MsgTopicLens,
+};
 use crate::data::AppEvent;
 use crate::ui::common::{label_static, GREEN, MSG, QOS, TOPIC, YELLOW};
 use druid::im::Vector;
@@ -68,7 +72,7 @@ fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
 
     let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list)
         .vertical()
-        .lens(BrokerIndex(id));
+        .lens(BrokerIndexLensVecSubscribeTopic(id));
     scroll
     // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     // let flex = flex
@@ -87,7 +91,7 @@ fn init_subscribe_his_list(id: usize) -> impl Widget<AppData> {
     });
     let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
         .vertical()
-        .lens(BrokerIndex(id));
+        .lens(BrokerIndexLensVecSubscribeHis(id));
     scroll
 
     // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
@@ -128,7 +132,7 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
     let scroll = Scroll::<Vector<Msg>, List<Msg>>::new(list);
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     let flex = flex
-        .with_child(scroll.vertical().lens(BrokerIndex(id)))
+        .with_child(scroll.vertical().lens(BrokerIndexLensVecMsg(id)))
         .align_vertical(UnitPoint::TOP)
         .expand_width()
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
@@ -141,25 +145,31 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
         .with_child(
             Flex::row()
                 .with_child(label_static("topic"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::topic)))
+                .with_child(
+                    TextBox::new()
+                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::topic)),
+                )
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("qos"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(SubscribeInput::qos)))
+                .with_child(
+                    TextBox::new()
+                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos)),
+                )
                 .align_left(),
         )
         .with_child(
             Flex::row().with_child(
                 Button::new("订阅")
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.subscribe_ing.get(&data.index) {
+                        if let Some(broker) = data.data.subscribe_ing.get(&data.id) {
                             if let Err(e) = data
                                 .data
                                 .db
                                 .tx
-                                .send(AppEvent::Subscribe(broker.clone(), data.index))
+                                .send(AppEvent::Subscribe(broker.clone(), data.id))
                             {
                                 error!("{:?}", e);
                             }
@@ -180,7 +190,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("topic"))
                 .with_child(
                     TextBox::new()
-                        .lens(BrokerIndex(id).then(PublicInput::topic))
+                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::topic))
                         .fix_width(300.),
                 )
                 .align_left(),
@@ -190,7 +200,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("qos"))
                 .with_child(
                     TextBox::new()
-                        .lens(BrokerIndex(id).then(PublicInput::qos))
+                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::qos))
                         .fix_width(300.),
                 )
                 .align_left(),
@@ -202,7 +212,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                     TextBox::multiline()
                         .fix_height(60.)
                         .fix_width(300.)
-                        .lens(BrokerIndex(id).then(PublicInput::msg)),
+                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::msg)),
                 )
                 .align_left(),
         )
@@ -210,12 +220,12 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
             Flex::row().with_child(
                 Button::new("发布")
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.public_ing.get(&data.index) {
+                        if let Some(broker) = data.data.public_ing.get(&data.id) {
                             if let Err(e) = data
                                 .data
                                 .db
                                 .tx
-                                .send(AppEvent::Public(broker.clone(), data.index))
+                                .send(AppEvent::Public(broker.clone(), data.id))
                             {
                                 error!("{:?}", e);
                             }

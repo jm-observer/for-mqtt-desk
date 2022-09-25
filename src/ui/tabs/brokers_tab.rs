@@ -1,11 +1,12 @@
 use crate::data::common::Broker;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIndex;
+use crate::data::AppEvent;
 use crate::ui::tabs::broker_tab::BrokerTabPolicy;
 use druid::widget::{Axis, Label, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
 use druid::{Data, Env};
 use druid::{Widget, WidgetExt};
-use log::debug;
+use log::{debug, error};
 
 #[derive(Clone, Data)]
 pub struct BrokersTabs;
@@ -42,17 +43,23 @@ impl TabsPolicy for BrokersTabs {
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {
-        if let Some((index, _)) = data
-            .broker_tabs
-            .iter()
-            .enumerate()
-            .map(|x| (x.0, *x.1))
-            .find(|x| (*x).1 == key)
-        {
-            data.broker_tabs.remove(index);
-            return;
+        if let Err(_) = data.db.tx.send(AppEvent::CloseTab(key)) {
+            error!("fail to send event");
         }
-        unreachable!()
+        // if let Err(e) = data.close_tab(key) {
+        //     error!("{:?}", e);
+        // }
+        // if let Some((index, _)) = data
+        //     .broker_tabs
+        //     .iter()
+        //     .enumerate()
+        //     .map(|x| (x.0, *x.1))
+        //     .find(|x| (*x).1 == key)
+        // {
+        //     data.broker_tabs.remove(index);
+        //     return;
+        // }
+        // unreachable!()
     }
 
     fn tab_label(
@@ -61,6 +68,7 @@ impl TabsPolicy for BrokersTabs {
         _info: TabInfo<Self::Input>,
         _data: &Self::Input,
     ) -> Self::LabelWidget {
-        Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name)).lens(BrokerIndex(_key))
+        Self::default_make_label(_info)
+        // Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name)).lens(BrokerIndex(_key))
     }
 }

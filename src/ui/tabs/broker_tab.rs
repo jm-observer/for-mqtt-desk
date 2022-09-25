@@ -2,6 +2,7 @@ use crate::data::common::TabKind;
 use crate::data::hierarchy::AppData;
 use crate::ui::broker_info::display_broker;
 use crate::ui::connection::display_connection;
+use crate::ui::debug::debug_label_appdata;
 use druid::widget::{TabInfo, TabsPolicy};
 use druid::{Data, Widget};
 
@@ -46,8 +47,14 @@ impl TabsPolicy for BrokerTabPolicy {
 
     fn tab_body(&self, key: Self::Key, _data: &AppData) -> Self::BodyWidget {
         match key {
-            TabKind::Connection => display_connection(self.0),
-            TabKind::Broker => display_broker(self.0),
+            TabKind::Connection => {
+                display_connection(self.0)
+                // debug_label_appdata()
+            }
+            TabKind::Broker => {
+                // debug_label_appdata()
+                display_broker(self.0)
+            }
         }
     }
 

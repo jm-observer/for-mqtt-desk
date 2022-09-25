@@ -123,6 +123,28 @@ impl ArcDb {
         )?;
         Ok(())
     }
+    pub fn delete_broker(&mut self, id: usize) -> Result<()> {
+        let mut selected_index = None;
+        for (index, broker) in self.ids.iter().enumerate() {
+            if *broker == id {
+                selected_index = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = selected_index {
+            self.ids.remove(index);
+            self.update_ids()?;
+            self.db.remove(BrokerKey::from(id).as_bytes())?;
+        } else {
+            warn!("not selected broker to delete");
+        }
+        Ok(())
+    }
+    #[inline]
+    fn update_ids(&self) -> Result<()> {
+        self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
+        Ok(())
+    }
 }
 
 const OPTION: &str = r#"{

@@ -6,6 +6,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::AString;
 use druid::im::Vector;
 use druid::Lens;
+use log::debug;
 
 pub struct BrokerIndex(pub usize);
 
@@ -13,7 +14,10 @@ impl druid::Lens<AppData, Broker> for BrokerIndex {
     fn with<V, F: FnOnce(&Broker) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.find_broker(self.0) {
             Some(broker) => broker,
-            None => unreachable!(""),
+            None => {
+                debug!("{}", self.0);
+                unreachable!("{}", self.0)
+            }
         })
     }
     fn with_mut<V, F: FnOnce(&mut Broker) -> V>(&self, data: &mut AppData, f: F) -> V {
@@ -23,8 +27,9 @@ impl druid::Lens<AppData, Broker> for BrokerIndex {
         })
     }
 }
+pub struct BrokerIndexLensVecSubscribeHis(pub usize);
 
-impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndex {
+impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndexLensVecSubscribeHis {
     fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.subscribe_hises.get(&self.0) {
             Some(broker) => broker,
@@ -42,8 +47,9 @@ impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndex {
         })
     }
 }
+pub struct BrokerIndexLensVecSubscribeTopic(pub usize);
 
-impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndex {
+impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndexLensVecSubscribeTopic {
     fn with<V, F: FnOnce(&Vector<SubscribeTopic>) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.subscribe_topics.get(&self.0) {
             Some(broker) => broker,
@@ -61,8 +67,9 @@ impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndex {
         })
     }
 }
+pub struct BrokerIndexLensVecMsg(pub usize);
 
-impl druid::Lens<AppData, Vector<Msg>> for BrokerIndex {
+impl druid::Lens<AppData, Vector<Msg>> for BrokerIndexLensVecMsg {
     fn with<V, F: FnOnce(&Vector<Msg>) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.msgs.get(&self.0) {
             Some(broker) => broker,
@@ -76,8 +83,9 @@ impl druid::Lens<AppData, Vector<Msg>> for BrokerIndex {
         })
     }
 }
+pub struct BrokerIndexLensSubscribeInput(pub usize);
 
-impl druid::Lens<AppData, SubscribeInput> for BrokerIndex {
+impl druid::Lens<AppData, SubscribeInput> for BrokerIndexLensSubscribeInput {
     fn with<V, F: FnOnce(&SubscribeInput) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.subscribe_ing.get(&self.0) {
             Some(broker) => broker,
@@ -92,7 +100,9 @@ impl druid::Lens<AppData, SubscribeInput> for BrokerIndex {
     }
 }
 
-impl druid::Lens<AppData, PublicInput> for BrokerIndex {
+pub struct BrokerIndexLensPublicInput(pub usize);
+
+impl druid::Lens<AppData, PublicInput> for BrokerIndexLensPublicInput {
     fn with<V, F: FnOnce(&PublicInput) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.public_ing.get(&self.0) {
             Some(broker) => broker,
@@ -107,7 +117,9 @@ impl druid::Lens<AppData, PublicInput> for BrokerIndex {
     }
 }
 
-impl druid::Lens<AppData, TabStatus> for BrokerIndex {
+pub struct BrokerIndexLensTabStatus(pub usize);
+
+impl druid::Lens<AppData, TabStatus> for BrokerIndexLensTabStatus {
     fn with<V, F: FnOnce(&TabStatus) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.tab_statuses.get(&self.0) {
             Some(broker) => broker,
@@ -125,7 +137,7 @@ impl druid::Lens<AppData, TabStatus> for BrokerIndex {
 #[derive(Clone)]
 pub struct DbIndex {
     pub data: AppData,
-    pub index: usize,
+    pub id: usize,
 }
 impl druid::Data for DbIndex {
     fn same(&self, _other: &Self) -> bool {
@@ -139,14 +151,14 @@ impl druid::Lens<AppData, DbIndex> for Index {
     fn with<V, F: FnOnce(&DbIndex) -> V>(&self, data: &AppData, f: F) -> V {
         let db_index = DbIndex {
             data: data.clone(),
-            index: self.0,
+            id: self.0,
         };
         f(&db_index)
     }
     fn with_mut<V, F: FnOnce(&mut DbIndex) -> V>(&self, data: &mut AppData, f: F) -> V {
         let mut db_index = DbIndex {
             data: data.clone(),
-            index: self.0,
+            id: self.0,
         };
         f(&mut db_index)
     }

@@ -3,10 +3,12 @@ use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
 };
+use crate::data::AppEvent;
 use crate::util::db::ArcDb;
 use anyhow::Result;
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
+use log::{debug, error, warn};
 use rumqttc::v5::{AsyncClient, PubAck, PubAckReason, SubAck};
 
 #[derive(Debug, Clone, Lens, Data)]
@@ -95,6 +97,46 @@ impl AppData {
                 broker.selected = false;
             }
         }
+    }
+    pub fn delete_broker(&mut self) -> Result<()> {
+        let mut selected_index = None;
+        for (index, broker) in self.brokers.iter().enumerate() {
+            if broker.selected {
+                selected_index = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = selected_index {
+            let broker = self.brokers.remove(index);
+            self.db.delete_broker(broker.id)?;
+            if self.db.tx.send(AppEvent::Disconnect(index)).is_err() {
+                error!("fail to send event");
+            }
+            if self.db.tx.send(AppEvent::CloseTab(index)).is_err() {
+                error!("fail to send event");
+            }
+        } else {
+            warn!("not selected broker to delete");
+        }
+        Ok(())
+    }
+    pub fn close_tab(&mut self, id: usize) -> Result<()> {
+        if let Some((index, _)) = self.broker_tabs.iter().enumerate().find(|x| *(*x).1 == id) {
+            debug!("close_tab：{} {}", index, self.broker_tabs.len());
+            self.broker_tabs.remove(index);
+            // 删除未保存的broker
+            if let Some((index, _broker)) = self.brokers.iter().enumerate().find(|x| {
+                let broker = (*x).1;
+                broker.id == id && broker.stored == false
+            }) {
+                self.brokers.remove(index);
+                self.tab_statuses.remove(&id);
+            }
+            if self.db.tx.send(AppEvent::Disconnect(id)).is_err() {
+                error!("fail to send event");
+            }
+        }
+        Ok(())
     }
     pub fn puback(&mut self, id: usize, input: PubAck) {
         if let Some(msgs) = self.msgs.get_mut(&id) {

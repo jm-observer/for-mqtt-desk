@@ -9,7 +9,8 @@ mod broker_info;
 mod broker_list;
 mod common;
 mod connection;
-mod tabs;
+mod debug;
+pub mod tabs;
 
 pub fn init_layout() -> impl Widget<AppData> {
     Padding::new(
