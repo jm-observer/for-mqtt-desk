@@ -1,10 +1,12 @@
-use crate::data::common::TabKind;
+use crate::data::common::{TabKind, TabStatus};
 use crate::data::hierarchy::AppData;
+use crate::data::lens::BrokerIndexLensTabStatus;
 use crate::data::AppEvent;
 use crate::ui::broker_info::display_broker;
+use crate::ui::common::{GREEN, RED, YELLOW};
 use crate::ui::connection::display_connection;
-use druid::widget::{TabInfo, TabsPolicy};
-use druid::{Data, Widget};
+use druid::widget::{Either, Label, TabInfo, TabsPolicy};
+use druid::{Data, Env, Widget, WidgetExt};
 use log::error;
 
 #[derive(Data, Clone)]
@@ -31,7 +33,7 @@ impl TabsPolicy for BrokerTabPolicy {
     fn tabs(&self, data: &AppData) -> Vec<Self::Key> {
         let mut keys = Vec::with_capacity(2);
         if let Some(status) = data.tab_statuses.get(&self.0) {
-            if status.try_connect {
+            if status.try_connect || status.connected {
                 keys.push(TabKind::Connection);
             }
         }
@@ -42,7 +44,7 @@ impl TabsPolicy for BrokerTabPolicy {
     fn tab_info(&self, key: Self::Key, _data: &AppData) -> TabInfo<AppData> {
         match key {
             TabKind::Connection => TabInfo::new(format!("Connection"), true),
-            TabKind::Broker => TabInfo::new(format!("Broker"), false),
+            TabKind::Broker => TabInfo::new(format!("Options"), false),
         }
     }
 
@@ -68,9 +70,22 @@ impl TabsPolicy for BrokerTabPolicy {
     fn tab_label(
         &self,
         _key: Self::Key,
-        info: TabInfo<Self::Input>,
+        _info: TabInfo<Self::Input>,
         _data: &Self::Input,
     ) -> Self::LabelWidget {
-        Self::default_make_label(info)
+        match _key {
+            TabKind::Connection => Either::new(
+                |status: &TabStatus, _: &Env| status.connected,
+                Label::new("Connected").background(GREEN),
+                Either::new(
+                    |status: &TabStatus, _: &Env| status.try_connect,
+                    Label::new("Connecting").background(YELLOW),
+                    Label::new("Disconnection").background(RED),
+                ),
+            )
+            .lens(BrokerIndexLensTabStatus(self.0)),
+            TabKind::Broker => Either::new(|_, _| true, Label::new("Option"), Label::new("Option"))
+                .lens(BrokerIndexLensTabStatus(self.0)),
+        }
     }
 }

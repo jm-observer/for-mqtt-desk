@@ -7,7 +7,11 @@ use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
 use anyhow::{bail, Result};
 use druid::piet::TextStorage;
 use log::{debug, error};
-use rumqttc::v5::{AsyncClient, ConnectReturnCode, MqttOptions, Packet, Publish};
+use rumqttc::v5::mqttbytes::v5::Packet;
+use rumqttc::v5::{
+    mqttbytes::{ConnectReturnCode, Publish},
+    AsyncClient, Event, MqttOptions,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
@@ -26,44 +30,47 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncC
     update_option(&mut mqttoptions, some);
 
     debug!("{:?}", mqttoptions);
-    let (client, mut notifier) = AsyncClient::connect(mqttoptions, 10).await;
+    let (client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
     let _client_tmp = client.clone();
     let id = broker.id;
     debug!("start");
     tokio::spawn(async move {
         debug!("start");
-        for event in notifier.iter() {
+        while let Ok(event) = eventloop.poll().await {
+            let event = match event {
+                Event::Incoming(event) => event,
+                _ => continue,
+            };
             let tx = tx.clone();
             debug!("{:?}", event);
-            match event {
+            match *event {
                 Packet::ConnAck(ack) => {
                     deal_conn_ack(ack.code, tx, id);
                 }
-                Packet::PubAck(ack) => {
+                Packet::PubAck(ack, _) => {
                     if let Err(_) = tx.send(AppEvent::PubAck(id, ack)) {
                         error!("fail to send event!");
                     };
                 }
-                Packet::SubAck(ack) => {
+                Packet::SubAck(ack, _) => {
                     if let Err(_) = tx.send(AppEvent::SubAck(id, ack)) {
                         error!("fail to send event!");
                     };
                 }
-                Packet::Publish(msg) => {
+                Packet::Publish(msg, _) => {
                     let Publish {
                         dup: _,
                         qos,
                         retain: _,
                         topic,
                         pkid,
-                        properties: _,
                         payload,
                     } = msg;
                     if let Err(_) = tx.send(AppEvent::ReceivePublic(
                         id,
                         SubscribeMsg {
                             pkid,
-                            topic: topic.into(),
+                            topic: String::from_utf8_lossy(topic.as_ref()).to_string().into(),
                             msg: String::from_utf8_lossy(payload.as_ref()).to_string().into(),
                             qos: qos.into(),
                         },

@@ -146,6 +146,13 @@ pub async fn deal_event(
                     }
                 });
             }
+            AppEvent::ConnectAckSuccess(id) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.connected(id) {
+                        error!("{:?}", e);
+                    }
+                });
+            }
             _ => {}
         }
     }

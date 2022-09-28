@@ -81,12 +81,12 @@ impl Msg {
     }
 }
 
-impl From<rumqttc::v5::QoS> for QoS {
-    fn from(qos: rumqttc::v5::QoS) -> Self {
+impl From<rumqttc::v5::mqttbytes::QoS> for QoS {
+    fn from(qos: rumqttc::v5::mqttbytes::QoS) -> Self {
         match qos {
-            rumqttc::v5::QoS::AtLeastOnce => Self::AtLeastOnce,
-            rumqttc::v5::QoS::AtMostOnce => Self::AtMostOnce,
-            rumqttc::v5::QoS::ExactlyOnce => Self::ExactlyOnce,
+            rumqttc::v5::mqttbytes::QoS::AtLeastOnce => Self::AtLeastOnce,
+            rumqttc::v5::mqttbytes::QoS::AtMostOnce => Self::AtMostOnce,
+            rumqttc::v5::mqttbytes::QoS::ExactlyOnce => Self::ExactlyOnce,
         }
     }
 }

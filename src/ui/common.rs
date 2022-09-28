@@ -42,8 +42,9 @@ pub const TOPIC: fn() -> SizedBox<AString> = || {
 pub const MSG: fn() -> SizedBox<AString> =
     || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(170.);
 
-// pub use druid::Color::GREEN;
+// pub use piet::Color::GREEN;
 pub const GREEN: Color = Color::rgb8(0, 128, 0);
 /// Opaque yellow.
 pub const YELLOW: Color = Color::rgb8(255, 255, 0);
 pub const SILVER: Color = Color::grey8(192);
+pub const RED: Color = Color::rgb8(255, 0, 0);

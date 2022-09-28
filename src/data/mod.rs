@@ -5,7 +5,7 @@ pub mod lens;
 
 use crate::data::common::{PublicInput, SubscribeInput, SubscribeMsg};
 use common::Broker;
-use rumqttc::v5::{PubAck, SubAck};
+use rumqttc::v5::mqttbytes::{PubAck, SubAck};
 use std::sync::Arc;
 
 pub type AString = Arc<String>;

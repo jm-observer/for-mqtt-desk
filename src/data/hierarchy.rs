@@ -9,7 +9,8 @@ use anyhow::Result;
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
 use log::{debug, error, warn};
-use rumqttc::v5::{AsyncClient, PubAck, PubAckReason, SubAck};
+use rumqttc::v5::mqttbytes::*;
+use rumqttc::v5::AsyncClient;
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
@@ -68,6 +69,20 @@ impl AppData {
         self.public_ing.insert(id, PublicInput::default().into());
         Ok(())
     }
+    pub fn connected(&mut self, id: usize) -> Result<()> {
+        if let Some(status) = self.tab_statuses.get_mut(&id) {
+            status.try_connect = false;
+            status.connected = true;
+        }
+        Ok(())
+    }
+    pub fn disconnect(&mut self, id: usize) -> Result<()> {
+        if let Some(status) = self.tab_statuses.get_mut(&id) {
+            status.try_connect = false;
+            status.connected = false;
+        }
+        Ok(())
+    }
     pub fn close_connection(&mut self, id: usize) {
         if let Some(status) = self.tab_statuses.get_mut(&id) {
             status.try_connect = false;
@@ -92,8 +107,11 @@ impl AppData {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
             for msg in subscribe_topics.iter_mut() {
                 if msg.pkid == input.pkid {
-                    let code = input.return_codes[0] as u8;
-                    if code == 0 || code == 1 || code == 2 {
+                    let code = input.return_codes[0];
+                    if code == SubscribeReasonCode::QoS0
+                        || code == SubscribeReasonCode::QoS1
+                        || code == SubscribeReasonCode::QoS2
+                    {
                         msg.status = SubscribeStatus::Success;
                     }
                 }
