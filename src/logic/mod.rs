@@ -1,8 +1,7 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::mqtt::{init_connect, public, subscribe};
-use crate::ui::tabs::init_brokers_tabs;
-use druid::Widget;
+// use crate::ui::tabs::init_brokers_tabs;
 use log::{debug, error};
 use rumqttc::v5::AsyncClient;
 use std::collections::HashMap;
@@ -123,8 +122,8 @@ pub async fn deal_event(
                     if let Err(e) = data.close_tab(id) {
                         error!("{:?}", e);
                     }
-                    let root = init_brokers_tabs();
-                    println!("{:?}", root.debug_state(&data));
+                    // let root = init_brokers_tabs();
+                    // println!("{:?}", root.debug_state(&data));
                 });
             }
             AppEvent::CloseConnectionTab(id) => {

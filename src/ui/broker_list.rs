@@ -8,8 +8,9 @@ use druid::widget::{Button, CrossAxisAlignment, Either, Flex, Label, List, Scrol
 use druid::WidgetExt;
 use druid::{Env, EventCtx};
 use log::error;
+use std::sync::mpsc::Sender;
 
-pub fn init_connect() -> Flex<AppData> {
+pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
     let name = || label_dy(|data: &Broker, _: &Env| format!("{}", data.name));
     let addr =
         || label_dy_expand_width(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port));

@@ -5,7 +5,7 @@ use crate::data::common::{
 use crate::data::hierarchy::AppData;
 use crate::data::AString;
 use druid::im::Vector;
-use druid::Lens;
+use druid::{Data, Lens};
 use log::debug;
 
 pub struct BrokerIndex(pub usize);
@@ -141,7 +141,15 @@ pub struct DbIndex {
 }
 impl druid::Data for DbIndex {
     fn same(&self, _other: &Self) -> bool {
-        true
+        let self_status = match self.data.tab_statuses.get(&self.id) {
+            Some(status) => status,
+            None => return false,
+        };
+        let other_status = match _other.data.tab_statuses.get(&self.id) {
+            Some(status) => status,
+            None => return false,
+        };
+        Data::same(self_status, other_status)
     }
 }
 

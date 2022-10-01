@@ -177,6 +177,13 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                             error!("can't get the broker");
                         }
                     })
+                    .disabled_if(|data: &DbIndex, _env| {
+                        if let Some(broker) = data.data.tab_statuses.get(&data.id) {
+                            !broker.connected
+                        } else {
+                            true
+                        }
+                    })
                     .lens(Index(id)),
             ),
         );
@@ -231,6 +238,13 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                             }
                         } else {
                             error!("can't get the broker");
+                        }
+                    })
+                    .disabled_if(|data: &DbIndex, _env| {
+                        if let Some(broker) = data.data.tab_statuses.get(&data.id) {
+                            !broker.connected
+                        } else {
+                            true
                         }
                     })
                     .lens(Index(id)),

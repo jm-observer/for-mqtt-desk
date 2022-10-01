@@ -7,9 +7,8 @@ use std::thread;
 fn main() -> Result<(), PlatformError> {
     custom_utils::logger::logger_stdout_debug();
 
-    let win = WindowDesc::new(init_layout()).title(LocalizedString::new("app-names")); //.menu(menu);
-
     let (tx, rx) = std::sync::mpsc::channel();
+    let win = WindowDesc::new(init_layout(tx.clone())).title(LocalizedString::new("app-names")); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
     let data = db.read_app_data()?;
 

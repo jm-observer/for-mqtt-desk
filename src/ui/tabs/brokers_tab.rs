@@ -7,10 +7,16 @@ use druid::widget::{Axis, Label, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransi
 use druid::{Data, Env};
 use druid::{Widget, WidgetExt};
 use log::{debug, error};
+use std::sync::mpsc::Sender;
 
-#[derive(Clone, Data)]
-pub struct BrokersTabs;
+#[derive(Clone)]
+pub struct BrokersTabs(pub Sender<AppEvent>);
 
+impl Data for BrokersTabs {
+    fn same(&self, _other: &Self) -> bool {
+        true
+    }
+}
 impl TabsPolicy for BrokersTabs {
     type Key = usize;
     type Build = ();
@@ -46,7 +52,7 @@ impl TabsPolicy for BrokersTabs {
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
         debug!("tab_body");
-        Tabs::for_policy(BrokerTabPolicy(_key))
+        Tabs::for_policy(BrokerTabPolicy(_key, self.0.clone()))
             .with_axis(Axis::Horizontal)
             .with_edge(TabsEdge::Leading)
             .with_transition(TabsTransition::Instant)

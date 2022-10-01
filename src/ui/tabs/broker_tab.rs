@@ -8,10 +8,15 @@ use crate::ui::connection::display_connection;
 use druid::widget::{Either, Label, TabInfo, TabsPolicy};
 use druid::{Data, Env, Widget, WidgetExt};
 use log::error;
+use std::sync::mpsc::Sender;
 
-#[derive(Data, Clone)]
-pub struct BrokerTabPolicy(pub usize);
-
+#[derive(Clone)]
+pub struct BrokerTabPolicy(pub usize, pub Sender<AppEvent>);
+impl Data for BrokerTabPolicy {
+    fn same(&self, _other: &Self) -> bool {
+        true
+    }
+}
 impl TabsPolicy for BrokerTabPolicy {
     type Key = TabKind;
     type Build = ();
