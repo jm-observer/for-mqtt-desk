@@ -1,29 +1,47 @@
 use crate::data::common::Broker;
 use crate::data::{AString, AppEvent};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
-use zerocopy::{AsBytes, FromBytes};
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromBytes, AsBytes)]
-#[repr(C)]
-pub struct BrokerKey {
-    pub id: usize,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DbKey {
+    Broker(usize),
+    SubscribeHis(usize),
 }
-#[derive(Debug, Clone, Serialize, Deserialize, FromBytes, AsBytes)]
-#[repr(C)]
-pub struct SubscribeHisesKey {
-    pub id: usize,
-}
-impl From<usize> for SubscribeHisesKey {
-    fn from(id: usize) -> Self {
-        Self { id }
+
+impl DbKey {
+    pub fn broker_key(id: usize) -> Self {
+        Self::Broker(id)
+    }
+    pub fn subscribe_his_key(id: usize) -> Self {
+        Self::SubscribeHis(id)
+    }
+    pub fn as_bytes(&self) -> Result<Vec<u8>> {
+        Ok(serde_json::to_vec(self)?)
     }
 }
-impl From<usize> for BrokerKey {
-    fn from(id: usize) -> Self {
-        Self { id }
-    }
-}
+
+// #[derive(Debug, Clone, Serialize, Deserialize, FromBytes, AsBytes)]
+// #[repr(C)]
+// pub struct BrokerKey {
+//     pub id: usize,
+// }
+// #[derive(Debug, Clone, Serialize, Deserialize, FromBytes, AsBytes)]
+// #[repr(C)]
+// pub struct SubscribeHisesKey {
+//     pub id: usize,
+// }
+// impl From<usize> for SubscribeHisesKey {
+//     fn from(id: usize) -> Self {
+//         Self { id }
+//     }
+// }
+// impl From<usize> for BrokerKey {
+//     fn from(id: usize) -> Self {
+//         Self { id }
+//     }
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrokerDB {
@@ -68,21 +86,21 @@ impl BrokerDB {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use crate::data::db::SubscribeHisesKey;
-    use core::mem::size_of;
-    use core::slice;
-
-    #[test]
-    pub fn test_ptr() {
-        let val: SubscribeHisesKey = 16usize.into();
-        assert_eq!(size_of::<SubscribeHisesKey>(), size_of::<usize>());
-        let u8_slice = val.as_ref();
-        let mut data = [0u8; size_of::<usize>()];
-        for (index, u8_tmp) in u8_slice.iter().enumerate() {
-            data[index] = *u8_tmp;
-        }
-        assert_eq!(usize::from_ne_bytes(data), 16);
-    }
-}
+// #[cfg(test)]
+// mod test {
+//     use crate::data::db::SubscribeHisesKey;
+//     use core::mem::size_of;
+//     use core::slice;
+//
+//     #[test]
+//     pub fn test_ptr() {
+//         let val: SubscribeHisesKey = 16usize.into();
+//         assert_eq!(size_of::<SubscribeHisesKey>(), size_of::<usize>());
+//         let u8_slice = val.as_ref();
+//         let mut data = [0u8; size_of::<usize>()];
+//         for (index, u8_tmp) in u8_slice.iter().enumerate() {
+//             data[index] = *u8_tmp;
+//         }
+//         assert_eq!(usize::from_ne_bytes(data), 16);
+//     }
+// }

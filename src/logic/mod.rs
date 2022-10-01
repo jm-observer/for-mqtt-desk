@@ -49,7 +49,9 @@ pub async fn deal_event(
                 match subscribe(index, input.clone().into(), &mqtt_clients).await {
                     Ok(id) => {
                         event_sink.add_idle_callback(move |data: &mut AppData| {
-                            data.subscribe(index, input, id);
+                            if let Err(e) = data.subscribe(index, input, id) {
+                                error!("{:?}", e);
+                            }
                         });
                     }
                     Err(e) => {

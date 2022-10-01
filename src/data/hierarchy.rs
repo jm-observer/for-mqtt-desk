@@ -91,7 +91,7 @@ impl AppData {
             error!("can't find the connection");
         }
     }
-    pub fn subscribe(&mut self, id: usize, input: SubscribeInput, pkid: u16) {
+    pub fn subscribe(&mut self, id: usize, input: SubscribeInput, pkid: u16) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
             let sub = SubscribeTopic::from(input.clone(), pkid);
             subscribe_topics.push_back(sub.into());
@@ -100,8 +100,10 @@ impl AppData {
             let his: SubscribeHis = input.into();
             if subscribe_hises.iter().find(|x| *x == &his).is_none() {
                 subscribe_hises.push_back(his.into());
+                self.db.update_subscribe_his(id, subscribe_hises.clone())?;
             }
         }
+        Ok(())
     }
     pub fn suback(&mut self, id: usize, input: SubAck) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
