@@ -159,8 +159,14 @@ impl AppData {
             msgs.push_back(sub.into());
         }
     }
-    pub fn click_broker(&mut self, id: usize) {
+    pub fn click_broker(&mut self, id: usize) -> Result<()> {
         self.select_broker(id);
+        for (index, tab) in self.broker_tabs.iter().enumerate() {
+            if *tab == id {
+                tx!(self.db.tx, AppEvent::SelectTabs(index));
+            }
+        }
+        Ok(())
     }
     pub fn db_click_broker(&mut self, id: usize) {
         self.init_broker_tab(id);

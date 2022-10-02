@@ -3,6 +3,7 @@ use crate::data::AppEvent;
 use crate::mqtt::{init_connect, public, subscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::SubscribeHis;
+use crate::ui::tabs::{ID_ONE, INCREMENT};
 use log::{debug, error};
 use rumqttc::v5::AsyncClient;
 use std::collections::HashMap;
@@ -95,6 +96,11 @@ pub async fn deal_event(
                     data.suback(id, ack);
                 });
             }
+            AppEvent::SelectTabs(id) => {
+                if let Err(e) = event_sink.submit_command(INCREMENT, id, ID_ONE) {
+                    error!("{:?}", e);
+                }
+            }
             AppEvent::ClickBroker(id) => {
                 if let Some(_previous) = clicks.remove(&id) {
                     event_sink.add_idle_callback(move |data: &mut AppData| {
@@ -104,7 +110,9 @@ pub async fn deal_event(
                     clicks.insert(id, id);
                     let async_tx = tx.clone();
                     event_sink.add_idle_callback(move |data: &mut AppData| {
-                        data.click_broker(id);
+                        if let Err(e) = data.click_broker(id) {
+                            error!("{:?}", e);
+                        }
                     });
                     tokio::spawn(async move {
                         tokio::time::sleep(Duration::from_millis(280)).await;

@@ -15,6 +15,8 @@ pub enum AppEvent {
     AddBroker,
     SaveBroker(usize),
     ReConnect(usize),
+    // select brokers tab
+    SelectTabs(usize),
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
     ConnectAckSuccess(usize),
