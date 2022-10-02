@@ -14,7 +14,6 @@ use rumqttc::v5::AsyncClient;
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
-    pub broker_selected: usize,
     pub brokers: Vector<Broker>,
     pub broker_tabs: Vector<usize>,
     pub tab_statuses: HashMap<usize, TabStatus>,
@@ -26,9 +25,6 @@ pub struct AppData {
     #[data(ignore)]
     #[lens(ignore)]
     pub db: ArcDb,
-    #[data(ignore)]
-    #[lens(ignore)]
-    pub mqtt_clients: HashMap<usize, AsyncClient>,
 }
 
 impl AppData {
@@ -91,7 +87,19 @@ impl AppData {
             error!("can't find the connection");
         }
     }
-    pub fn subscribe(&mut self, id: usize, input: SubscribeInput, pkid: u16) -> Result<()> {
+    pub fn subscribe(&mut self, id: usize, input: SubscribeHis, pkid: u16) -> Result<()> {
+        if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
+            let sub = SubscribeTopic::from_his(input, pkid);
+            subscribe_topics.push_back(sub.into());
+        }
+        Ok(())
+    }
+    pub fn subscribe_by_input(
+        &mut self,
+        id: usize,
+        input: SubscribeInput,
+        pkid: u16,
+    ) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
             let sub = SubscribeTopic::from(input.clone(), pkid);
             subscribe_topics.push_back(sub.into());

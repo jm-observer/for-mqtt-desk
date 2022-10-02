@@ -1,4 +1,4 @@
-use crate::data::common::{PublicInput, SubscribeInput};
+use crate::data::common::{PublicInput, SubscribeHis, SubscribeInput};
 use rumqttc::v5::mqttbytes::QoS;
 
 pub struct MqttPublicInput {
@@ -28,6 +28,14 @@ impl From<SubscribeInput> for MqttSubscribeInput {
         Self {
             topic: val.topic.as_ref().clone(),
             qos: QoS::AtLeastOnce,
+        }
+    }
+}
+impl From<SubscribeHis> for MqttSubscribeInput {
+    fn from(val: SubscribeHis) -> Self {
+        Self {
+            topic: val.topic.as_ref().clone(),
+            qos: val.qos.into(),
         }
     }
 }

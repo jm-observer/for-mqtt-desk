@@ -56,7 +56,7 @@ impl TabsPolicy for BrokerTabPolicy {
     fn tab_body(&self, key: Self::Key, _data: &AppData) -> Self::BodyWidget {
         match key {
             TabKind::Connection => {
-                display_connection(self.0)
+                display_connection(self.0, self.1.clone())
                 // debug_label_appdata()
             }
             TabKind::Broker => {

@@ -1,5 +1,5 @@
 use crate::data::common::{
-    Msg, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput, SubscribeMsg,
+    Id, Msg, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic,
 };
 use crate::data::AString;
@@ -11,6 +11,14 @@ impl SubscribeTopic {
             pkid,
             topic: val.topic.clone(),
             qos: QoS::AtLeastOnce,
+            status: SubscribeStatus::Ing,
+        }
+    }
+    pub fn from_his(val: SubscribeHis, pkid: u16) -> Self {
+        Self {
+            pkid,
+            topic: val.topic.clone(),
+            qos: val.qos,
             status: SubscribeStatus::Ing,
         }
     }
@@ -38,6 +46,7 @@ impl PublicMsg {
 impl From<SubscribeInput> for SubscribeHis {
     fn from(val: SubscribeInput) -> Self {
         Self {
+            id: Id::default(),
             topic: val.topic.clone(),
             qos: QoS::AtMostOnce,
         }
@@ -87,6 +96,15 @@ impl From<rumqttc::v5::mqttbytes::QoS> for QoS {
             rumqttc::v5::mqttbytes::QoS::AtLeastOnce => Self::AtLeastOnce,
             rumqttc::v5::mqttbytes::QoS::AtMostOnce => Self::AtMostOnce,
             rumqttc::v5::mqttbytes::QoS::ExactlyOnce => Self::ExactlyOnce,
+        }
+    }
+}
+impl From<QoS> for rumqttc::v5::mqttbytes::QoS {
+    fn from(qos: QoS) -> Self {
+        match qos {
+            QoS::AtLeastOnce => Self::AtLeastOnce,
+            QoS::AtMostOnce => Self::AtMostOnce,
+            QoS::ExactlyOnce => Self::ExactlyOnce,
         }
     }
 }

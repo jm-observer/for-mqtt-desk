@@ -2,6 +2,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::mqtt::{init_connect, public, subscribe};
 // use crate::ui::tabs::init_brokers_tabs;
+use crate::data::common::SubscribeHis;
 use log::{debug, error};
 use rumqttc::v5::AsyncClient;
 use std::collections::HashMap;
@@ -16,6 +17,7 @@ pub async fn deal_event(
 ) {
     let mut mqtt_clients: HashMap<usize, AsyncClient> = HashMap::new();
     let mut clicks: HashMap<usize, usize> = HashMap::new();
+    let mut click_his: HashMap<usize, SubscribeHis> = HashMap::new();
     loop {
         let event = match rx.recv() {
             Ok(event) => event,
@@ -49,7 +51,7 @@ pub async fn deal_event(
                 match subscribe(index, input.clone().into(), &mqtt_clients).await {
                     Ok(id) => {
                         event_sink.add_idle_callback(move |data: &mut AppData| {
-                            if let Err(e) = data.subscribe(index, input, id) {
+                            if let Err(e) = data.subscribe_by_input(index, input, id) {
                                 error!("{:?}", e);
                             }
                         });
@@ -107,6 +109,41 @@ pub async fn deal_event(
             }
             AppEvent::DbClickCheck(id) => {
                 if let Some(_previous) = clicks.remove(&id) {
+                    // event_sink.add_idle_callback(move |data: &mut AppData| {
+                    //     data.click_broker(id);
+                    // });
+                }
+            }
+            AppEvent::ClickSubscribeHis(index, his) => {
+                if let Some(_previous) = click_his.remove(&index) {
+                    if _previous == his {
+                        // double
+                        match subscribe(index, his.into(), &mqtt_clients).await {
+                            Ok(id) => {
+                                event_sink.add_idle_callback(move |data: &mut AppData| {
+                                    if let Err(e) = data.subscribe(index, _previous, id) {
+                                        error!("{:?}", e);
+                                    }
+                                });
+                            }
+                            Err(e) => {
+                                error!("{:?}", e);
+                            }
+                        }
+                        continue;
+                    }
+                }
+                click_his.insert(index, his);
+                let async_tx = tx.clone();
+                tokio::spawn(async move {
+                    tokio::time::sleep(Duration::from_millis(280)).await;
+                    if let Err(e) = async_tx.send(AppEvent::DbClickCheckSubscribeHis(index)) {
+                        error!("{:?}", e);
+                    }
+                });
+            }
+            AppEvent::DbClickCheckSubscribeHis(id) => {
+                if let Some(_previous) = click_his.remove(&id) {
                     // event_sink.add_idle_callback(move |data: &mut AppData| {
                     //     data.click_broker(id);
                     // });

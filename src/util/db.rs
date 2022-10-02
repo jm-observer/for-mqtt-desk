@@ -81,7 +81,6 @@ impl ArcDb {
             }
         }
         Ok(AppData {
-            broker_selected: 0,
             brokers,
             broker_tabs: Default::default(),
             tab_statuses: Default::default(),
@@ -91,7 +90,6 @@ impl ArcDb {
             subscribe_ing: Default::default(),
             public_ing: Default::default(),
             db: self.clone(),
-            mqtt_clients: Default::default(),
         })
     }
 

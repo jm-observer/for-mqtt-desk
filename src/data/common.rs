@@ -4,7 +4,19 @@ use crate::data::db::BrokerDB;
 use crate::data::{AString, AppEvent};
 use druid::{Data, Lens};
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc::Sender;
+
+static U32: AtomicU32 = AtomicU32::new(0);
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct Id(u32);
+
+impl Default for Id {
+    fn default() -> Self {
+        Self(U32.fetch_add(1, Ordering::Release))
+    }
+}
 
 #[derive(Data, Clone, Debug, Lens)]
 pub struct SubscribeTopic {
@@ -18,6 +30,8 @@ pub struct SubscribeTopic {
 }
 #[derive(Debug, Clone, Eq, PartialEq, Lens, Deserialize, Serialize)]
 pub struct SubscribeHis {
+    #[serde(skip)]
+    pub(crate) id: Id,
     pub(crate) topic: AString,
     pub(crate) qos: QoS,
 }
