@@ -43,11 +43,21 @@ impl TabsPolicy for BrokersTabs {
     }
 
     fn tab_info(&self, key: Self::Key, data: &Self::Input) -> TabInfo<Self::Input> {
-        if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
-            debug!("{}", tabs.name);
-            return TabInfo::new(format!("{}", tabs.name), true);
-        }
-        unreachable!()
+        // if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
+        //     debug!("{}", tabs.name);
+        return TabInfo::new(
+            move |data: &AppData, _: &Env| {
+                if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
+                    format!("{}", tabs.name)
+                } else {
+                    "".to_string()
+                }
+                // debug!("data.name={}", data.name);
+            },
+            true,
+        );
+        // }
+        // unreachable!()
     }
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
@@ -84,12 +94,12 @@ impl TabsPolicy for BrokersTabs {
         _info: TabInfo<Self::Input>,
         _data: &Self::Input,
     ) -> Self::LabelWidget {
-        // Self::default_make_label(_info)
-        Label::dynamic(|data: &Broker, _: &Env| {
-            debug!("data.name={}", data.name);
-            format!("{}", data.name)
-        })
-        .lens(BrokerIndex(_key))
+        Self::default_make_label(_info)
+        // Label::dynamic(|data: &Broker, _: &Env| {
+        //     debug!("data.name={}", data.name);
+        //     format!("{}", data.name)
+        // })
+        // .lens(BrokerIndex(_key))
         // if let Some(tabs) = _data.brokers.iter().find(|x| (*x).id == _key) {
         //     debug!("{}", tabs.name);
         //     return Label::new(tabs.name.as_str());

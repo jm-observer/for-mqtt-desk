@@ -179,13 +179,13 @@ impl AppData {
             debug!("close_tab：{} {}", index, self.broker_tabs.len());
             self.broker_tabs.remove(index);
             // 删除未保存的broker todo 会导致tab的label panic
-            // if let Some((index, _broker)) = self.brokers.iter().enumerate().find(|x| {
-            //     let broker = (*x).1;
-            //     broker.id == id && broker.stored == false
-            // }) {
-            //     self.brokers.remove(index);
-            //     self.tab_statuses.remove(&id);
-            // }
+            if let Some((index, _broker)) = self.brokers.iter().enumerate().find(|x| {
+                let broker = (*x).1;
+                broker.id == id && broker.stored == false
+            }) {
+                self.brokers.remove(index);
+                self.tab_statuses.remove(&id);
+            }
             if self.db.tx.send(AppEvent::Disconnect(id)).is_err() {
                 error!("fail to send event");
             }
