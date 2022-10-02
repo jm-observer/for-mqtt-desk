@@ -34,15 +34,19 @@ impl AppData {
         self.brokers.push_back(broker);
     }
     fn init_broker_tab(&mut self, id: usize) {
-        self.broker_tabs.push_front(id);
-        self.tab_statuses.insert(
-            id,
-            TabStatus {
-                id: id,
-                try_connect: false,
-                connected: false,
-            },
-        );
+        if self.broker_tabs.iter().find(|x| **x == id).is_none() {
+            self.broker_tabs.push_front(id);
+        }
+        if self.tab_statuses.get(&id).is_none() {
+            self.tab_statuses.insert(
+                id,
+                TabStatus {
+                    id: id,
+                    try_connect: false,
+                    connected: false,
+                },
+            );
+        }
     }
     pub fn find_broker(&self, id: usize) -> Option<&Broker> {
         self.brokers.iter().find(|x| (*x).id == id)
