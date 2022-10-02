@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 druid = { git = "https://github.com/linebender/druid.git", features = ["im", "serde"] }
-custom-utils = "0.10.4"
+custom-utils = "0.10.8"
 log = "0.4.17"
 
 anyhow = "1.0.64"

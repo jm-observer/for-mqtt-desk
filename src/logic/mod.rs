@@ -17,7 +17,7 @@ pub async fn deal_event(
 ) {
     let mut mqtt_clients: HashMap<usize, AsyncClient> = HashMap::new();
     let mut clicks: HashMap<usize, usize> = HashMap::new();
-    let mut click_his: HashMap<usize, SubscribeHis> = HashMap::new();
+    let mut click_his: Option<SubscribeHis> = None;
     loop {
         let event = match rx.recv() {
             Ok(event) => event,
@@ -31,6 +31,13 @@ pub async fn deal_event(
             AppEvent::AddBroker => {
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     data.add_broker();
+                });
+            }
+            AppEvent::SaveBroker(index) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.save_broker(index) {
+                        error!("{:?}", e);
+                    }
                 });
             }
             AppEvent::Connect(broker) => match init_connect(broker.clone(), tx.clone()).await {
@@ -107,47 +114,51 @@ pub async fn deal_event(
                     });
                 }
             }
-            AppEvent::DbClickCheck(id) => {
-                if let Some(_previous) = clicks.remove(&id) {
-                    // event_sink.add_idle_callback(move |data: &mut AppData| {
-                    //     data.click_broker(id);
-                    // });
-                }
-            }
-            AppEvent::ClickSubscribeHis(index, his) => {
-                if let Some(_previous) = click_his.remove(&index) {
+            AppEvent::DbClickCheck(id) => if let Some(_previous) = clicks.remove(&id) {},
+            AppEvent::ClickSubscribeHis(his) => {
+                let index = his.broker_id;
+                if let Some(_previous) = click_his.take() {
                     if _previous == his {
                         // double
-                        match subscribe(index, his.into(), &mqtt_clients).await {
-                            Ok(id) => {
-                                event_sink.add_idle_callback(move |data: &mut AppData| {
-                                    if let Err(e) = data.subscribe(index, _previous, id) {
-                                        error!("{:?}", e);
-                                    }
-                                });
-                            }
-                            Err(e) => {
-                                error!("{:?}", e);
-                            }
+                        if let Some(client) = mqtt_clients.get(&index) {
+                            let Ok(pkid) = client.subscribe(his.topic.as_str(), his.qos.into()).await else {
+                                error!("!!!!!!");
+                                continue;
+                            };
+                            event_sink.add_idle_callback(move |data: &mut AppData| {
+                                if let Err(e) = data.subscribe(index, _previous, pkid) {
+                                    error!("{:?}", e);
+                                }
+                            });
                         }
                         continue;
                     }
                 }
-                click_his.insert(index, his);
+                click_his = Some(his.clone());
                 let async_tx = tx.clone();
                 tokio::spawn(async move {
                     tokio::time::sleep(Duration::from_millis(280)).await;
-                    if let Err(e) = async_tx.send(AppEvent::DbClickCheckSubscribeHis(index)) {
+                    if let Err(e) = async_tx.send(AppEvent::DbClickCheckSubscribeHis(his)) {
                         error!("{:?}", e);
                     }
                 });
             }
-            AppEvent::DbClickCheckSubscribeHis(id) => {
-                if let Some(_previous) = click_his.remove(&id) {
-                    // event_sink.add_idle_callback(move |data: &mut AppData| {
-                    //     data.click_broker(id);
-                    // });
+            AppEvent::DbClickCheckSubscribeHis(his) => {
+                if click_his.as_ref().map_or(false, |x| *x == his) {
+                    click_his.take();
                 }
+            }
+            AppEvent::ReConnect(id) => {
+                if let Some(client) = mqtt_clients.remove(&id) {
+                    if let Err(e) = client.disconnect().await {
+                        error!("{:?}", e);
+                    }
+                }
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.reconnect(id) {
+                        error!("{:?}", e);
+                    }
+                });
             }
             AppEvent::Disconnect(id) => {
                 if let Some(client) = mqtt_clients.remove(&id) {
@@ -155,6 +166,11 @@ pub async fn deal_event(
                         error!("{:?}", e);
                     }
                 }
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.disconnect(id) {
+                        error!("{:?}", e);
+                    }
+                });
             }
             AppEvent::CloseBrokerTab(id) => {
                 event_sink.add_idle_callback(move |data: &mut AppData| {

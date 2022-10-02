@@ -9,7 +9,6 @@ use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use druid::im::{HashMap, Vector};
 use log::{debug, warn};
-use zerocopy::AsBytes;
 
 #[derive(Clone, Debug)]
 pub struct ArcDb {
@@ -45,7 +44,15 @@ impl ArcDb {
                     let hises = if let Some(val) =
                         self.db.remove(DbKey::subscribe_his_key(id).as_bytes()?)?
                     {
-                        let hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
+                        let mut hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
+                        hises = {
+                            let mut tmp = Vector::new();
+                            for mut his in hises {
+                                his.broker_id = index;
+                                tmp.push_back(his);
+                            }
+                            tmp
+                        };
                         hises
                     } else {
                         Vector::new()

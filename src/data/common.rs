@@ -32,6 +32,8 @@ pub struct SubscribeTopic {
 pub struct SubscribeHis {
     #[serde(skip)]
     pub(crate) id: Id,
+    #[serde(skip)]
+    pub(crate) broker_id: usize,
     pub(crate) topic: AString,
     pub(crate) qos: QoS,
 }
@@ -92,8 +94,9 @@ pub struct SubscribeMsg {
     pub qos: QoS,
 }
 
-#[derive(Data, Debug, Clone, Eq, PartialEq, Lens, Default)]
+#[derive(Data, Debug, Clone, Eq, PartialEq, Lens)]
 pub struct SubscribeInput {
+    pub broker_id: usize,
     pub(crate) topic: AString,
     pub(crate) qos: AString,
 }

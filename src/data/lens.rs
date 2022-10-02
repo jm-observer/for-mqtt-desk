@@ -47,6 +47,39 @@ impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndexLensVecSubscribeH
         })
     }
 }
+
+pub struct LensSelectedSubscribeHis;
+
+impl druid::Lens<AppData, Vector<SubscribeHis>> for LensSelectedSubscribeHis {
+    fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
+        if let Some(broker) = data.get_selected_broker() {
+            f(match data.subscribe_hises.get(&broker.id) {
+                Some(broker) => broker,
+                None => unreachable!(""),
+            })
+        } else {
+            let datas = Vector::new();
+            f(&datas)
+        }
+    }
+    fn with_mut<V, F: FnOnce(&mut Vector<SubscribeHis>) -> V>(
+        &self,
+        data: &mut AppData,
+        f: F,
+    ) -> V {
+        let id = match data.get_selected_broker() {
+            Some(broker) => broker.id,
+            None => {
+                let mut datas = Vector::new();
+                return f(&mut datas);
+            }
+        };
+        f(match data.subscribe_hises.get_mut(&id) {
+            Some(broker) => broker,
+            None => unreachable!(""),
+        })
+    }
+}
 pub struct BrokerIndexLensVecSubscribeTopic(pub usize);
 
 impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndexLensVecSubscribeTopic {

@@ -1,11 +1,11 @@
 use crate::data::common::Broker;
 use crate::data::hierarchy::AppData;
-use crate::data::lens::{BrokerIndex, DbIndex, Index};
+use crate::data::lens::BrokerIndex;
 use crate::data::AppEvent;
 use crate::ui::common::label_static;
-use druid::widget::{Container, Flex, TextBox};
-use druid::LensExt;
+use druid::widget::{Container, Either, Flex, TextBox};
 use druid::WidgetExt;
+use druid::{Env, LensExt};
 use log::error;
 
 pub fn display_broker(id: usize) -> Container<AppData> {
@@ -34,13 +34,49 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::port)))
                 .align_left(),
         )
-        .with_child(
+        .with_child(Either::new(
+            move |data: &AppData, _: &Env| {
+                if let Some(broker) = data.tab_statuses.get(&id) {
+                    broker.connected
+                } else {
+                    false
+                }
+            },
             Flex::row()
                 .with_child(
-                    label_static("连接").on_click(move |_ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.brokers.iter().find(|x| x.id == data.id) {
-                            if let Err(e) = data.data.db.tx.send(AppEvent::Connect(broker.clone()))
-                            {
+                    label_static("保存").on_click(move |_ctx, data: &mut AppData, _env| {
+                        if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
+                            error!("{:?}", e);
+                        }
+                    }),
+                )
+                .with_child(
+                    label_static("重连").on_click(move |_ctx, data: &mut AppData, _env| {
+                        if let Err(e) = data.db.tx.send(AppEvent::ReConnect(id)) {
+                            error!("{:?}", e);
+                        }
+                    }),
+                )
+                .with_child(
+                    label_static("断开").on_click(move |_ctx, data: &mut AppData, _env| {
+                        if let Err(e) = data.db.tx.send(AppEvent::Disconnect(id)) {
+                            error!("{:?}", e);
+                        }
+                    }),
+                )
+                .align_left(),
+            Flex::row()
+                .with_child(
+                    label_static("保存").on_click(move |_ctx, data: &mut AppData, _env| {
+                        if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
+                            error!("{:?}", e);
+                        }
+                    }),
+                )
+                .with_child(
+                    label_static("连接").on_click(move |_ctx, data: &mut AppData, _env| {
+                        if let Some(broker) = data.brokers.iter().find(|x| x.id == id) {
+                            if let Err(e) = data.db.tx.send(AppEvent::Connect(broker.clone())) {
                                 error!("{:?}", e);
                             }
                         } else {
@@ -48,9 +84,8 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         }
                     }),
                 )
-                .lens(Index(id))
                 .align_left(),
-        )
+        ))
         .with_child(
             Flex::row()
                 .with_child(label_static("params"))

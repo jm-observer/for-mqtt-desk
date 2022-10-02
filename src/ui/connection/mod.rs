@@ -1,9 +1,8 @@
-use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Msg, PublicInput, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
-    BrokerIndexLensVecSubscribeHis, BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens,
-    MsgTopicLens,
+    BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgTopicLens,
 };
 use crate::data::AppEvent;
 use crate::ui::common::{label_static, GREEN, MSG, QOS, TOPIC, YELLOW};
@@ -13,18 +12,18 @@ use druid::widget::{
     Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split,
     TextBox,
 };
-use druid::{Env, EventCtx, LensExt};
+use druid::LensExt;
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::error;
 use std::sync::mpsc::Sender;
 
-pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData> {
+pub fn display_connection(id: usize, _tx: Sender<AppEvent>) -> Container<AppData> {
     let subscribe_list = Padding::new(
         1.0,
         Container::new(
-            Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
-                .split_point(0.75)
-                .bar_size(1.0),
+            init_subscribe_list(id), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
+                                     //     .split_point(0.75)
+                                     //     .bar_size(1.0),
         )
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
@@ -75,40 +74,34 @@ fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
         .vertical()
         .lens(BrokerIndexLensVecSubscribeTopic(id));
     scroll
-    // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    // let flex = flex
-    //     .with_child(scroll)
-    //     .expand_width()
-    //     .align_vertical(UnitPoint::TOP);
-    // flex
 }
 
-fn init_subscribe_his_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    let list: List<SubscribeHis> = List::new(move || {
-        let tx = tx.clone();
-        Flex::row()
-            .with_child(QOS().lens(SubscribeHis::qos))
-            .with_child(TOPIC().lens(SubscribeHis::topic))
-            .expand_width()
-            .on_click(
-                move |_ctx: &mut EventCtx, data: &mut SubscribeHis, _env: &Env| {
-                    if let Err(_e) = tx.send(AppEvent::ClickSubscribeHis(id, data.clone())) {
-                        error!("fail to send");
-                    }
-                },
-            )
-    });
-    let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
-        .vertical()
-        .lens(BrokerIndexLensVecSubscribeHis(id));
-    scroll
-
-    // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    // let flex = flex
-    //     .with_child(scroll.vertical().lens(BrokerIndex(id)))
-    //     .align_vertical(UnitPoint::TOP);
-    // flex
-}
+// fn init_subscribe_his_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
+//     let list: List<SubscribeHis> = List::new(move || {
+//         let tx = tx.clone();
+//         Flex::row()
+//             .with_child(QOS().lens(SubscribeHis::qos))
+//             .with_child(TOPIC().lens(SubscribeHis::topic))
+//             .expand_width()
+//             .on_click(
+//                 move |_ctx: &mut EventCtx, data: &mut SubscribeHis, _env: &Env| {
+//                     if let Err(_e) = tx.send(AppEvent::ClickSubscribeHis(data.clone())) {
+//                         error!("fail to send");
+//                     }
+//                 },
+//             )
+//     });
+//     let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
+//         .vertical()
+//         .lens(BrokerIndexLensVecSubscribeHis(id));
+//     scroll
+//
+//     // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
+//     // let flex = flex
+//     //     .with_child(scroll.vertical().lens(BrokerIndex(id)))
+//     //     .align_vertical(UnitPoint::TOP);
+//     // flex
+// }
 
 fn init_msgs_list(id: usize) -> impl Widget<AppData> {
     let list: List<Msg> = List::new(move || {

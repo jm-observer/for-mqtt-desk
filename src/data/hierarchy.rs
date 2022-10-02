@@ -5,12 +5,13 @@ use crate::data::common::{
 };
 use crate::data::AppEvent;
 use crate::util::db::ArcDb;
+use anyhow::bail;
 use anyhow::Result;
+use custom_utils::tx;
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
 use log::{debug, error, warn};
 use rumqttc::v5::mqttbytes::*;
-use rumqttc::v5::AsyncClient;
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
@@ -48,8 +49,27 @@ impl AppData {
             );
         }
     }
+    pub fn get_selected_broker(&self) -> Option<&Broker> {
+        self.brokers.iter().find(|x| x.selected)
+    }
     pub fn find_broker(&self, id: usize) -> Option<&Broker> {
         self.brokers.iter().find(|x| (*x).id == id)
+    }
+    pub fn save_broker(&mut self, id: usize) -> Result<()> {
+        if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
+            broker.stored = true;
+            self.db.save_broker(id, broker)?;
+        }
+        Ok(())
+    }
+    pub fn reconnect(&mut self, id: usize) -> Result<()> {
+        self.disconnect(id)?;
+        if let Some(broker) = self.brokers.iter().find(|x| (*x).id == id) {
+            tx!(self.db.tx, AppEvent::Connect(broker.clone()))
+        } else {
+            error!("not find the broker");
+        }
+        Ok(())
     }
     pub fn init_connection(&mut self, id: usize) -> Result<()> {
         if let Some(status) = self.tab_statuses.get_mut(&id) {
@@ -64,8 +84,7 @@ impl AppData {
         }
         self.subscribe_topics.insert(id, Vector::new());
         self.msgs.insert(id, Vector::new());
-        self.subscribe_ing
-            .insert(id, SubscribeInput::default().into());
+        self.subscribe_ing.insert(id, SubscribeInput::init(id));
         self.public_ing.insert(id, PublicInput::default().into());
         Ok(())
     }
@@ -80,6 +99,8 @@ impl AppData {
         if let Some(status) = self.tab_statuses.get_mut(&id) {
             status.try_connect = false;
             status.connected = false;
+        } else {
+            warn!("not find the connection")
         }
         Ok(())
     }
@@ -150,10 +171,6 @@ impl AppData {
         } else {
             error!("can't find broker");
         }
-
-        // if let Err(e) = self.init_connection(id) {
-        //     error!("{:?}", e);
-        // }
     }
     fn select_broker(&mut self, id: usize) {
         for broker in self.brokers.iter_mut() {

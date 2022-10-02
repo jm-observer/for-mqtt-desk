@@ -1,11 +1,9 @@
-use crate::data::common::Broker;
 use crate::data::hierarchy::AppData;
-use crate::data::lens::BrokerIndex;
 use crate::data::AppEvent;
 use crate::ui::tabs::broker_tab::BrokerTabPolicy;
-use druid::widget::{Axis, Label, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
+use druid::widget::{Axis, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
+use druid::Widget;
 use druid::{Data, Env};
-use druid::{Widget, WidgetExt};
 use log::{debug, error};
 use std::sync::mpsc::Sender;
 
@@ -42,7 +40,7 @@ impl TabsPolicy for BrokersTabs {
         data.broker_tabs.iter().map(|x| *x).collect()
     }
 
-    fn tab_info(&self, key: Self::Key, data: &Self::Input) -> TabInfo<Self::Input> {
+    fn tab_info(&self, key: Self::Key, _data: &Self::Input) -> TabInfo<Self::Input> {
         // if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
         //     debug!("{}", tabs.name);
         return TabInfo::new(

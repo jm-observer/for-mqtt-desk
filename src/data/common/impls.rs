@@ -4,6 +4,7 @@ use crate::data::common::{
 };
 use crate::data::AString;
 use druid::Data;
+use std::sync::Arc;
 
 impl SubscribeTopic {
     pub fn from(val: SubscribeInput, pkid: u16) -> Self {
@@ -47,6 +48,7 @@ impl From<SubscribeInput> for SubscribeHis {
     fn from(val: SubscribeInput) -> Self {
         Self {
             id: Id::default(),
+            broker_id: val.broker_id,
             topic: val.topic.clone(),
             qos: QoS::AtMostOnce,
         }
@@ -67,6 +69,16 @@ impl From<PublicMsg> for Msg {
 impl From<SubscribeMsg> for Msg {
     fn from(val: SubscribeMsg) -> Self {
         Self::Subscribe(val)
+    }
+}
+
+impl SubscribeInput {
+    pub fn init(broker_id: usize) -> Self {
+        Self {
+            broker_id,
+            topic: Arc::new("".to_string()),
+            qos: Arc::new("".to_string()),
+        }
     }
 }
 impl Msg {
