@@ -129,7 +129,7 @@ pub async fn deal_event(
                     if _previous == his {
                         // double
                         if let Some(client) = mqtt_clients.get(&index) {
-                            let Ok(pkid) = client.subscribe(his.topic.as_str(), his.qos.into()).await else {
+                            let Ok(pkid) = client.subscribe_and_tracing(his.topic.as_str(), his.qos.into()).await else {
                                 error!("!!!!!!");
                                 continue;
                             };

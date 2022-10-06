@@ -27,11 +27,16 @@ impl TabsPolicy for BrokersTabs {
             return true;
         }
         for id in &old_data.broker_tabs {
-            let old_broker = old_data.brokers.iter().find(|x| x.id == *id).unwrap();
-            let broker = data.brokers.iter().find(|x| x.id == *id).unwrap();
-            if !old_broker.same(broker) {
-                return true;
+            if let Some(old_broker) = old_data.brokers.iter().find(|x| x.id == *id) {
+                if let Some(broker) = data.brokers.iter().find(|x| x.id == *id) {
+                    if !old_broker.same(broker) {
+                        return true;
+                    } else {
+                        continue;
+                    }
+                }
             }
+            return true;
         }
         false
     }

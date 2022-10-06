@@ -110,7 +110,7 @@ pub async fn subscribe(
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.subscribe(input.topic, input.qos).await?)
+    Ok(client.subscribe_and_tracing(input.topic, input.qos).await?)
 }
 
 pub async fn public(
@@ -122,7 +122,7 @@ pub async fn public(
         bail!("can't get mqtt client: {}", index);
     };
     Ok(client
-        .publish(input.topic, input.qos, input.retain, input.msg)
+        .publish_and_tracing(input.topic, input.qos, input.retain, input.msg)
         .await?)
 }
 

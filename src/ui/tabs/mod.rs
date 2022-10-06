@@ -3,7 +3,6 @@ use crate::data::AppEvent;
 use crate::ui::tabs::brokers_tab::BrokersTabs;
 use druid::widget::{Axis, Controller, Tabs, TabsEdge, TabsTransition};
 use druid::{Env, Event, EventCtx, Selector, Widget, WidgetExt, WidgetId};
-use log::error;
 use std::sync::mpsc::Sender;
 
 mod broker_tab;
