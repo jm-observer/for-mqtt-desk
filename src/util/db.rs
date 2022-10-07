@@ -108,7 +108,7 @@ impl ArcDb {
             client_id: Arc::new("".to_string()),
             name: Arc::new("".to_string()),
             addr: Arc::new("broker-cn.emqx.io".to_string()),
-            port: Arc::new("1883".to_string()),
+            port: 1883,
             params: Arc::new(OPTION.to_string()),
             use_credentials: false,
             user_name: Arc::new("".to_string()),
@@ -180,16 +180,16 @@ mod test {
 
     #[test]
     fn insert_broker() {
-        let db = Config::new().path("./resource/db").open().unwrap();
-        let broker = vector![Broker {
-            id: 0,
-            client_id: Arc::new("id_5678".to_string()),
-            name: Arc::new("emq".to_string()),
-            addr: Arc::new("192.168.199.188".to_string()),
-            port: Arc::new("1883".to_string()),
-            params: Arc::new("{abc,jiofewki, iowoere}".to_string()),
-        }];
-        let broker = serde_json::to_vec(&broker).unwrap();
-        db.insert(BROKERS, broker).unwrap();
+        // let db = Config::new().path("./resource/db").open().unwrap();
+        // let broker = vector![Broker {
+        //     id: 0,
+        //     client_id: Arc::new("id_5678".to_string()),
+        //     name: Arc::new("emq".to_string()),
+        //     addr: Arc::new("192.168.199.188".to_string()),
+        //     port: Arc::new("1883".to_string()),
+        //     params: Arc::new("{abc,jiofewki, iowoere}".to_string()),
+        // }];
+        // let broker = serde_json::to_vec(&broker).unwrap();
+        // db.insert(BROKERS, broker).unwrap();
     }
 }

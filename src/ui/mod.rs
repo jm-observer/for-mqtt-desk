@@ -12,6 +12,8 @@ mod broker_list;
 mod common;
 mod connection;
 mod debug;
+pub mod formatter;
+mod ids;
 pub mod tabs;
 
 pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {

@@ -4,6 +4,8 @@ use crate::mqtt::{init_connect, public, subscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::SubscribeHis;
 use crate::ui::tabs::{ID_ONE, INCREMENT};
+use anyhow::Result;
+use custom_utils::rx;
 use log::{debug, error};
 use rumqttc::v5::AsyncClient;
 use std::collections::HashMap;
@@ -15,20 +17,14 @@ pub async fn deal_event(
     event_sink: druid::ExtEventSink,
     rx: Receiver<AppEvent>,
     tx: Sender<AppEvent>,
-) {
+) -> Result<()> {
     let mut mqtt_clients: HashMap<usize, AsyncClient> = HashMap::new();
     let mut clicks: HashMap<usize, usize> = HashMap::new();
     let mut click_his: Option<SubscribeHis> = None;
     loop {
-        let event = match rx.recv() {
-            Ok(event) => event,
-            Err(_) => {
-                error!("RecvError");
-                break;
-            }
-        };
-        debug!("{:?}", event);
-        match event {
+        // let event = ;
+        // debug!("{:?}", event);
+        match rx!(rx) {
             AppEvent::AddBroker => {
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     data.add_broker();

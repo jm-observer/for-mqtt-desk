@@ -3,10 +3,16 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIndex;
 use crate::data::AppEvent;
 use crate::ui::common::label_static;
+use crate::ui::formatter::{check_addr, MustInput};
+use crate::ui::ids::{
+    error_display_widget, TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT,
+    ID_CLIENT_ID, ID_PORT,
+};
+use crate::util::general_id;
 use druid::widget::{Container, Either, Flex, TextBox};
 use druid::WidgetExt;
 use druid::{Env, LensExt};
-use log::error;
+use log::{debug, error};
 
 pub fn display_broker(id: usize) -> Container<AppData> {
     let connection = Flex::column()
@@ -19,19 +25,43 @@ pub fn display_broker(id: usize) -> Container<AppData> {
         .with_child(
             Flex::row()
                 .with_child(label_static("client id"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::client_id)))
+                .with_child(
+                    TextBox::new()
+                        // .with_formatter(MustInput)
+                        // .validate_while_editing(false)
+                        // .delegate(
+                        //     TextBoxErrorDelegate::new(ID_CLIENT_ID).sends_partial_errors(true),
+                        // )
+                        .lens(BrokerIndex(id).then(Broker::client_id)),
+                )
+                // .with_child(error_display_widget(ID_CLIENT_ID))
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("addr"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::addr)))
+                .with_child(
+                    TextBox::new()
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .update_data_while_editing(true)
+                        .delegate(TextBoxErrorDelegate::new(ID_ADDR).sends_partial_errors(true))
+                        .lens(BrokerIndex(id).then(Broker::addr)),
+                )
+                .with_child(error_display_widget(ID_ADDR))
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("port"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::port)))
+                .with_child(
+                    TextBox::new()
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .delegate(TextBoxErrorDelegate::new(ID_PORT).sends_partial_errors(true))
+                        .lens(BrokerIndex(id).then(Broker::port)),
+                )
+                .with_child(error_display_widget(ID_PORT))
                 .align_left(),
         )
         .with_child(Either::new(
@@ -52,6 +82,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 )
                 .with_child(
                     label_static("重连").on_click(move |_ctx, data: &mut AppData, _env| {
+                        _ctx.set_focus(ID_BUTTON_RECONNECT);
                         if let Err(e) = data.db.tx.send(AppEvent::ReConnect(id)) {
                             error!("{:?}", e);
                         }
@@ -75,7 +106,12 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 )
                 .with_child(
                     label_static("连接").on_click(move |_ctx, data: &mut AppData, _env| {
-                        if let Some(broker) = data.brokers.iter().find(|x| x.id == id) {
+                        if let Some(broker) = data.brokers.iter_mut().find(|x| x.id == id) {
+                            debug!("{:?}", broker);
+                            _ctx.set_focus(ID_BUTTON_CONNECT);
+                            if broker.client_id.as_str().is_empty() {
+                                broker.client_id = general_id().into();
+                            }
                             if let Err(e) = data.db.tx.send(AppEvent::Connect(broker.clone())) {
                                 error!("{:?}", e);
                             }

@@ -2,6 +2,7 @@ use druid::{AppLauncher, LocalizedString, PlatformError, WindowDesc};
 use for_mqtt::logic::deal_event;
 use for_mqtt::ui::init_layout;
 use for_mqtt::util::db::ArcDb;
+use log::error;
 use std::thread;
 
 fn main() -> Result<(), PlatformError> {
@@ -14,7 +15,11 @@ fn main() -> Result<(), PlatformError> {
 
     let launcher = AppLauncher::with_window(win);
     let event_sink = launcher.get_external_handle();
-    thread::spawn(move || deal_event(event_sink, rx, tx));
+    thread::spawn(move || {
+        if let Err(e) = deal_event(event_sink, rx, tx) {
+            error!("{:?}", e);
+        }
+    });
 
     launcher.launch(data)?;
     Ok(())

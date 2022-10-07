@@ -18,7 +18,7 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         5.0,
         Container::new(
             Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
-                .split_point(0.25)
+                .split_point(0.55)
                 // .bar_size(1.0)
                 .draggable(true),
         )

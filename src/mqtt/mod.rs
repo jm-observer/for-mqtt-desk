@@ -18,11 +18,8 @@ use std::sync::mpsc::Sender;
 use std::time::Duration;
 
 pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncClient> {
-    let mut mqttoptions = MqttOptions::new(
-        broker.client_id.as_str(),
-        broker.addr.as_str(),
-        broker.port.parse()?,
-    );
+    let mut mqttoptions =
+        MqttOptions::new(broker.client_id.as_str(), broker.addr.as_str(), broker.port);
     if broker.use_credentials {
         mqttoptions.set_credentials(&*broker.user_name, &*broker.password);
     }
