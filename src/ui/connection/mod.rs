@@ -5,7 +5,12 @@ use crate::data::lens::{
     BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgTopicLens,
 };
 use crate::data::AppEvent;
-use crate::ui::common::{label_static, GREEN, MSG, QOS, TOPIC, YELLOW};
+use crate::ui::common::{error_display_widget, label_static, GREEN, MSG, QOS, TOPIC, YELLOW};
+use crate::ui::formatter::MustInput;
+use crate::ui::ids::{
+    TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
+    ID_SUBSCRIBE_TOPIC,
+};
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
@@ -149,8 +154,15 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("topic"))
                 .with_child(
                     TextBox::new()
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC)
+                                .sends_partial_errors(true),
+                        )
                         .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::topic)),
                 )
+                .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
                 .align_left(),
         )
         .with_child(
@@ -158,8 +170,15 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("qos"))
                 .with_child(
                     TextBox::new()
+                        .with_placeholder("0/1/2")
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_SUBSCRIBE_QOS).sends_partial_errors(true),
+                        )
                         .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos)),
                 )
+                .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
                 .align_left(),
         )
         .with_child(
@@ -199,9 +218,15 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("topic"))
                 .with_child(
                     TextBox::new()
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_PUBLISH_TOPIC).sends_partial_errors(true),
+                        )
                         .lens(BrokerIndexLensPublicInput(id).then(PublicInput::topic))
                         .fix_width(300.),
                 )
+                .with_child(error_display_widget(ID_PUBLISH_TOPIC))
                 .align_left(),
         )
         .with_child(
@@ -209,9 +234,16 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("qos"))
                 .with_child(
                     TextBox::new()
+                        .with_placeholder("0/1/2")
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_PUBLISH_QOS).sends_partial_errors(true),
+                        )
                         .lens(BrokerIndexLensPublicInput(id).then(PublicInput::qos))
                         .fix_width(300.),
                 )
+                .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
         )
         .with_child(
@@ -219,10 +251,16 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("msg"))
                 .with_child(
                     TextBox::multiline()
+                        .with_formatter(MustInput)
+                        .validate_while_editing(false)
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_PUBLISH_MSG).sends_partial_errors(true),
+                        )
                         .fix_height(60.)
                         .fix_width(300.)
                         .lens(BrokerIndexLensPublicInput(id).then(PublicInput::msg)),
                 )
+                .with_child(error_display_widget(ID_PUBLISH_MSG))
                 .align_left(),
         )
         .with_child(

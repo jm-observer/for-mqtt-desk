@@ -16,7 +16,7 @@ use thiserror::Error;
 pub enum ForError {
     #[error("Only 0~65535")]
     InvalidPort,
-    #[error("Only qos0/qos1/qos2")]
+    #[error("Only 0/1/2")]
     InvalidQos,
     #[error("NotEmpty")]
     NotEmpty,

@@ -2,11 +2,10 @@ use crate::data::common::Broker;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIndex;
 use crate::data::AppEvent;
-use crate::ui::common::label_static;
+use crate::ui::common::{error_display_widget, label_static, TEXTBOX_MULTI_WIDTH, TEXTBOX_WIDTH};
 use crate::ui::formatter::{check_addr, MustInput};
 use crate::ui::ids::{
-    error_display_widget, TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT,
-    ID_CLIENT_ID, ID_PORT,
+    TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_CLIENT_ID, ID_PORT,
 };
 use crate::util::general_id;
 use druid::widget::{Container, Either, Flex, TextBox};
@@ -19,7 +18,11 @@ pub fn display_broker(id: usize) -> Container<AppData> {
         .with_child(
             Flex::row()
                 .with_child(label_static("name"))
-                .with_child(TextBox::new().lens(BrokerIndex(id).then(Broker::name)))
+                .with_child(
+                    TextBox::new()
+                        .fix_width(TEXTBOX_WIDTH)
+                        .lens(BrokerIndex(id).then(Broker::name)),
+                )
                 .align_left(),
         )
         .with_child(
@@ -27,14 +30,9 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(label_static("client id"))
                 .with_child(
                     TextBox::new()
-                        // .with_formatter(MustInput)
-                        // .validate_while_editing(false)
-                        // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_CLIENT_ID).sends_partial_errors(true),
-                        // )
+                        .fix_width(TEXTBOX_WIDTH)
                         .lens(BrokerIndex(id).then(Broker::client_id)),
                 )
-                // .with_child(error_display_widget(ID_CLIENT_ID))
                 .align_left(),
         )
         .with_child(
@@ -46,6 +44,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         .validate_while_editing(false)
                         .update_data_while_editing(true)
                         .delegate(TextBoxErrorDelegate::new(ID_ADDR).sends_partial_errors(true))
+                        .fix_width(TEXTBOX_WIDTH)
                         .lens(BrokerIndex(id).then(Broker::addr)),
                 )
                 .with_child(error_display_widget(ID_ADDR))
@@ -59,6 +58,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         .with_formatter(MustInput)
                         .validate_while_editing(false)
                         .delegate(TextBoxErrorDelegate::new(ID_PORT).sends_partial_errors(true))
+                        .fix_width(TEXTBOX_WIDTH)
                         .lens(BrokerIndex(id).then(Broker::port)),
                 )
                 .with_child(error_display_widget(ID_PORT))
@@ -127,10 +127,10 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(label_static("params"))
                 .with_flex_child(
                     TextBox::multiline()
-                        .with_placeholder("Multi")
+                        // .with_placeholder("Multi")
                         .lens(BrokerIndex(id).then(Broker::params))
                         .fix_height(180.)
-                        .expand_width(),
+                        .fix_width(TEXTBOX_MULTI_WIDTH),
                     1.0,
                 )
                 .align_left(),

@@ -77,7 +77,7 @@ impl SubscribeInput {
         Self {
             broker_id,
             topic: Arc::new("".to_string()),
-            qos: Arc::new("".to_string()),
+            qos: QoS::AtMostOnce,
         }
     }
 }

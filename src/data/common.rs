@@ -82,7 +82,7 @@ pub enum PublicStatus {
 pub struct PublicInput {
     pub topic: AString,
     pub msg: AString,
-    pub qos: AString,
+    pub qos: QoS,
     pub retain: bool,
 }
 
@@ -98,7 +98,7 @@ pub struct SubscribeMsg {
 pub struct SubscribeInput {
     pub broker_id: usize,
     pub(crate) topic: AString,
-    pub(crate) qos: AString,
+    pub(crate) qos: QoS,
 }
 #[derive(Data, Debug, Clone, Eq, PartialEq)]
 pub enum SubscribeStatus {
@@ -125,6 +125,20 @@ pub enum QoS {
     AtMostOnce = 0,
     AtLeastOnce = 1,
     ExactlyOnce = 2,
+}
+impl Default for QoS {
+    fn default() -> Self {
+        QoS::AtMostOnce
+    }
+}
+impl ToString for QoS {
+    fn to_string(&self) -> String {
+        match self {
+            QoS::AtMostOnce => "0".to_string(),
+            QoS::AtLeastOnce => "1".to_string(),
+            QoS::ExactlyOnce => "2".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Data, Lens)]

@@ -35,25 +35,6 @@ pub const EDIT_BEGAN: Selector<WidgetId> = Selector::new("druid-example.edit-beg
 /// This is used to set the contents of the help text.
 pub const EDIT_FINISHED: Selector<WidgetId> = Selector::new("druid-example.edit-finished");
 
-pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
-    ErrorController::new(
-        Either::new(
-            |d: &Option<ValidationError>, _| {
-                debug!("{}", d.is_some());
-                d.is_some()
-            },
-            Label::dynamic(|d: &Option<ValidationError>, _| {
-                // "AAAAAAAAAAAAA".to_string()
-                d.as_ref().map(|d| d.to_string()).unwrap_or_default()
-            })
-            .with_text_color(ERROR_TEXT_COLOR)
-            .with_text_size(12.0),
-            SizedBox::empty(),
-        )
-        .with_id(id),
-    )
-}
-
 pub struct TextBoxErrorDelegate {
     target: WidgetId,
     sends_partial_errors: bool,
