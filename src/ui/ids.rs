@@ -37,13 +37,15 @@ pub const EDIT_FINISHED: Selector<WidgetId> = Selector::new("druid-example.edit-
 
 pub struct TextBoxErrorDelegate {
     target: WidgetId,
+    check_fn: fn(&str) -> bool,
     sends_partial_errors: bool,
 }
 
 impl TextBoxErrorDelegate {
-    pub fn new(target: WidgetId) -> TextBoxErrorDelegate {
+    pub fn new(target: WidgetId, check_fn: fn(&str) -> bool) -> TextBoxErrorDelegate {
         TextBoxErrorDelegate {
             target,
+            check_fn,
             sends_partial_errors: false,
         }
     }
@@ -76,8 +78,9 @@ impl ValidationDelegate for TextBoxErrorDelegate {
             }
             TextBoxEvent::Cancel | TextBoxEvent::Complete => {
                 debug!("Cancel | Complete: {}", _current_text);
-                ctx.submit_command(CLEAR_ERROR.to(self.target));
-                // ctx.submit_command(EDIT_FINISHED.with(self.target));
+                if (self.check_fn)(_current_text) {
+                    ctx.submit_command(CLEAR_ERROR.to(self.target));
+                }
             }
             _ => (),
         }

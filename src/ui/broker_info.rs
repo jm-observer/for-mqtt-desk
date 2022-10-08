@@ -3,7 +3,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIndex;
 use crate::data::AppEvent;
 use crate::ui::common::{error_display_widget, label_static, TEXTBOX_MULTI_WIDTH, TEXTBOX_WIDTH};
-use crate::ui::formatter::{check_addr, MustInput};
+use crate::ui::formatter::{check_addr, check_no_empty, check_port, MustInput};
 use crate::ui::ids::{
     TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_CLIENT_ID, ID_PORT,
 };
@@ -43,7 +43,10 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         .with_formatter(MustInput)
                         .validate_while_editing(false)
                         .update_data_while_editing(true)
-                        .delegate(TextBoxErrorDelegate::new(ID_ADDR).sends_partial_errors(true))
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_ADDR, check_no_empty)
+                                .sends_partial_errors(true),
+                        )
                         .fix_width(TEXTBOX_WIDTH)
                         .lens(BrokerIndex(id).then(Broker::addr)),
                 )
@@ -57,7 +60,10 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                     TextBox::new()
                         .with_formatter(MustInput)
                         .validate_while_editing(false)
-                        .delegate(TextBoxErrorDelegate::new(ID_PORT).sends_partial_errors(true))
+                        .delegate(
+                            TextBoxErrorDelegate::new(ID_PORT, check_port)
+                                .sends_partial_errors(true),
+                        )
                         .fix_width(TEXTBOX_WIDTH)
                         .lens(BrokerIndex(id).then(Broker::port)),
                 )

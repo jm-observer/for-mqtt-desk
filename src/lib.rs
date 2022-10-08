@@ -18,6 +18,6 @@ pub enum ForError {
     InvalidPort,
     #[error("Only 0/1/2")]
     InvalidQos,
-    #[error("NotEmpty")]
+    #[error("Not Empty")]
     NotEmpty,
 }

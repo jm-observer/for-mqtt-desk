@@ -12,6 +12,7 @@ pub const ERROR_LABLE_WIDTH: f64 = 180.;
 pub const TEXTBOX_WIDTH: f64 = 180.;
 pub const TEXTBOX_MULTI_WIDTH: f64 = 300.;
 pub const LABLE_PADDING: f64 = 5.0;
+pub const BUTTON_PADDING: f64 = 5.0;
 
 pub fn label_dy<T: druid::Data>(f: impl Fn(&T, &Env) -> String + 'static) -> impl Widget<T> {
     Label::dynamic(f)

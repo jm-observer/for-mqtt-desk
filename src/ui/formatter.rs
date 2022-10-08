@@ -50,7 +50,7 @@ impl Formatter<QoS> for MustInput {
     }
 
     fn validate_partial_input(&self, input: &str, sel: &Selection) -> Validation {
-        parse_to_port(input).to_validation()
+        parse_to_qos(input).to_validation()
     }
     fn value(&self, input: &str) -> Result<QoS, ValidationError> {
         parse_to_qos(input).to_validation_error()
@@ -81,6 +81,7 @@ pub fn parse_to_port(input: &str) -> Result<u16, ForError> {
     input.parse().map_err(|_| ForError::InvalidPort)
 }
 pub fn parse_to_no_empty(input: &str) -> Result<AString, ForError> {
+    debug!("{}", input);
     if input.is_empty() {
         return Err(ForError::NotEmpty);
     }
@@ -97,21 +98,26 @@ pub fn parse_to_qos(input: &str) -> Result<QoS, ForError> {
         _ => Err(ForError::InvalidQos),
     }
 }
-pub fn check_qos(input: &str, ctx: &mut EventCtx) -> bool {
-    if parse_to_qos(input).is_err() {
-        return false;
-    }
-    true
-}
-pub fn check_addr(input: &str, ctx: &mut EventCtx) -> bool {
+pub fn check_no_empty(input: &str) -> bool {
     if parse_to_no_empty(input).is_err() {
         return false;
     }
     true
 }
-pub fn check_port(input: &str, ctx: &mut EventCtx) -> bool {
+pub fn check_qos(input: &str) -> bool {
+    if parse_to_qos(input).is_err() {
+        return false;
+    }
+    true
+}
+pub fn check_addr(input: &str) -> bool {
+    if parse_to_no_empty(input).is_err() {
+        return false;
+    }
+    true
+}
+pub fn check_port(input: &str) -> bool {
     if parse_to_port(input).is_err() {
-        // ctx.submit_command(SHOW_ERROR.with(err).to(ID_ADDR));
         return false;
     }
     true
