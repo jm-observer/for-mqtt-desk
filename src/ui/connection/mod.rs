@@ -14,6 +14,7 @@ use crate::ui::ids::{
     ID_SUBSCRIBE_TOPIC,
 };
 use druid::im::Vector;
+use druid::text::EditableText;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
     Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split,
@@ -21,7 +22,7 @@ use druid::widget::{
 };
 use druid::LensExt;
 use druid::{UnitPoint, Widget, WidgetExt};
-use log::error;
+use log::{debug, error};
 use std::sync::mpsc::Sender;
 
 pub fn display_connection(id: usize, _tx: Sender<AppEvent>) -> Container<AppData> {
@@ -189,6 +190,10 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 Button::new("订阅")
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
                         if let Some(broker) = data.data.subscribe_ing.get(&data.id) {
+                            if broker.topic.is_empty() {
+                                debug!("topic is empty");
+                                return;
+                            }
                             if let Err(e) = data
                                 .data
                                 .db
@@ -275,6 +280,10 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 Button::new("发布")
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
                         if let Some(broker) = data.data.public_ing.get(&data.id) {
+                            if broker.topic.is_empty() || broker.msg.is_empty() {
+                                debug!("topic or msg is empty");
+                                return;
+                            }
                             if let Err(e) = data
                                 .data
                                 .db
