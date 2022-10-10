@@ -3,7 +3,7 @@ use crate::data::AString;
 use crate::ui::ids::{ErrorController, ERROR_TEXT_COLOR};
 use druid::text::ValidationError;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{Either, Label, SizedBox};
+use druid::widget::{Either, Label, LabelText, SizedBox};
 use druid::{Color, Data, Env, UnitPoint, Widget, WidgetExt, WidgetId};
 use log::debug;
 
@@ -13,6 +13,14 @@ pub const TEXTBOX_WIDTH: f64 = 180.;
 pub const TEXTBOX_MULTI_WIDTH: f64 = 300.;
 pub const LABLE_PADDING: f64 = 5.0;
 pub const BUTTON_PADDING: f64 = 5.0;
+
+// pub use piet::Color::GREEN;
+pub const GREEN: Color = Color::rgb8(0, 128, 0);
+/// Opaque yellow.
+pub const YELLOW: Color = Color::rgb8(255, 255, 0);
+pub const SILVER: Color = Color::grey8(192);
+pub const RED: Color = Color::rgb8(255, 0, 0);
+pub const WHITE: Color = Color::grey8(255);
 
 pub fn label_dy<T: druid::Data>(f: impl Fn(&T, &Env) -> String + 'static) -> impl Widget<T> {
     Label::dynamic(f)
@@ -30,7 +38,7 @@ pub fn label_dy_expand_width<T: druid::Data>(
         .expand_width()
     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
-pub fn label_static<T: druid::Data>(text: &str) -> impl Widget<T> {
+pub fn label_static<T: druid::Data>(text: impl Into<LabelText<T>>) -> impl Widget<T> {
     Label::new(text)
         .align_vertical(UnitPoint::RIGHT)
         .padding(LABLE_PADDING)
@@ -51,13 +59,6 @@ pub const TOPIC: fn() -> SizedBox<AString> = || {
 
 pub const MSG: fn() -> SizedBox<AString> =
     || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(170.);
-
-// pub use piet::Color::GREEN;
-pub const GREEN: Color = Color::rgb8(0, 128, 0);
-/// Opaque yellow.
-pub const YELLOW: Color = Color::rgb8(255, 255, 0);
-pub const SILVER: Color = Color::grey8(192);
-pub const RED: Color = Color::rgb8(255, 0, 0);
 
 pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
     ErrorController::new(

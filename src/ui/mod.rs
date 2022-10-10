@@ -9,7 +9,7 @@ use std::sync::mpsc::Sender;
 
 mod broker_info;
 mod broker_list;
-mod common;
+pub mod common;
 mod connection;
 mod debug;
 pub mod formatter;

@@ -20,7 +20,7 @@ use druid::widget::{
     Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split,
     TextBox,
 };
-use druid::LensExt;
+use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{debug, error};
 use std::sync::mpsc::Sender;
@@ -187,8 +187,9 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row().with_child(
-                Button::new("订阅")
+                Button::new(LocalizedString::new("button-subscribe"))
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
+                        debug!("{:?}", data.data);
                         if let Some(broker) = data.data.subscribe_ing.get(&data.id) {
                             if broker.topic.is_empty() {
                                 debug!("topic is empty");
@@ -277,7 +278,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row().with_child(
-                Button::new("发布")
+                Button::new(LocalizedString::new("button-publish"))
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
                         if let Some(broker) = data.data.public_ing.get(&data.id) {
                             if broker.topic.is_empty() || broker.msg.is_empty() {

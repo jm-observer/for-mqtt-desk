@@ -2,6 +2,13 @@
 
 app-names = { -app-name }
 
+button-subscribe = Subscribe
+button-publish = Publish
+button-save = Save
+button-reconnect = Reconnect
+button-disconnect = Disconnect
+button-connect = Connect
+
 hello-counter = Current value is { $count }
 
 # The 'application' menu on macOS
