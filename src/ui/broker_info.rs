@@ -8,7 +8,7 @@ use crate::ui::ids::{
     TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_CLIENT_ID, ID_PORT,
 };
 use crate::util::general_id;
-use druid::widget::{Container, Either, Flex, TextBox};
+use druid::widget::{Button, Container, Either, Flex, TextBox};
 use druid::{Env, LensExt};
 use druid::{LocalizedString, WidgetExt};
 use log::{debug, error};
@@ -79,7 +79,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 }
             },
             Flex::row()
-                .with_child(label_static(LocalizedString::new("button-save")).on_click(
+                .with_child(Button::new(LocalizedString::new("button-save")).on_click(
                     move |_ctx, data: &mut AppData, _env| {
                         if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
                             error!("{:?}", e);
@@ -87,7 +87,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                     },
                 ))
                 .with_child(
-                    label_static(LocalizedString::new("button-reconnect")).on_click(
+                    Button::new(LocalizedString::new("button-reconnect")).on_click(
                         move |_ctx, data: &mut AppData, _env| {
                             _ctx.set_focus(ID_BUTTON_RECONNECT);
                             if let Err(e) = data.db.tx.send(AppEvent::ReConnect(id)) {
@@ -97,7 +97,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                     ),
                 )
                 .with_child(
-                    label_static(LocalizedString::new("button-disconnect")).on_click(
+                    Button::new(LocalizedString::new("button-disconnect")).on_click(
                         move |_ctx, data: &mut AppData, _env| {
                             if let Err(e) = data.db.tx.send(AppEvent::Disconnect(id)) {
                                 error!("{:?}", e);
@@ -107,7 +107,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 )
                 .align_left(),
             Flex::row()
-                .with_child(label_static(LocalizedString::new("button-save")).on_click(
+                .with_child(Button::new(LocalizedString::new("button-save")).on_click(
                     move |_ctx, data: &mut AppData, _env| {
                         if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
                             error!("{:?}", e);
@@ -115,7 +115,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                     },
                 ))
                 .with_child(
-                    label_static(LocalizedString::new("button-connect")).on_click(
+                    Button::new(LocalizedString::new("button-connect")).on_click(
                         move |_ctx, data: &mut AppData, _env| {
                             if let Some(broker) = data.brokers.iter_mut().find(|x| x.id == id) {
                                 debug!("{:?}", broker);

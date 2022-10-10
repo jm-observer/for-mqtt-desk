@@ -13,6 +13,7 @@ pub mod common;
 mod connection;
 mod debug;
 pub mod formatter;
+pub mod icons;
 mod ids;
 pub mod tabs;
 

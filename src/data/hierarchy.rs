@@ -59,6 +59,7 @@ impl AppData {
         if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
             broker.stored = true;
             self.db.save_broker(id, broker)?;
+            self.subscribe_hises.insert(id, Vector::new());
         }
         Ok(())
     }
@@ -167,6 +168,25 @@ impl AppData {
             }
         }
         Ok(())
+    }
+    pub fn edit_broker(&mut self) {
+        if let Some(broker) = self.get_selected_broker() {
+            self.init_broker_tab(broker.id);
+        } else {
+            // todo
+            warn!("edit_broker: not selected broker");
+        }
+    }
+    pub fn connect_broker(&mut self) {
+        if let Some(broker) = self.get_selected_broker() {
+            if let Err(e) = self.db.tx.send(AppEvent::Connect(broker.clone())) {
+                error!("{:?}", e);
+            }
+            self.init_broker_tab(broker.id);
+        } else {
+            // todo
+            warn!("connect_broker: not selected broker");
+        }
     }
     pub fn db_click_broker(&mut self, id: usize) {
         self.init_broker_tab(id);

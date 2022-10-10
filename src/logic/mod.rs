@@ -30,6 +30,16 @@ pub async fn deal_event(
                     data.add_broker();
                 });
             }
+            AppEvent::EditBroker => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.edit_broker();
+                });
+            }
+            AppEvent::ConnectBroker => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.connect_broker();
+                });
+            }
             AppEvent::SaveBroker(index) => {
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     if let Err(e) = data.save_broker(index) {
@@ -181,8 +191,6 @@ pub async fn deal_event(
                     if let Err(e) = data.close_tab(id) {
                         error!("{:?}", e);
                     }
-                    // let root = init_brokers_tabs();
-                    // println!("{:?}", root.debug_state(&data));
                 });
             }
             AppEvent::CloseConnectionTab(id) => {

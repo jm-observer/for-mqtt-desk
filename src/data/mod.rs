@@ -13,6 +13,8 @@ pub type AString = Arc<String>;
 #[derive(Debug)]
 pub enum AppEvent {
     AddBroker,
+    EditBroker,
+    ConnectBroker,
     SaveBroker(usize),
     ReConnect(usize),
     // select brokers tab

@@ -3,12 +3,14 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerStoredList, LensSelectedSubscribeHis};
 use crate::data::AppEvent;
 use crate::ui::common::{label_dy, label_dy_expand_width, QOS, SILVER, TOPIC};
+use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
+use druid::widget::Svg;
 use druid::widget::{
     Button, Container, CrossAxisAlignment, Either, Flex, Label, List, Padding, Scroll, Split,
 };
-use druid::{Env, EventCtx};
+use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
 use log::error;
 use std::sync::mpsc::Sender;
@@ -77,17 +79,38 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
     let scroll = Scroll::<Vector<Broker>, List<Broker>>::new(list);
 
     let buttons = Flex::row()
-        .cross_axis_alignment(CrossAxisAlignment::Start)
+        .cross_axis_alignment(CrossAxisAlignment::Center)
         .with_child(
-            Label::new("新增").on_click(move |_ctx, data: &mut AppData, _env| {
+            Svg::new(added_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::AddBroker) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
-            Button::new("删").on_click(move |_ctx, data: &mut AppData, _env| {
+            Svg::new(modified_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+                if let Err(_) = data.db.tx.send(AppEvent::EditBroker) {
+                    error!("fail to send event")
+                }
+            }),
+        )
+        // .with_child(
+        //     Svg::new(copy_icons()).on_click(move |_ctx, data: &mut AppData, _env| {
+        //         if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {
+        //             error!("fail to send event")
+        //         }
+        //     }),
+        // )
+        .with_child(
+            Svg::new(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {
+                    error!("fail to send event")
+                }
+            }),
+        )
+        .with_child(
+            Svg::new(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+                if let Err(_) = data.db.tx.send(AppEvent::ConnectBroker) {
                     error!("fail to send event")
                 }
             }),
