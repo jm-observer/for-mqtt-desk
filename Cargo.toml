@@ -9,23 +9,18 @@ edition = "2021"
 druid = { git = "https://github.com/linebender/druid.git", features = ["im", "serde", "svg"] }
 custom-utils = "0.10.8"
 log = "0.4.17"
-
 anyhow = "1.0.64"
 sled = "0.34.7"
 rumqttc = { path = "../rumqtt/rumqttc"}
-
 serde = {version ="1.0.144", features = ["derive", "rc"]}
 serde_json = "1.0.85"
-
 tokio = {version ="1.21.0", features = ["macros", "rt-multi-thread"]}
 zerocopy = "0.6.0"
 byteorder = "1.4.3"
-
 config = "0.13.2"
 toml_edit = "0.14.4"
 indexmap = "1.9.1"
 notify = "5.0.0"
-
 thiserror = "1.0.37"
 rand = "0.8.5"
 
