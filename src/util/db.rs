@@ -96,6 +96,7 @@ impl ArcDb {
             msgs: Default::default(),
             subscribe_ing: Default::default(),
             public_ing: Default::default(),
+            unsubscribe_ing: Default::default(),
             db: self.clone(),
         })
     }

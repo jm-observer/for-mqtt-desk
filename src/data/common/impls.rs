@@ -12,7 +12,7 @@ impl SubscribeTopic {
             pkid,
             topic: val.topic.clone(),
             qos: QoS::AtLeastOnce,
-            status: SubscribeStatus::Ing,
+            status: SubscribeStatus::SubscribeIng,
         }
     }
     pub fn from_his(val: SubscribeHis, pkid: u16) -> Self {
@@ -20,11 +20,11 @@ impl SubscribeTopic {
             pkid,
             topic: val.topic.clone(),
             qos: val.qos,
-            status: SubscribeStatus::Ing,
+            status: SubscribeStatus::SubscribeIng,
         }
     }
     pub fn is_sucess(&self) -> bool {
-        if self.status == SubscribeStatus::Success {
+        if self.status == SubscribeStatus::SubscribeSuccess {
             true
         } else {
             false

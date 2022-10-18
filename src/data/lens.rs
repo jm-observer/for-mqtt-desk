@@ -287,7 +287,6 @@ impl Lens<Broker, u16> for PortLens {
     }
 
     fn with_mut<V, F: FnOnce(&mut u16) -> V>(&self, data: &mut Broker, f: F) -> V {
-        debug!("**********");
         f(&mut data.port)
     }
 }

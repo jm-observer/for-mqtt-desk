@@ -102,9 +102,10 @@ pub struct SubscribeInput {
 }
 #[derive(Data, Debug, Clone, Eq, PartialEq)]
 pub enum SubscribeStatus {
-    Ing,
-    Success,
-    Fail,
+    SubscribeIng,
+    SubscribeSuccess,
+    SubscribeFail,
+    UnSubscribeIng,
 }
 
 #[derive(Debug, Clone, Data)]

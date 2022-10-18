@@ -22,13 +22,15 @@ pub enum AppEvent {
     SelectTabs(usize),
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
-    UnSubscribe { broker_id: usize, pk_id: u16 },
+    ToUnSubscribe { broker_id: usize, pk_id: u16 },
+    UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
     Public(PublicInput, usize),
     ReceivePublic(usize, SubscribeMsg),
     PubAck(usize, PubAck),
     SubAck(usize, SubAck),
+    UnSubAck(usize, u16),
     ClickBroker(usize),
     DbClickCheck(usize),
     // ClickSubscribeHis(usize, SubscribeHis),
@@ -39,4 +41,10 @@ pub enum AppEvent {
     DeleteBroker,
     // e.g: delete broker; close tab; click button "disconnect"
     Disconnect(usize),
+}
+#[derive(Debug, Clone)]
+pub struct EventUnSubscribe {
+    pub broke_id: usize,
+    pub subscribe_pk_id: u16,
+    pub topic: String,
 }

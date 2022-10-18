@@ -1,6 +1,6 @@
 use crate::data::hierarchy::AppData;
-use crate::data::AppEvent;
-use crate::mqtt::{init_connect, public, subscribe};
+use crate::data::{AppEvent, EventUnSubscribe};
+use crate::mqtt::{init_connect, public, subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::SubscribeHis;
 use crate::ui::tabs::{ID_ONE, INCREMENT};
@@ -43,6 +43,41 @@ pub async fn deal_event(
             AppEvent::SaveBroker(index) => {
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     if let Err(e) = data.save_broker(index) {
+                        error!("{:?}", e);
+                    }
+                });
+            }
+            AppEvent::RemoveSubscribeHis { broker_id, his_id } => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    data.remove_subscribe_his(broker_id, his_id);
+                });
+            }
+            AppEvent::ToUnSubscribe { broker_id, pk_id } => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.to_unscribe(broker_id, pk_id) {
+                        error!("{:?}", e);
+                    }
+                });
+            }
+            AppEvent::UnSubscribeIng(EventUnSubscribe {
+                broke_id,
+                subscribe_pk_id,
+                topic,
+            }) => match to_unsubscribe(broke_id, topic, &mqtt_clients).await {
+                Ok(pk_id) => {
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        if let Err(e) = data.unscribeing(broke_id, subscribe_pk_id, pk_id) {
+                            error!("{:?}", e);
+                        }
+                    });
+                }
+                Err(e) => {
+                    error!("{:?}", e);
+                }
+            },
+            AppEvent::UnSubAck(broke_id, unsubscribe_pk_id) => {
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.unsubscribe_ack(broke_id, unsubscribe_pk_id) {
                         error!("{:?}", e);
                     }
                 });

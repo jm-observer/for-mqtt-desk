@@ -54,6 +54,11 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncC
                         error!("fail to send event!");
                     };
                 }
+                Packet::UnsubAck(ack) => {
+                    if let Err(_) = tx.send(AppEvent::UnSubAck(id, ack.pkid)) {
+                        error!("fail to send event!");
+                    };
+                }
                 Packet::Publish(msg, _) => {
                     let Publish {
                         dup: _,
@@ -108,6 +113,17 @@ pub async fn subscribe(
         bail!("can't get mqtt client: {}", index);
     };
     Ok(client.subscribe_and_tracing(input.topic, input.qos).await?)
+}
+
+pub async fn to_unsubscribe(
+    index: usize,
+    topic: String,
+    clients: &HashMap<usize, AsyncClient>,
+) -> Result<u16> {
+    let Some(client) = clients.get(&index) else {
+        bail!("can't get mqtt client: {}", index);
+    };
+    Ok(client.unsubscribe_and_tracing(topic).await?)
 }
 
 pub async fn public(

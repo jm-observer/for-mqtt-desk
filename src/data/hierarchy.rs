@@ -1,13 +1,14 @@
-use crate::data::common::Broker;
+use crate::data::common::{Broker, Id};
 use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
 };
-use crate::data::AppEvent;
+
+use crate::data::{AppEvent, EventUnSubscribe};
 use crate::util::db::ArcDb;
 use anyhow::bail;
 use anyhow::Result;
-use custom_utils::tx;
+use custom_utils::{tx, tx_async};
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
 use log::{debug, error, warn};
@@ -23,6 +24,7 @@ pub struct AppData {
     pub msgs: HashMap<usize, Vector<Msg>>,
     pub subscribe_ing: HashMap<usize, SubscribeInput>,
     pub public_ing: HashMap<usize, PublicInput>,
+    pub unsubscribe_ing: HashMap<usize, Vector<UnsubcribeTracing>>,
     #[data(ignore)]
     #[lens(ignore)]
     pub db: ArcDb,
@@ -113,12 +115,106 @@ impl AppData {
             error!("can't find the connection");
         }
     }
+    pub fn unscribeing(
+        &mut self,
+        broker_id: usize,
+        subscribe_pkid: u16,
+        unsubscribe_pkid: u16,
+    ) -> Result<()> {
+        if let Some(broker) = self.find_broker(broker_id) {
+            if let Some(list) = self.unsubscribe_ing.get_mut(&broker_id) {
+                list.push_back(UnsubcribeTracing {
+                    subscribe_pk_id: subscribe_pkid,
+                    unsubscribe_pk_id: unsubscribe_pkid,
+                })
+            } else {
+                let mut list = Vector::new();
+                list.push_back(UnsubcribeTracing {
+                    subscribe_pk_id: subscribe_pkid,
+                    unsubscribe_pk_id: unsubscribe_pkid,
+                });
+                self.unsubscribe_ing.insert(broker_id, list);
+            }
+        } else {
+            bail!("can't find broker");
+        }
+        Ok(())
+    }
+
+    pub fn unsubscribe_ack(&mut self, broker_id: usize, unsubscribe_pkid: u16) -> Result<()> {
+        if let Some(broker) = self.find_broker(broker_id) {
+            if let Some(list) = self.unsubscribe_ing.get_mut(&broker_id) {
+                if let Some(index) = list
+                    .iter()
+                    .enumerate()
+                    .find(|(index, x)| x.unsubscribe_pk_id == unsubscribe_pkid)
+                    .map(|(index, x)| index)
+                {
+                    let tracing = list.remove(index);
+                    if let Some(list) = self.subscribe_topics.get_mut(&broker_id) {
+                        if let Some(index) = list
+                            .iter_mut()
+                            .enumerate()
+                            .find(|(index, his)| (*his).pkid == tracing.subscribe_pk_id)
+                            .map(|(index, x)| index)
+                        {
+                            list.remove(index);
+                            return Ok(());
+                        } else {
+                            bail!("can't find broker's subscribe");
+                        }
+                    }
+                } else {
+                    bail!("can't find broker's unsubscribe_tracing");
+                }
+            } else {
+                bail!("can't find broker's unsubscribe_ing");
+            }
+        } else {
+            bail!("can't find broker");
+        }
+        Ok(())
+    }
+    pub fn to_unscribe(&mut self, broker_id: usize, pkid: u16) -> Result<()> {
+        if let Some(broker) = self.find_broker(broker_id) {
+            if let Some(list) = self.subscribe_topics.get_mut(&broker_id) {
+                if let Some(index) = list.iter_mut().find(|his| (*his).pkid == pkid) {
+                    index.status = SubscribeStatus::UnSubscribeIng;
+                    let event = EventUnSubscribe {
+                        broke_id: broker_id,
+                        subscribe_pk_id: index.pkid,
+                        topic: index.topic.as_ref().clone(),
+                    };
+                    tx!(self.db.tx, AppEvent::UnSubscribeIng(event));
+                    return Ok(());
+                }
+            }
+        }
+        warn!("can't find the subscribe to unsubscibe");
+        Ok(())
+    }
     pub fn subscribe(&mut self, id: usize, input: SubscribeHis, pkid: u16) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
             let sub = SubscribeTopic::from_his(input, pkid);
             subscribe_topics.push_back(sub.into());
         }
         Ok(())
+    }
+    pub fn remove_subscribe_his(&mut self, broker_id: usize, his_id: Id) {
+        if let Some(broker) = self.find_broker(broker_id) {
+            if let Some(hises) = self.subscribe_hises.get_mut(&broker_id) {
+                if let Some(index) = hises
+                    .iter()
+                    .enumerate()
+                    .find(|(index, his)| his.id == his_id)
+                    .map(|(index, his)| index)
+                {
+                    hises.remove(index);
+                    return;
+                }
+            }
+        }
+        warn!("can't find the subscribe_his");
     }
     pub fn subscribe_by_input(
         &mut self,
@@ -148,7 +244,7 @@ impl AppData {
                         || code == SubscribeReasonCode::QoS1
                         || code == SubscribeReasonCode::QoS2
                     {
-                        msg.status = SubscribeStatus::Success;
+                        msg.status = SubscribeStatus::SubscribeSuccess;
                     }
                 }
             }
@@ -161,12 +257,14 @@ impl AppData {
         }
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
+        debug!("********");
         self.select_broker(id);
         for (index, tab) in self.broker_tabs.iter().enumerate() {
             if *tab == id {
                 tx!(self.db.tx, AppEvent::SelectTabs(index));
             }
         }
+        debug!("END");
         Ok(())
     }
     pub fn edit_broker(&mut self) {
@@ -266,4 +364,9 @@ impl AppData {
             msgs.push_back(sub.into());
         }
     }
+}
+#[derive(Debug, Clone, Data)]
+pub struct UnsubcribeTracing {
+    pub subscribe_pk_id: u16,
+    pub unsubscribe_pk_id: u16,
 }

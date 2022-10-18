@@ -78,7 +78,7 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
             .with_child(TOPIC().lens(SubscribeTopic::topic))
             .with_child(Svg::new(removed_icon()).on_click(
                 move |_ctx, data: &mut SubscribeTopic, _env| {
-                    if let Err(_) = tx.send(AppEvent::UnSubscribe {
+                    if let Err(_) = tx.send(AppEvent::ToUnSubscribe {
                         broker_id: id,
                         pk_id: data.pkid,
                     }) {
