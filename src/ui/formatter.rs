@@ -41,6 +41,7 @@ impl Formatter<u16> for MustInput {
         parse_to_port(input).to_validation()
     }
     fn value(&self, input: &str) -> Result<u16, ValidationError> {
+        debug!("Value: {}", input);
         parse_to_port(input).to_validation_error()
     }
 }
@@ -61,10 +62,13 @@ pub trait Portable<T> {
     fn to_validation_error(self) -> Result<T, ValidationError>;
 }
 
-impl<T> Portable<T> for Result<T, ForError> {
+impl<T: ToString> Portable<T> for Result<T, ForError> {
     fn to_validation(self) -> Validation {
         match self {
-            Ok(_) => Validation::success(),
+            Ok(val) => {
+                debug!("&&&&&&&&: {}", val.to_string());
+                Validation::success().change_text(val.to_string())
+            }
             Err(e) => Validation::failure(e),
         }
     }

@@ -278,3 +278,16 @@ impl Lens<Msg, QoS> for MsgTopicLens {
         })
     }
 }
+
+pub struct PortLens;
+
+impl Lens<Broker, u16> for PortLens {
+    fn with<V, F: FnOnce(&u16) -> V>(&self, data: &Broker, f: F) -> V {
+        f(&data.port)
+    }
+
+    fn with_mut<V, F: FnOnce(&mut u16) -> V>(&self, data: &mut Broker, f: F) -> V {
+        debug!("**********");
+        f(&mut data.port)
+    }
+}

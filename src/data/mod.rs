@@ -3,7 +3,7 @@ pub mod db;
 pub mod hierarchy;
 pub mod lens;
 
-use crate::data::common::{PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
+use crate::data::common::{Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
 use common::Broker;
 use rumqttc::v5::mqttbytes::{PubAck, SubAck};
 use std::sync::Arc;
@@ -12,6 +12,7 @@ pub type AString = Arc<String>;
 
 #[derive(Debug)]
 pub enum AppEvent {
+    RemoveSubscribeHis { broker_id: usize, his_id: Id },
     AddBroker,
     EditBroker,
     ConnectBroker,
@@ -21,6 +22,7 @@ pub enum AppEvent {
     SelectTabs(usize),
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
+    UnSubscribe { broker_id: usize, pk_id: u16 },
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
     Public(PublicInput, usize),

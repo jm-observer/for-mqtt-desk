@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use druid::theme::WINDOW_BACKGROUND_COLOR;
 use druid::{AppLauncher, Color, Env, LocalizedString, PlatformError, WindowDesc};
 use for_mqtt::data::hierarchy::AppData;
@@ -16,9 +17,10 @@ fn main() -> Result<(), PlatformError> {
     let mut db = ArcDb::init_db(tx.clone())?;
     let data = db.read_app_data()?;
 
-    let launcher = AppLauncher::with_window(win).configure_env(|env: &mut Env, data: &AppData| {
-        // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
-    });
+    let launcher =
+        AppLauncher::with_window(win).configure_env(|_env: &mut Env, _data: &AppData| {
+            // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
+        });
     let event_sink = launcher.get_external_handle();
     thread::spawn(move || {
         if let Err(e) = deal_event(event_sink, rx, tx) {

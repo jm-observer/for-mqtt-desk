@@ -9,6 +9,7 @@ use crate::ui::common::{
     error_display_widget, label_static, BUTTON_PADDING, GREEN, MSG, QOS, TOPIC, YELLOW,
 };
 use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
+use crate::ui::icons::removed_icon;
 use crate::ui::ids::{
     TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
     ID_SUBSCRIBE_TOPIC,
@@ -17,7 +18,7 @@ use druid::im::Vector;
 use druid::text::EditableText;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
-    Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split,
+    Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split, Svg,
     TextBox,
 };
 use druid::{LensExt, LocalizedString};
@@ -25,15 +26,14 @@ use druid::{UnitPoint, Widget, WidgetExt};
 use log::{debug, error};
 use std::sync::mpsc::Sender;
 
-pub fn display_connection(id: usize, _tx: Sender<AppEvent>) -> Container<AppData> {
+pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData> {
     let subscribe_list = Padding::new(
-        1.0,
+        0.5,
         Container::new(
-            init_subscribe_list(id), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
-                                     //     .split_point(0.75)
-                                     //     .bar_size(1.0),
-        )
-        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+            init_subscribe_list(id, tx), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
+                                         //     .split_point(0.75)
+                                         //     .bar_size(1.0),
+        ), // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
     let subscribe = Padding::new(
         1.0,
@@ -46,7 +46,7 @@ pub fn display_connection(id: usize, _tx: Sender<AppEvent>) -> Container<AppData
     );
 
     let msg = Padding::new(
-        1.0,
+        0.5,
         Container::new(
             Split::rows(
                 Align::centered(init_msgs_list(id)),
@@ -60,13 +60,15 @@ pub fn display_connection(id: usize, _tx: Sender<AppEvent>) -> Container<AppData
     Container::new(
         Split::columns(subscribe, msg)
             .split_point(0.3)
-            .draggable(true),
+            .draggable(true)
+            .bar_size(0.5),
     )
     // .debug_paint_layout()
 }
 
-fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
+fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let list: List<SubscribeTopic> = List::new(move || {
+        let tx = tx.clone();
         Flex::row()
             .with_child(Either::new(
                 |data: &SubscribeTopic, _env| data.is_sucess(),
@@ -74,6 +76,16 @@ fn init_subscribe_list(id: usize) -> impl Widget<AppData> {
                 QOS().background(YELLOW).lens(SubscribeTopic::qos),
             ))
             .with_child(TOPIC().lens(SubscribeTopic::topic))
+            .with_child(Svg::new(removed_icon()).on_click(
+                move |_ctx, data: &mut SubscribeTopic, _env| {
+                    if let Err(_) = tx.send(AppEvent::UnSubscribe {
+                        broker_id: id,
+                        pk_id: data.pkid,
+                    }) {
+                        error!("fail to send event")
+                    }
+                },
+            ))
             .align_left()
             .expand_width()
     });

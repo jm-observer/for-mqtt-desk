@@ -21,8 +21,8 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         Container::new(
             Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
                 .split_point(0.55)
-                // .bar_size(1.0)
-                .draggable(true),
+                .draggable(true)
+                .bar_size(3.0),
         )
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     )
@@ -30,14 +30,25 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let list: List<SubscribeHis> = List::new(move || {
-        let tx = tx.clone();
+        let tx_click = tx.clone();
+        let tx_remove = tx.clone();
         Flex::row()
             .with_child(QOS().lens(SubscribeHis::qos))
             .with_child(TOPIC().lens(SubscribeHis::topic))
+            .with_child(Svg::new(removed_icon()).on_click(
+                move |_ctx, data: &mut SubscribeHis, _env| {
+                    if let Err(_) = tx_remove.send(AppEvent::RemoveSubscribeHis {
+                        broker_id: data.broker_id,
+                        his_id: data.id,
+                    }) {
+                        error!("fail to send event")
+                    }
+                },
+            ))
             .expand_width()
             .on_click(
                 move |_ctx: &mut EventCtx, data: &mut SubscribeHis, _env: &Env| {
-                    if let Err(_e) = tx.send(AppEvent::ClickSubscribeHis(data.clone())) {
+                    if let Err(_e) = tx_click.send(AppEvent::ClickSubscribeHis(data.clone())) {
                         error!("fail to send");
                     }
                 },

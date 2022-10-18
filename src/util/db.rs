@@ -120,6 +120,7 @@ impl ArcDb {
     }
 
     pub fn save_broker(&mut self, id: usize, broker: &Broker) -> Result<()> {
+        debug!("save broker: {:?}", broker);
         if self.ids.iter().find(|x| **x == id).is_none() {
             self.ids.push_back(id);
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;

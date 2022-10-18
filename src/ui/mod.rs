@@ -24,7 +24,8 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Split::columns(init_broker_list(tx.clone()), init_brokers_tabs(tx))
                 .split_point(0.25)
                 // .bar_size(1.0)
-                .draggable(true),
+                .draggable(true)
+                .bar_size(0.5),
         )
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     )
