@@ -41,8 +41,8 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(
                     TextBox::new()
                         .with_formatter(MustInput)
-                        .validate_while_editing(false)
                         .update_data_while_editing(true)
+                        .validate_while_editing(true)
                         .delegate(
                             TextBoxErrorDelegate::new(ID_ADDR, check_no_empty)
                                 .sends_partial_errors(true),
@@ -59,6 +59,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(
                     TextBox::new()
                         .with_formatter(MustInput)
+                        .update_data_while_editing(true)
                         .validate_while_editing(true)
                         .delegate(
                             TextBoxErrorDelegate::new(ID_PORT, check_port)

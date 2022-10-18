@@ -170,7 +170,8 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 .with_child(
                     TextBox::new()
                         .with_formatter(MustInput)
-                        .validate_while_editing(false)
+                        .update_data_while_editing(true)
+                        .validate_while_editing(true)
                         .delegate(
                             TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
                                 .sends_partial_errors(true),
@@ -187,7 +188,8 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                     TextBox::new()
                         .with_placeholder("0/1/2")
                         .with_formatter(MustInput)
-                        .validate_while_editing(false)
+                        .update_data_while_editing(true)
+                        .validate_while_editing(true)
                         .delegate(
                             TextBoxErrorDelegate::new(ID_SUBSCRIBE_QOS, check_qos)
                                 .sends_partial_errors(true),
@@ -241,7 +243,8 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(
                     TextBox::new()
                         .with_formatter(MustInput)
-                        .validate_while_editing(false)
+                        .update_data_while_editing(true)
+                        .validate_while_editing(true)
                         .delegate(
                             TextBoxErrorDelegate::new(ID_PUBLISH_TOPIC, check_no_empty)
                                 .sends_partial_errors(true),
