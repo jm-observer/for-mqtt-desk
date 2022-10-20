@@ -154,10 +154,10 @@ impl ArcDb {
         self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
         Ok(())
     }
-    pub fn update_subscribe_his(&self, id: usize, hises: Vector<SubscribeHis>) -> Result<()> {
+    pub fn update_subscribe_his(&self, id: usize, hises: &Vector<SubscribeHis>) -> Result<()> {
         let key = DbKey::subscribe_his_key(id);
         self.db
-            .insert(key.as_bytes()?, serde_json::to_vec(&hises)?)?;
+            .insert(key.as_bytes()?, serde_json::to_vec(hises)?)?;
         Ok(())
     }
 }

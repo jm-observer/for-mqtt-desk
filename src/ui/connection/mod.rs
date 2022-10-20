@@ -279,7 +279,8 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(
                     TextBox::multiline()
                         .with_formatter(MustInput)
-                        .validate_while_editing(false)
+                        .update_data_while_editing(true)
+                        .validate_while_editing(true)
                         .delegate(
                             TextBoxErrorDelegate::new(ID_PUBLISH_MSG, check_no_empty)
                                 .sends_partial_errors(true),

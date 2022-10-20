@@ -65,10 +65,7 @@ pub trait Portable<T> {
 impl<T: ToString> Portable<T> for Result<T, ForError> {
     fn to_validation(self) -> Validation {
         match self {
-            Ok(val) => {
-                debug!("&&&&&&&&: {}", val.to_string());
-                Validation::success().change_text(val.to_string())
-            }
+            Ok(val) => Validation::success().change_text(val.to_string()),
             Err(e) => Validation::failure(e),
         }
     }
@@ -85,7 +82,7 @@ pub fn parse_to_port(input: &str) -> Result<u16, ForError> {
     input.parse().map_err(|_| ForError::InvalidPort)
 }
 pub fn parse_to_no_empty(input: &str) -> Result<AString, ForError> {
-    debug!("{}", input);
+    // debug!("{}", input);
     if input.is_empty() {
         return Err(ForError::NotEmpty);
     }

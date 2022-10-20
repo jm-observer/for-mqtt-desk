@@ -54,7 +54,10 @@ impl druid::Lens<AppData, Vector<SubscribeHis>> for LensSelectedSubscribeHis {
     fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
         if let Some(broker) = data.get_selected_broker() {
             f(match data.subscribe_hises.get(&broker.id) {
-                Some(broker) => broker,
+                Some(broker) => {
+                    debug!("{:?}", broker);
+                    broker
+                }
                 None => unreachable!(""),
             })
         } else {

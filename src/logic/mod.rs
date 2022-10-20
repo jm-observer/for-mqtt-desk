@@ -111,6 +111,7 @@ pub async fn deal_event(
                 }
             }
             AppEvent::Public(input, index) => {
+                debug!("{:?}", input);
                 match public(index, input.clone().into(), &mqtt_clients).await {
                     Ok(id) => {
                         event_sink.add_idle_callback(move |data: &mut AppData| {

@@ -210,6 +210,9 @@ impl AppData {
                     .map(|(index, his)| index)
                 {
                     hises.remove(index);
+                    if let Err(e) = self.db.update_subscribe_his(broker_id, hises) {
+                        warn!("{:?}", e);
+                    }
                     return;
                 }
             }
@@ -228,9 +231,11 @@ impl AppData {
         }
         if let Some(subscribe_hises) = self.subscribe_hises.get_mut(&id) {
             let his: SubscribeHis = input.into();
+            debug!("{:?}", subscribe_hises);
+            debug!("{:?}", his);
             if subscribe_hises.iter().find(|x| *x == &his).is_none() {
                 subscribe_hises.push_back(his.into());
-                self.db.update_subscribe_his(id, subscribe_hises.clone())?;
+                self.db.update_subscribe_his(id, &subscribe_hises)?;
             }
         }
         Ok(())
@@ -257,14 +262,12 @@ impl AppData {
         }
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
-        debug!("********");
         self.select_broker(id);
         for (index, tab) in self.broker_tabs.iter().enumerate() {
             if *tab == id {
                 tx!(self.db.tx, AppEvent::SelectTabs(index));
             }
         }
-        debug!("END");
         Ok(())
     }
     pub fn edit_broker(&mut self) {

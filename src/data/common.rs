@@ -3,6 +3,7 @@ mod impls;
 use crate::data::db::BrokerDB;
 use crate::data::{AString, AppEvent};
 use druid::{Data, Lens};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc::Sender;
@@ -28,7 +29,7 @@ pub struct SubscribeTopic {
     #[data(eq)]
     pub status: SubscribeStatus,
 }
-#[derive(Debug, Clone, Eq, PartialEq, Lens, Deserialize, Serialize)]
+#[derive(Debug, Clone, Eq, Lens, Deserialize, Serialize)]
 pub struct SubscribeHis {
     #[serde(skip)]
     pub(crate) id: Id,
@@ -176,5 +177,11 @@ impl Broker {
             user_name: self.user_name.clone(),
             password: self.password.clone(),
         }
+    }
+}
+
+impl PartialEq for SubscribeHis {
+    fn eq(&self, other: &Self) -> bool {
+        self.broker_id == other.broker_id && self.topic == other.topic && self.qos == other.qos
     }
 }

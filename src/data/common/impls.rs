@@ -11,7 +11,7 @@ impl SubscribeTopic {
         Self {
             pkid,
             topic: val.topic.clone(),
-            qos: QoS::AtLeastOnce,
+            qos: val.qos,
             status: SubscribeStatus::SubscribeIng,
         }
     }
@@ -38,7 +38,7 @@ impl PublicMsg {
             pkid,
             topic: val.topic.clone(),
             msg: val.msg.clone(),
-            qos: QoS::AtLeastOnce,
+            qos: val.qos,
             status: PublicStatus::Ing,
         }
     }
@@ -50,7 +50,7 @@ impl From<SubscribeInput> for SubscribeHis {
             id: Id::default(),
             broker_id: val.broker_id,
             topic: val.topic.clone(),
-            qos: QoS::AtMostOnce,
+            qos: val.qos.clone(),
         }
     }
 }

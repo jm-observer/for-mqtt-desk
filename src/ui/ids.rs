@@ -60,24 +60,24 @@ impl ValidationDelegate for TextBoxErrorDelegate {
     fn event(&mut self, ctx: &mut EventCtx, event: TextBoxEvent, _current_text: &str) {
         match event {
             TextBoxEvent::Began => {
-                debug!("Began");
+                // debug!("Began");
                 ctx.submit_command(CLEAR_ERROR.to(self.target));
                 ctx.submit_command(EDIT_BEGAN.with(self.target));
             }
             TextBoxEvent::Changed if self.sends_partial_errors => {
-                debug!("Changed");
+                // debug!("Changed");
                 ctx.submit_command(CLEAR_ERROR.to(self.target));
             }
             TextBoxEvent::PartiallyInvalid(err) if self.sends_partial_errors => {
-                debug!("PartiallyInvalid");
+                // debug!("PartiallyInvalid");
                 ctx.submit_command(SHOW_ERROR.with(err).to(self.target));
             }
             TextBoxEvent::Invalid(err) => {
-                debug!("Invalid");
+                // debug!("Invalid");
                 ctx.submit_command(SHOW_ERROR.with(err).to(self.target));
             }
             TextBoxEvent::Cancel | TextBoxEvent::Complete => {
-                debug!("Cancel | Complete: {}", _current_text);
+                // debug!("Cancel | Complete: {}", _current_text);
                 if (self.check_fn)(_current_text) {
                     ctx.submit_command(CLEAR_ERROR.to(self.target));
                 }
