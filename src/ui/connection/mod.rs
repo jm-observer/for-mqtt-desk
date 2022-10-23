@@ -166,7 +166,7 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
-                .with_child(label_static("topic"))
+                .with_child(label_static("topic", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
                         .with_formatter(MustInput)
@@ -183,7 +183,7 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("qos"))
+                .with_child(label_static("qos", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
                         .with_placeholder("0/1/2")
@@ -239,7 +239,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
-                .with_child(label_static("topic"))
+                .with_child(label_static("topic", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
                         .with_formatter(MustInput)
@@ -257,7 +257,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("qos"))
+                .with_child(label_static("qos", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
                         .with_placeholder("0/1/2")
@@ -275,7 +275,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("msg"))
+                .with_child(label_static("msg", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::multiline()
                         .with_formatter(MustInput)

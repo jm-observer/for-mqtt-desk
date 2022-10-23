@@ -2,7 +2,10 @@ use crate::data::common::{Broker, SubscribeHis};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerStoredList, LensSelectedSubscribeHis};
 use crate::data::AppEvent;
-use crate::ui::common::{label_dy, label_dy_expand_width, QOS, SILVER, TOPIC};
+use crate::ui::common::{
+    label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title, QOS,
+    SILVER, TOPIC,
+};
 use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
@@ -16,16 +19,22 @@ use log::error;
 use std::sync::mpsc::Sender;
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    Padding::new(
-        5.0,
-        Container::new(
-            Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
-                .split_point(0.55)
-                .draggable(true)
-                .bar_size(3.0),
+    let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
+    flex
+        // .with_child(label_static("Broker List", UnitPoint::LEFT))
+        .with_flex_child(
+            Padding::new(
+                5.0,
+                Container::new(
+                    Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
+                        .split_point(0.55)
+                        .draggable(true)
+                        .bar_size(3.0),
+                )
+                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+            ),
+            1.0,
         )
-        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-    )
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
@@ -53,15 +62,16 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .lens(LensSelectedSubscribeHis);
     let buttons = Flex::row()
         .cross_axis_alignment(CrossAxisAlignment::Center)
+        .with_flex_child(title("Subscribe History", UnitPoint::LEFT), 1.0)
         .with_child(
-            Svg::new(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+            svg(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::RemoveSubscribeHis) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
-            Svg::new(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+            svg(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Some(his) = data.get_selected_subscribe_his() {
                     if let Err(_) = data.db.tx.send(AppEvent::SubscribeFromHis(his)) {
                         error!("fail to send event");
@@ -71,7 +81,13 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         );
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    let flex = flex.with_child(buttons).with_flex_child(scroll, 1.0);
+    let flex = flex
+        .with_child(
+            buttons
+                .expand_width()
+                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+        )
+        .with_flex_child(scroll, 1.0);
     flex
 }
 
@@ -106,15 +122,16 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
 
     let buttons = Flex::row()
         .cross_axis_alignment(CrossAxisAlignment::Center)
+        .with_flex_child(title("Broker List", UnitPoint::LEFT), 1.0)
         .with_child(
-            Svg::new(added_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+            svg(added_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::AddBroker) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
-            Svg::new(modified_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+            svg(modified_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::EditBroker) {
                     error!("fail to send event")
                 }
@@ -128,14 +145,14 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
         //     }),
         // )
         .with_child(
-            Svg::new(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+            svg(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
-            Svg::new(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+            svg(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::ConnectBroker) {
                     error!("fail to send event")
                 }
@@ -144,7 +161,14 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
 
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
     let flex = flex
-        .with_child(buttons)
+        // .with_child(label_static("Broker List", UnitPoint::LEFT))
+        .with_child(
+            buttons
+                // .fix_height(16.0)
+                .expand_width()
+                // .padding(2.0)
+                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+        )
         .with_flex_child(scroll.vertical().expand().lens(BrokerStoredList), 1.0);
     flex
 }
