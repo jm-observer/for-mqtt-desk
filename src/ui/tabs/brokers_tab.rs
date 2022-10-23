@@ -98,17 +98,7 @@ impl TabsPolicy for BrokersTabs {
         _data: &Self::Input,
     ) -> Self::LabelWidget {
         Self::default_make_label(_info)
-            .with_text_size(8.0)
-            .fix_size(10.0, 10.0)
-        // Label::dynamic(|data: &Broker, _: &Env| {
-        //     debug!("data.name={}", data.name);
-        //     format!("{}", data.name)
-        // })
-        // .lens(BrokerIndex(_key))
-        // if let Some(tabs) = _data.brokers.iter().find(|x| (*x).id == _key) {
-        //     debug!("{}", tabs.name);
-        //     return Label::new(tabs.name.as_str());
-        // }
-        // unreachable!()
+        // .with_text_size(8.0)
+        // .fix_size(20.0, 15.0)
     }
 }

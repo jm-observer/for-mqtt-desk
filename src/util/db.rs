@@ -98,6 +98,7 @@ impl ArcDb {
             public_input: Default::default(),
             unsubscribe_ing: Default::default(),
             db: self.clone(),
+            hint: "error to init from db".to_string().into(),
         })
     }
 

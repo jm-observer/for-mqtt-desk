@@ -4,7 +4,7 @@ use crate::data::common::{
     SubscribeStatus, SubscribeTopic, TabStatus,
 };
 
-use crate::data::{AppEvent, EventUnSubscribe};
+use crate::data::{AString, AppEvent, EventUnSubscribe};
 use crate::util::db::ArcDb;
 use anyhow::bail;
 use anyhow::Result;
@@ -28,6 +28,7 @@ pub struct AppData {
     #[data(ignore)]
     #[lens(ignore)]
     pub db: ArcDb,
+    pub hint: AString,
 }
 
 impl AppData {

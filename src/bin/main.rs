@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+#![windows_subsystem = "windows"]
 use druid::theme::WINDOW_BACKGROUND_COLOR;
 use druid::{AppLauncher, Color, Env, LocalizedString, PlatformError, WindowDesc};
 use for_mqtt::data::hierarchy::AppData;
