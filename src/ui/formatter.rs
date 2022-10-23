@@ -24,7 +24,7 @@ impl Formatter<AString> for MustInput {
         value.as_str().to_string()
     }
 
-    fn validate_partial_input(&self, input: &str, sel: &Selection) -> Validation {
+    fn validate_partial_input(&self, input: &str, _sel: &Selection) -> Validation {
         parse_to_no_empty(input).to_validation()
     }
     fn value(&self, input: &str) -> Result<AString, ValidationError> {
@@ -37,7 +37,7 @@ impl Formatter<u16> for MustInput {
         value.to_string()
     }
 
-    fn validate_partial_input(&self, input: &str, sel: &Selection) -> Validation {
+    fn validate_partial_input(&self, input: &str, _sel: &Selection) -> Validation {
         parse_to_port(input).to_validation()
     }
     fn value(&self, input: &str) -> Result<u16, ValidationError> {
@@ -50,7 +50,7 @@ impl Formatter<QoS> for MustInput {
         value.to_string()
     }
 
-    fn validate_partial_input(&self, input: &str, sel: &Selection) -> Validation {
+    fn validate_partial_input(&self, input: &str, _sel: &Selection) -> Validation {
         parse_to_qos(input).to_validation()
     }
     fn value(&self, input: &str) -> Result<QoS, ValidationError> {
@@ -65,7 +65,7 @@ pub trait Portable<T> {
 impl<T: ToString> Portable<T> for Result<T, ForError> {
     fn to_validation(self) -> Validation {
         match self {
-            Ok(val) => Validation::success().change_text(val.to_string()),
+            Ok(_val) => Validation::success(),
             Err(e) => Validation::failure(e),
         }
     }

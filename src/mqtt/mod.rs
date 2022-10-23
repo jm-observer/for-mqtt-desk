@@ -104,7 +104,7 @@ fn deal_conn_ack(ack_code: ConnectReturnCode, tx: Sender<AppEvent>, id: usize) {
     }
 }
 
-pub async fn subscribe(
+pub async fn mqtt_subscribe(
     index: usize,
     input: MqttSubscribeInput,
     clients: &HashMap<usize, AsyncClient>,
@@ -126,7 +126,7 @@ pub async fn to_unsubscribe(
     Ok(client.unsubscribe_and_tracing(topic).await?)
 }
 
-pub async fn public(
+pub async fn mqtt_public(
     index: usize,
     input: MqttPublicInput,
     clients: &HashMap<usize, AsyncClient>,

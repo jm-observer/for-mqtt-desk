@@ -121,7 +121,7 @@ impl AppData {
         subscribe_pkid: u16,
         unsubscribe_pkid: u16,
     ) -> Result<()> {
-        if let Some(broker) = self.find_broker(broker_id) {
+        if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(list) = self.unsubscribe_ing.get_mut(&broker_id) {
                 list.push_back(UnsubcribeTracing {
                     subscribe_pk_id: subscribe_pkid,
@@ -142,21 +142,21 @@ impl AppData {
     }
 
     pub fn unsubscribe_ack(&mut self, broker_id: usize, unsubscribe_pkid: u16) -> Result<()> {
-        if let Some(broker) = self.find_broker(broker_id) {
+        if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(list) = self.unsubscribe_ing.get_mut(&broker_id) {
                 if let Some(index) = list
                     .iter()
                     .enumerate()
-                    .find(|(index, x)| x.unsubscribe_pk_id == unsubscribe_pkid)
-                    .map(|(index, x)| index)
+                    .find(|(_index, x)| x.unsubscribe_pk_id == unsubscribe_pkid)
+                    .map(|(index, _x)| index)
                 {
                     let tracing = list.remove(index);
                     if let Some(list) = self.subscribe_topics.get_mut(&broker_id) {
                         if let Some(index) = list
                             .iter_mut()
                             .enumerate()
-                            .find(|(index, his)| (*his).pkid == tracing.subscribe_pk_id)
-                            .map(|(index, x)| index)
+                            .find(|(_index, his)| (*his).pkid == tracing.subscribe_pk_id)
+                            .map(|(index, _x)| index)
                         {
                             list.remove(index);
                             return Ok(());
@@ -176,7 +176,7 @@ impl AppData {
         Ok(())
     }
     pub fn to_unscribe(&mut self, broker_id: usize, pkid: u16) -> Result<()> {
-        if let Some(broker) = self.find_broker(broker_id) {
+        if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(list) = self.subscribe_topics.get_mut(&broker_id) {
                 if let Some(index) = list.iter_mut().find(|his| (*his).pkid == pkid) {
                     index.status = SubscribeStatus::UnSubscribeIng;
@@ -201,13 +201,13 @@ impl AppData {
         Ok(())
     }
     pub fn remove_subscribe_his(&mut self, broker_id: usize, his_id: Id) {
-        if let Some(broker) = self.find_broker(broker_id) {
+        if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(hises) = self.subscribe_hises.get_mut(&broker_id) {
                 if let Some(index) = hises
                     .iter()
                     .enumerate()
-                    .find(|(index, his)| his.id == his_id)
-                    .map(|(index, his)| index)
+                    .find(|(_index, his)| his.id == his_id)
+                    .map(|(index, _his)| index)
                 {
                     hises.remove(index);
                     if let Err(e) = self.db.update_subscribe_his(broker_id, hises) {

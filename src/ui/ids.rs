@@ -2,10 +2,9 @@ use crate::ForError;
 use druid::text::ValidationError;
 use druid::widget::{Either, Label, SizedBox, TextBoxEvent, ValidationDelegate};
 use druid::{
-    BoxConstraints, Color, Data, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx,
-    PaintCtx, Point, Selector, Size, UpdateCtx, Widget, WidgetExt, WidgetId, WidgetPod,
+    BoxConstraints, Color, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx,
+    Point, Selector, Size, UpdateCtx, Widget, WidgetId, WidgetPod,
 };
-use log::debug;
 
 pub const ID_CLIENT_ID: WidgetId = WidgetId::reserved(2);
 pub const ID_ADDR: WidgetId = WidgetId::reserved(3);

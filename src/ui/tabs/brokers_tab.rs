@@ -2,8 +2,8 @@ use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::ui::tabs::broker_tab::BrokerTabPolicy;
 use druid::widget::{Axis, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
-use druid::Widget;
 use druid::{Data, Env};
+use druid::{Widget, WidgetExt};
 use log::{debug, error};
 use std::sync::mpsc::Sender;
 
@@ -98,6 +98,8 @@ impl TabsPolicy for BrokersTabs {
         _data: &Self::Input,
     ) -> Self::LabelWidget {
         Self::default_make_label(_info)
+            .with_text_size(8.0)
+            .fix_size(10.0, 10.0)
         // Label::dynamic(|data: &Broker, _: &Env| {
         //     debug!("data.name={}", data.name);
         //     format!("{}", data.name)
