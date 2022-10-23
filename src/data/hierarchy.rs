@@ -22,8 +22,8 @@ pub struct AppData {
     pub subscribe_hises: HashMap<usize, Vector<SubscribeHis>>,
     pub subscribe_topics: HashMap<usize, Vector<SubscribeTopic>>,
     pub msgs: HashMap<usize, Vector<Msg>>,
-    pub subscribe_ing: HashMap<usize, SubscribeInput>,
-    pub public_ing: HashMap<usize, PublicInput>,
+    pub subscribe_input: HashMap<usize, SubscribeInput>,
+    pub public_input: HashMap<usize, PublicInput>,
     pub unsubscribe_ing: HashMap<usize, Vector<UnsubcribeTracing>>,
     #[data(ignore)]
     #[lens(ignore)]
@@ -104,8 +104,8 @@ impl AppData {
         }
         self.subscribe_topics.insert(id, Vector::new());
         self.msgs.insert(id, Vector::new());
-        self.subscribe_ing.insert(id, SubscribeInput::init(id));
-        self.public_ing.insert(id, PublicInput::default().into());
+        self.subscribe_input.insert(id, SubscribeInput::init(id));
+        self.public_input.insert(id, PublicInput::default().into());
         Ok(())
     }
     pub fn connected(&mut self, id: usize) -> Result<()> {

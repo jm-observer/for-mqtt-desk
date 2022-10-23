@@ -94,8 +94,8 @@ impl ArcDb {
             subscribe_hises,
             subscribe_topics: Default::default(),
             msgs: Default::default(),
-            subscribe_ing: Default::default(),
-            public_ing: Default::default(),
+            subscribe_input: Default::default(),
+            public_input: Default::default(),
             unsubscribe_ing: Default::default(),
             db: self.clone(),
         })

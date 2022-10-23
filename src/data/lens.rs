@@ -120,13 +120,13 @@ pub struct BrokerIndexLensSubscribeInput(pub usize);
 
 impl druid::Lens<AppData, SubscribeInput> for BrokerIndexLensSubscribeInput {
     fn with<V, F: FnOnce(&SubscribeInput) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.subscribe_ing.get(&self.0) {
+        f(match data.subscribe_input.get(&self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
         })
     }
     fn with_mut<V, F: FnOnce(&mut SubscribeInput) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.subscribe_ing.get_mut(&self.0) {
+        f(match data.subscribe_input.get_mut(&self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
         })
@@ -137,13 +137,13 @@ pub struct BrokerIndexLensPublicInput(pub usize);
 
 impl druid::Lens<AppData, PublicInput> for BrokerIndexLensPublicInput {
     fn with<V, F: FnOnce(&PublicInput) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.public_ing.get(&self.0) {
+        f(match data.public_input.get(&self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
         })
     }
     fn with_mut<V, F: FnOnce(&mut PublicInput) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.public_ing.get_mut(&self.0) {
+        f(match data.public_input.get_mut(&self.0) {
             Some(broker) => broker,
             None => unreachable!(""),
         })

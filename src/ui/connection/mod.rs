@@ -204,8 +204,8 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 Button::new(LocalizedString::new("button-subscribe"))
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
                         debug!("{:?}", data.data);
-                        if let Some(broker) = data.data.subscribe_ing.get(&data.id) {
-                            if broker.topic.is_empty() {
+                        if let Some(input) = data.data.subscribe_input.get(&data.id) {
+                            if input.topic.is_empty() {
                                 debug!("topic is empty");
                                 return;
                             }
@@ -213,7 +213,7 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                                 .data
                                 .db
                                 .tx
-                                .send(AppEvent::Subscribe(broker.clone(), data.id))
+                                .send(AppEvent::Subscribe(input.clone(), data.id))
                             {
                                 error!("{:?}", e);
                             }
@@ -296,7 +296,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
             Flex::row().with_child(
                 Button::new(LocalizedString::new("button-publish"))
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.public_ing.get(&data.id) {
+                        if let Some(broker) = data.data.public_input.get(&data.id) {
                             if broker.topic.is_empty() || broker.msg.is_empty() {
                                 debug!("topic or msg is empty");
                                 return;
