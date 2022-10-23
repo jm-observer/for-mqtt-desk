@@ -49,6 +49,7 @@ impl From<SubscribeInput> for SubscribeHis {
         Self {
             id: Id::default(),
             broker_id: val.broker_id,
+            selected: false,
             topic: val.topic.clone(),
             qos: val.qos.clone(),
         }

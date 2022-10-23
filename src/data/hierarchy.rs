@@ -51,6 +51,23 @@ impl AppData {
             );
         }
     }
+    pub fn get_selected_subscribe_his(&self) -> Option<SubscribeHis> {
+        if let Some(id) = self.get_selected_broker_id() {
+            if let Some(hises) = self.subscribe_hises.get(&id) {
+                if let Some(his) = hises.iter().find(|x| x.selected) {
+                    return Some(his.clone());
+                }
+            }
+        }
+        warn!("could not find  subscribe his selected");
+        None
+    }
+    pub fn get_selected_broker_id(&self) -> Option<usize> {
+        self.brokers
+            .iter()
+            .find(|x| x.selected)
+            .map(|x| x.id.clone())
+    }
     pub fn get_selected_broker(&self) -> Option<&Broker> {
         self.brokers.iter().find(|x| x.selected)
     }
@@ -200,21 +217,22 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn remove_subscribe_his(&mut self, broker_id: usize, his_id: Id) {
-        if let Some(_broker) = self.find_broker(broker_id) {
-            if let Some(hises) = self.subscribe_hises.get_mut(&broker_id) {
-                if let Some(index) = hises
-                    .iter()
-                    .enumerate()
-                    .find(|(_index, his)| his.id == his_id)
-                    .map(|(index, _his)| index)
-                {
-                    hises.remove(index);
-                    if let Err(e) = self.db.update_subscribe_his(broker_id, hises) {
-                        warn!("{:?}", e);
-                    }
-                    return;
+    pub fn remove_subscribe_his(&mut self) {
+        let Some(id) = self.get_selected_broker_id() else {
+            return;
+        };
+        if let Some(hises) = self.subscribe_hises.get_mut(&id) {
+            if let Some(index) = hises
+                .iter()
+                .enumerate()
+                .find(|(_index, his)| his.selected)
+                .map(|(index, _his)| index)
+            {
+                hises.remove(index);
+                if let Err(e) = self.db.update_subscribe_his(id, hises) {
+                    warn!("{:?}", e);
                 }
+                return;
             }
         }
         warn!("can't find the subscribe_his");
@@ -330,6 +348,26 @@ impl AppData {
         }
         Ok(())
     }
+
+    pub fn click_subscribe_his(&mut self, his: SubscribeHis) -> Result<()> {
+        let Some(id) = self.get_selected_broker_id() else {
+            warn!("could not get selected broker");
+            return Ok(())
+        };
+        if let Some(hises) = self.subscribe_hises.get_mut(&id) {
+            hises.iter_mut().for_each(|x| {
+                if x == &his {
+                    x.selected = true;
+                } else {
+                    x.selected = false;
+                }
+            });
+        } else {
+            warn!("could not get subscribe hises of broker selected");
+        }
+        Ok(())
+    }
+
     pub fn close_tab(&mut self, id: usize) -> Result<()> {
         if let Some((index, _)) = self.broker_tabs.iter().enumerate().find(|x| *(*x).1 == id) {
             debug!("close_tab：{} {}", index, self.broker_tabs.len());

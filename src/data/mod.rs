@@ -12,7 +12,7 @@ pub type AString = Arc<String>;
 
 #[derive(Debug)]
 pub enum AppEvent {
-    RemoveSubscribeHis { broker_id: usize, his_id: Id },
+    RemoveSubscribeHis,
     AddBroker,
     EditBroker,
     ConnectBroker,
@@ -22,6 +22,7 @@ pub enum AppEvent {
     SelectTabs(usize),
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
+    SubscribeFromHis(SubscribeHis),
     ToUnSubscribe { broker_id: usize, pk_id: u16 },
     UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),

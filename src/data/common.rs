@@ -35,6 +35,8 @@ pub struct SubscribeHis {
     pub(crate) id: Id,
     #[serde(skip)]
     pub(crate) broker_id: usize,
+    #[serde(skip)]
+    pub(crate) selected: bool,
     pub(crate) topic: AString,
     pub(crate) qos: QoS,
 }

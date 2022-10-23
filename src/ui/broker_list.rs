@@ -29,35 +29,50 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    let list: List<SubscribeHis> = List::new(move || {
+    let his_fn = move || {
         let tx_click = tx.clone();
-        let tx_remove = tx.clone();
         Flex::row()
             .with_child(QOS().lens(SubscribeHis::qos))
             .with_child(TOPIC().lens(SubscribeHis::topic))
-            .with_child(Svg::new(removed_icon()).on_click(
-                move |_ctx, data: &mut SubscribeHis, _env| {
-                    if let Err(_) = tx_remove.send(AppEvent::RemoveSubscribeHis {
-                        broker_id: data.broker_id,
-                        his_id: data.id,
-                    }) {
-                        error!("fail to send event")
-                    }
-                },
-            ))
-            .expand_width()
-            .on_click(
-                move |_ctx: &mut EventCtx, data: &mut SubscribeHis, _env: &Env| {
-                    if let Err(_e) = tx_click.send(AppEvent::ClickSubscribeHis(data.clone())) {
-                        error!("fail to send");
-                    }
-                },
-            )
+            .on_click(move |_ctx, data: &mut SubscribeHis, _env| {
+                if let Err(_) = tx_click.send(AppEvent::ClickSubscribeHis(data.clone())) {
+                    error!("fail to send event")
+                }
+            })
+    };
+
+    let list: List<SubscribeHis> = List::new(move || {
+        Either::new(
+            |data: &SubscribeHis, _env| data.selected,
+            his_fn().background(SILVER),
+            his_fn(),
+        )
     });
     let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
         .vertical()
         .lens(LensSelectedSubscribeHis);
-    scroll
+    let buttons = Flex::row()
+        .cross_axis_alignment(CrossAxisAlignment::Center)
+        .with_child(
+            Svg::new(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+                if let Err(_) = data.db.tx.send(AppEvent::RemoveSubscribeHis) {
+                    error!("fail to send event")
+                }
+            }),
+        )
+        .with_child(
+            Svg::new(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
+                if let Some(his) = data.get_selected_subscribe_his() {
+                    if let Err(_) = data.db.tx.send(AppEvent::SubscribeFromHis(his)) {
+                        error!("fail to send event");
+                    }
+                }
+            }),
+        );
+
+    let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
+    let flex = flex.with_child(buttons).with_flex_child(scroll, 1.0);
+    flex
 }
 
 pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
