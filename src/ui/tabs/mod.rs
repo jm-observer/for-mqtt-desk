@@ -35,7 +35,6 @@ impl Controller<AppData, Tabs<BrokersTabs>> for TabsControler {
         match event {
             Event::Command(cmd) => {
                 if let Some(index) = cmd.get(INCREMENT) {
-                    // error!("{} {}", index, _data.broker_tabs.len());
                     child.set_tab_index(*index);
                 }
             }

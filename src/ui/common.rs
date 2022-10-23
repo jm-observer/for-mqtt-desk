@@ -52,10 +52,8 @@ pub const QOS: fn() -> SizedBox<QoS> = || {
         .fix_width(20f64)
 };
 
-pub const TOPIC: fn() -> SizedBox<AString> = || {
-    Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(150.)
-    // .align_horizontal(UnitPoint::LEFT)
-};
+pub const TOPIC: fn() -> SizedBox<AString> =
+    || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(150.);
 
 pub const MSG: fn() -> SizedBox<AString> =
     || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(170.);

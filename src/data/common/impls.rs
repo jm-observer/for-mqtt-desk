@@ -55,12 +55,6 @@ impl From<SubscribeInput> for SubscribeHis {
     }
 }
 
-impl Data for SubscribeHis {
-    fn same(&self, _other: &Self) -> bool {
-        true
-    }
-}
-
 impl From<PublicMsg> for Msg {
     fn from(val: PublicMsg) -> Self {
         Self::Public(val)

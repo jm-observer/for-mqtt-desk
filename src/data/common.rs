@@ -10,7 +10,7 @@ use std::sync::mpsc::Sender;
 
 static U32: AtomicU32 = AtomicU32::new(0);
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Data)]
 pub struct Id(u32);
 
 impl Default for Id {
@@ -29,7 +29,7 @@ pub struct SubscribeTopic {
     #[data(eq)]
     pub status: SubscribeStatus,
 }
-#[derive(Debug, Clone, Eq, Lens, Deserialize, Serialize)]
+#[derive(Debug, Clone, Eq, Lens, Deserialize, Serialize, Data)]
 pub struct SubscribeHis {
     #[serde(skip)]
     pub(crate) id: Id,
