@@ -1,9 +1,9 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::ui::tabs::brokers_tab::BrokersTabs;
+use crossbeam_channel::Sender;
 use druid::widget::{Axis, Controller, Tabs, TabsEdge, TabsTransition};
 use druid::{Env, Event, EventCtx, Selector, Widget, WidgetExt, WidgetId};
-use std::sync::mpsc::Sender;
 
 mod broker_tab;
 mod brokers_tab;

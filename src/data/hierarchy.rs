@@ -117,6 +117,7 @@ impl AppData {
         Ok(())
     }
     pub fn disconnect(&mut self, id: usize) -> Result<()> {
+        debug!("{:?}", self);
         if let Some(status) = self.tab_statuses.get_mut(&id) {
             status.try_connect = false;
             status.connected = false;

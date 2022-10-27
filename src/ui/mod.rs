@@ -3,10 +3,10 @@ use crate::data::AppEvent;
 use crate::ui::broker_list::init_broker_list;
 use crate::ui::common::{label_dy_expand_width, label_static, LABLE_PADDING};
 use crate::ui::tabs::init_brokers_tabs;
+use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Container, CrossAxisAlignment, Flex, Label, Padding, Split};
 use druid::{Env, UnitPoint, Widget, WidgetExt};
-use std::sync::mpsc::Sender;
 
 mod broker_info;
 mod broker_list;
@@ -24,7 +24,6 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .align_vertical(UnitPoint::LEFT)
         .padding(LABLE_PADDING)
         .fix_height(20.0)
-        // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
         .expand_width();
     let flex = Flex::column()
         .cross_axis_alignment(CrossAxisAlignment::Center)

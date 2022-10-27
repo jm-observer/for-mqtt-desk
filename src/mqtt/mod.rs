@@ -5,6 +5,7 @@ use crate::data::common::SubscribeMsg;
 use crate::data::AppEvent;
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
 use anyhow::{bail, Result};
+use crossbeam_channel::Sender;
 use druid::piet::TextStorage;
 use log::{debug, error};
 use rumqttc::v5::mqttbytes::v5::Packet;
@@ -14,7 +15,6 @@ use rumqttc::v5::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::mpsc::Sender;
 use std::time::Duration;
 
 pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncClient> {

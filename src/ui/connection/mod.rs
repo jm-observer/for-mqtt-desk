@@ -14,6 +14,7 @@ use crate::ui::ids::{
     TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
     ID_SUBSCRIBE_TOPIC,
 };
+use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::EditableText;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
@@ -24,7 +25,6 @@ use druid::widget::{
 use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{debug, error};
-use std::sync::mpsc::Sender;
 
 pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData> {
     let subscribe_list = Padding::new(
@@ -201,7 +201,7 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row().with_child(
-                Button::new(LocalizedString::new("button-subscribe"))
+                Button::new(LocalizedString::new("Subscribe"))
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
                         debug!("{:?}", data.data);
                         if let Some(input) = data.data.subscribe_input.get(&data.id) {
@@ -294,7 +294,7 @@ pub fn init_public_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row().with_child(
-                Button::new(LocalizedString::new("button-publish"))
+                Button::new(LocalizedString::new("Publish"))
                     .on_click(move |_ctx, data: &mut DbIndex, _env| {
                         if let Some(broker) = data.data.public_input.get(&data.id) {
                             if broker.topic.is_empty() || broker.msg.is_empty() {

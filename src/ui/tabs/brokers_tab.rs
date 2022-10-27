@@ -1,11 +1,11 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::ui::tabs::broker_tab::BrokerTabPolicy;
+use crossbeam_channel::Sender;
 use druid::widget::{Axis, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
 use druid::{Data, Env};
 use druid::{Widget, WidgetExt};
 use log::{debug, error};
-use std::sync::mpsc::Sender;
 
 #[derive(Clone)]
 pub struct BrokersTabs(pub Sender<AppEvent>);

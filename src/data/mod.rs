@@ -42,6 +42,7 @@ pub enum AppEvent {
     DeleteBroker,
     // e.g: delete broker; close tab; click button "disconnect"
     Disconnect(usize),
+    UpdateStatusBar(String),
 }
 #[derive(Debug, Clone)]
 pub struct EventUnSubscribe {

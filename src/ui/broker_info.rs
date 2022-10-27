@@ -83,7 +83,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
             },
             Flex::row()
                 .with_child(
-                    Button::new(LocalizedString::new("button-save"))
+                    Button::new(LocalizedString::new("Save"))
                         .on_click(move |_ctx, data: &mut AppData, _env| {
                             if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
                                 error!("{:?}", e);
@@ -92,7 +92,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         .padding(BUTTON_PADDING),
                 )
                 .with_child(
-                    Button::new(LocalizedString::new("button-reconnect"))
+                    Button::new(LocalizedString::new("Reconnect"))
                         .on_click(move |_ctx, data: &mut AppData, _env| {
                             _ctx.set_focus(ID_BUTTON_RECONNECT);
                             if let Err(e) = data.db.tx.send(AppEvent::ReConnect(id)) {
@@ -101,42 +101,38 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         })
                         .padding(BUTTON_PADDING),
                 )
-                .with_child(
-                    Button::new(LocalizedString::new("button-disconnect")).on_click(
-                        move |_ctx, data: &mut AppData, _env| {
-                            if let Err(e) = data.db.tx.send(AppEvent::Disconnect(id)) {
-                                error!("{:?}", e);
-                            }
-                        },
-                    ),
-                )
+                .with_child(Button::new(LocalizedString::new("Disconnect")).on_click(
+                    move |_ctx, data: &mut AppData, _env| {
+                        if let Err(e) = data.db.tx.send(AppEvent::Disconnect(id)) {
+                            error!("{:?}", e);
+                        }
+                    },
+                ))
                 .align_left(),
             Flex::row()
-                .with_child(Button::new(LocalizedString::new("button-save")).on_click(
+                .with_child(Button::new(LocalizedString::new("Save")).on_click(
                     move |_ctx, data: &mut AppData, _env| {
                         if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
                             error!("{:?}", e);
                         }
                     },
                 ))
-                .with_child(
-                    Button::new(LocalizedString::new("button-connect")).on_click(
-                        move |_ctx, data: &mut AppData, _env| {
-                            if let Some(broker) = data.brokers.iter_mut().find(|x| x.id == id) {
-                                debug!("{:?}", broker);
-                                _ctx.set_focus(ID_BUTTON_CONNECT);
-                                if broker.client_id.as_str().is_empty() {
-                                    broker.client_id = general_id().into();
-                                }
-                                if let Err(e) = data.db.tx.send(AppEvent::Connect(broker.clone())) {
-                                    error!("{:?}", e);
-                                }
-                            } else {
-                                error!("can't get the broker");
+                .with_child(Button::new(LocalizedString::new("Connect")).on_click(
+                    move |_ctx, data: &mut AppData, _env| {
+                        if let Some(broker) = data.brokers.iter_mut().find(|x| x.id == id) {
+                            debug!("{:?}", broker);
+                            _ctx.set_focus(ID_BUTTON_CONNECT);
+                            if broker.client_id.as_str().is_empty() {
+                                broker.client_id = general_id().into();
                             }
-                        },
-                    ),
-                )
+                            if let Err(e) = data.db.tx.send(AppEvent::Connect(broker.clone())) {
+                                error!("{:?}", e);
+                            }
+                        } else {
+                            error!("can't get the broker");
+                        }
+                    },
+                ))
                 .align_left(),
         ))
         .with_child(

@@ -7,6 +7,7 @@ use crate::ui::common::{
     SILVER, TOPIC,
 };
 use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
+use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::Svg;
@@ -16,7 +17,6 @@ use druid::widget::{
 use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
 use log::error;
-use std::sync::mpsc::Sender;
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);

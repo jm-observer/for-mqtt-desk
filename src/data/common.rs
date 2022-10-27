@@ -2,11 +2,11 @@ mod impls;
 
 use crate::data::db::BrokerDB;
 use crate::data::{AString, AppEvent};
+use crossbeam_channel::Sender;
 use druid::{Data, Lens};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::mpsc::Sender;
 
 static U32: AtomicU32 = AtomicU32::new(0);
 

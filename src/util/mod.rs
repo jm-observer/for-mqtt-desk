@@ -1,6 +1,7 @@
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 
+pub mod custom_logger;
 pub mod db;
 
 pub const ID_CHARS: [char; 62] = [

@@ -1,6 +1,6 @@
 use anyhow::Result;
+use crossbeam_channel::Sender;
 use sled::{Config, Db};
-use std::sync::mpsc::Sender;
 use std::sync::Arc;
 
 use crate::data::common::{Broker, SubscribeHis};
@@ -98,7 +98,7 @@ impl ArcDb {
             public_input: Default::default(),
             unsubscribe_ing: Default::default(),
             db: self.clone(),
-            hint: "error to init from db".to_string().into(),
+            hint: "".to_string().into(),
         })
     }
 

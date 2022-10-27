@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 druid = { git = "https://github.com/linebender/druid.git", features = ["im", "serde", "svg"] }
-custom-utils = "0.10.8"
+custom-utils = "0.10.11"
 log = "0.4.17"
 anyhow = "1.0.64"
 sled = "0.34.7"
@@ -23,9 +23,13 @@ indexmap = "1.9.1"
 notify = "5.0.0"
 thiserror = "1.0.37"
 rand = "0.8.5"
-
+flexi_logger = { version = "0.24.0", features = ["specfile_without_notification", "specfile", "colors"], default-features = false }
+crossbeam-channel = "0.5.6"
 [patch."https://github.com/linebender/druid.git"]
 druid = { path = "../druid-fork/druid"}
+
+#[patch.crates-io]
+#custom-utils = { path = "../custom-utils"}
 
 
 [profile.release]
@@ -36,3 +40,8 @@ debug = false
 debug-assertions = false
 codegen-units = 1
 panic = "abort"
+
+[features]
+default = ["prod"]
+dev = ["custom-utils/dev"]
+prod = ["custom-utils/prod"]

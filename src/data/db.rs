@@ -1,8 +1,8 @@
 use crate::data::common::Broker;
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
+use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
-use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DbKey {

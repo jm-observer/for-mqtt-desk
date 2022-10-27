@@ -2,9 +2,9 @@
 
 app-names = { -app-name }
 
-button-subscribe = Subscribe
-button-publish = Publish
-button-save = Save
-button-reconnect = Reconnect
-button-disconnect = Disconnect
-button-connect = Connect
+Subscribe = Subscribe
+Publish = Publish
+Save = Save
+Reconnect = Reconnect
+Disconnect = Disconnect
+Connect = Connect

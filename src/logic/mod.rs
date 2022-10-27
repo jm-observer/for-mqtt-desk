@@ -5,15 +5,16 @@ use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 use crate::data::common::{Broker, Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
 use crate::ui::tabs::{ID_ONE, INCREMENT};
 use anyhow::Result;
+use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
-use log::{debug, error};
+use log::{debug, error, info};
 use rumqttc::v5::{
     mqttbytes::{PubAck, SubAck},
     AsyncClient,
 };
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::Arc;
 use std::time::Duration;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
@@ -77,10 +78,17 @@ pub async fn deal_event(
             AppEvent::DeleteBroker => delete_broker(&event_sink),
             AppEvent::ConnectAckSuccess(id) => connect_ack_success(&event_sink, id), // _ => {}
             AppEvent::ConnectAckFail(_id, _msg) => todo!(),
+            AppEvent::UpdateStatusBar(msg) => {
+                update_status_bar(&event_sink, msg);
+            }
         }
     }
 }
-
+fn update_status_bar(event_sink: &druid::ExtEventSink, msg: String) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        data.hint = msg.into();
+    });
+}
 fn add_broker(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.add_broker();
@@ -396,6 +404,7 @@ fn delete_broker(event_sink: &druid::ExtEventSink) {
     });
 }
 fn connect_ack_success(event_sink: &druid::ExtEventSink, id: usize) {
+    info!("connect success!");
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.connected(id) {
             error!("{:?}", e);

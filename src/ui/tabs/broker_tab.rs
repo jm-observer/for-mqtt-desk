@@ -5,10 +5,10 @@ use crate::data::AppEvent;
 use crate::ui::broker_info::display_broker;
 use crate::ui::common::{GREEN, RED, YELLOW};
 use crate::ui::connection::display_connection;
+use crossbeam_channel::Sender;
 use druid::widget::{Either, Label, TabInfo, TabsPolicy};
 use druid::{Data, Env, Widget, WidgetExt};
 use log::error;
-use std::sync::mpsc::Sender;
 
 #[derive(Clone)]
 pub struct BrokerTabPolicy(pub usize, pub Sender<AppEvent>);
