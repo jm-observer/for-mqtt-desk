@@ -52,8 +52,11 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .vertical()
         .lens(LensSelectedSubscribeHis);
     let buttons = Flex::row()
-        .cross_axis_alignment(CrossAxisAlignment::Center)
-        .with_flex_child(title("Subscribe History", UnitPoint::LEFT), 1.0)
+        // .cross_axis_alignment(CrossAxisAlignment::Center)
+        .with_flex_child(
+            title("Subscribe History", UnitPoint::LEFT).expand_width(),
+            1.0,
+        )
         .with_child(
             svg(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::RemoveSubscribeHis) {
@@ -112,8 +115,8 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
     let scroll = Scroll::<Vector<Broker>, List<Broker>>::new(list);
 
     let buttons = Flex::row()
-        .cross_axis_alignment(CrossAxisAlignment::Center)
-        .with_flex_child(title("Broker List", UnitPoint::LEFT), 1.0)
+        // .cross_axis_alignment(CrossAxisAlignment::Center)
+        .with_flex_child(title("Broker List", UnitPoint::LEFT).expand_width(), 1.0)
         .with_child(
             svg(added_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::AddBroker) {
@@ -128,13 +131,6 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 }
             }),
         )
-        // .with_child(
-        //     Svg::new(copy_icons()).on_click(move |_ctx, data: &mut AppData, _env| {
-        //         if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {
-        //             error!("fail to send event")
-        //         }
-        //     }),
-        // )
         .with_child(
             svg(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {

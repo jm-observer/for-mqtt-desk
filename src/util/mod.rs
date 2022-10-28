@@ -3,6 +3,7 @@ use rand::thread_rng;
 
 pub mod custom_logger;
 pub mod db;
+pub mod hint;
 
 pub const ID_CHARS: [char; 62] = [
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',

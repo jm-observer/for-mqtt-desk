@@ -3,9 +3,9 @@ use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
 };
-
 use crate::data::{AString, AppEvent, EventUnSubscribe};
 use crate::util::db::ArcDb;
+use crate::util::hint::*;
 use anyhow::bail;
 use anyhow::Result;
 use custom_utils::{tx, tx_async};
@@ -79,7 +79,9 @@ impl AppData {
         if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
             broker.stored = true;
             self.db.save_broker(id, broker)?;
-            self.subscribe_hises.insert(id, Vector::new());
+            if !self.subscribe_hises.contains_key(&id) {
+                self.subscribe_hises.insert(id, Vector::new());
+            }
         }
         Ok(())
     }
@@ -117,12 +119,11 @@ impl AppData {
         Ok(())
     }
     pub fn disconnect(&mut self, id: usize) -> Result<()> {
-        debug!("{:?}", self);
         if let Some(status) = self.tab_statuses.get_mut(&id) {
             status.try_connect = false;
             status.connected = false;
         } else {
-            warn!("not find the connection")
+            debug!("not find the connection")
         }
         Ok(())
     }
@@ -219,9 +220,9 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn remove_subscribe_his(&mut self) {
+    pub fn remove_subscribe_his(&mut self) -> Result<()> {
         let Some(id) = self.get_selected_broker_id() else {
-            return;
+            bail!(DELETE_SUBSCRIBE_NO_SELECTED);
         };
         if let Some(hises) = self.subscribe_hises.get_mut(&id) {
             if let Some(index) = hises
@@ -231,13 +232,11 @@ impl AppData {
                 .map(|(index, _his)| index)
             {
                 hises.remove(index);
-                if let Err(e) = self.db.update_subscribe_his(id, hises) {
-                    warn!("{:?}", e);
-                }
-                return;
+                self.db.update_subscribe_his(id, hises)?;
+                return Ok(());
             }
         }
-        warn!("can't find the subscribe_his");
+        bail!(DELETE_SUBSCRIBE_NO_SELECTED);
     }
     pub fn subscribe_by_input(
         &mut self,
@@ -339,14 +338,10 @@ impl AppData {
         if let Some(index) = selected_index {
             let broker = self.brokers.remove(index);
             self.db.delete_broker(broker.id)?;
-            if self.db.tx.send(AppEvent::Disconnect(index)).is_err() {
-                error!("fail to send event");
-            }
-            if self.db.tx.send(AppEvent::CloseBrokerTab(index)).is_err() {
-                error!("fail to send event");
-            }
+            self.db.tx.send(AppEvent::Disconnect(index))?;
+            self.db.tx.send(AppEvent::CloseBrokerTab(index))?;
         } else {
-            warn!("not selected broker to delete");
+            bail!("not selected broker to delete");
         }
         Ok(())
     }

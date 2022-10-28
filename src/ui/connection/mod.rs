@@ -185,7 +185,8 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                             TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
                                 .sends_partial_errors(true),
                         )
-                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::topic)),
+                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::topic))
+                        .fix_width(150.),
                 )
                 .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
                 .align_left(),
@@ -203,7 +204,8 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                             TextBoxErrorDelegate::new(ID_SUBSCRIBE_QOS, check_qos)
                                 .sends_partial_errors(true),
                         )
-                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos)),
+                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos))
+                        .fix_width(150.),
                 )
                 .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
                 .align_left(),

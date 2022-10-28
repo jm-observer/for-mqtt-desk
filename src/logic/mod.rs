@@ -4,10 +4,14 @@ use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::{Broker, Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
 use crate::ui::tabs::{ID_ONE, INCREMENT};
+use crate::util::hint::{
+    DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
+    SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS,
+};
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use rumqttc::v5::{
     mqttbytes::{PubAck, SubAck},
     AsyncClient,
@@ -34,7 +38,7 @@ pub async fn deal_event(
             AppEvent::EditBroker => edit_broker(&event_sink),
             AppEvent::ConnectBroker => connect_broker(&event_sink),
             AppEvent::SaveBroker(index) => save_broker(&event_sink, index),
-            AppEvent::RemoveSubscribeHis => remove_subscribe_his(&event_sink),
+            AppEvent::RemoveSubscribeHis => delete_subscribe_his(&event_sink),
             AppEvent::ToUnSubscribe { broker_id, pk_id } => {
                 to_un_subscribe(&event_sink, broker_id, pk_id)
             }
@@ -110,12 +114,20 @@ fn save_broker(event_sink: &druid::ExtEventSink, index: usize) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.save_broker(index) {
             error!("{:?}", e);
+        } else {
+            info!("{}", SAVE_BROKER_SUCCESS);
         }
     });
 }
 
-fn remove_subscribe_his(event_sink: &druid::ExtEventSink) {
-    event_sink.add_idle_callback(move |data: &mut AppData| data.remove_subscribe_his());
+fn delete_subscribe_his(event_sink: &druid::ExtEventSink) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.remove_subscribe_his() {
+            warn!("{}", e.to_string());
+        } else {
+            info!("{}", DELETE_SUBSCRIBE_SUCCESS);
+        }
+    });
 }
 
 fn to_un_subscribe(event_sink: &druid::ExtEventSink, broker_id: usize, pk_id: u16) {
@@ -247,12 +259,14 @@ fn receive_public(event_sink: &druid::ExtEventSink, index: usize, msg: Subscribe
 fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: PubAck) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.puback(id, ack);
+        info!("{}", PUBLISH_SUCCESS);
     });
 }
 
 fn sub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: SubAck) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.suback(id, ack);
+        info!("{}", SUBSCRIBE_SUCCESS);
     });
 }
 fn select_tabs(event_sink: &druid::ExtEventSink, id: usize) {
@@ -368,6 +382,8 @@ async fn disconnect(
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.disconnect(id) {
             error!("{:?}", e);
+        } else {
+            info!("{}", DISCONNECT_SUCCESS);
         }
     });
 }
@@ -400,6 +416,8 @@ fn delete_broker(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.delete_broker() {
             error!("{:?}", e);
+        } else {
+            info!("{}", DELETE_BROKER_SUCCESS)
         }
     });
 }
