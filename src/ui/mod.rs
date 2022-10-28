@@ -39,5 +39,8 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .with_child(hint)
         .expand_height();
 
-    Padding::new(5.0, flex).border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    Padding::new(5.0, flex)
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+        .fix_width(600.0)
+        .fix_height(800.0)
 }

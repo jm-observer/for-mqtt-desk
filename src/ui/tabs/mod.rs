@@ -2,6 +2,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
 use crate::ui::tabs::brokers_tab::BrokersTabs;
 use crossbeam_channel::Sender;
+use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Axis, Controller, Tabs, TabsEdge, TabsTransition};
 use druid::{Env, Event, EventCtx, Selector, Widget, WidgetExt, WidgetId};
 
@@ -14,9 +15,12 @@ pub fn init_brokers_tabs(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .with_edge(TabsEdge::Leading)
         .with_transition(TabsTransition::Instant)
         .controller(TabsControler)
-        .with_id(ID_ONE);
+        .with_id(ID_ONE)
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+        .padding(5.0);
 
-    tabs.fix_width(600.0).fix_height(700.0)
+    // tabs.fix_width(600.0).fix_height(700.0)
+    tabs
 }
 
 struct TabsControler;

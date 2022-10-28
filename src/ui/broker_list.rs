@@ -19,22 +19,12 @@ use druid::{Widget, WidgetExt};
 use log::error;
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    flex
-        // .with_child(label_static("Broker List", UnitPoint::LEFT))
-        .with_flex_child(
-            Padding::new(
-                5.0,
-                Container::new(
-                    Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
-                        .split_point(0.55)
-                        .draggable(true)
-                        .bar_size(3.0),
-                )
-                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-            ),
-            1.0,
-        )
+    Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
+        .split_point(0.55)
+        .draggable(true)
+        .bar_size(3.0)
+        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+        .padding(5.0)
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
@@ -43,6 +33,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         Flex::row()
             .with_child(QOS().lens(SubscribeHis::qos))
             .with_child(TOPIC().lens(SubscribeHis::topic))
+            .expand_width()
             .on_click(move |_ctx, data: &mut SubscribeHis, _env| {
                 if let Err(_) = tx_click.send(AppEvent::ClickSubscribeHis(data.clone())) {
                     error!("fail to send event")
@@ -87,7 +78,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
                 .expand_width()
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )
-        .with_flex_child(scroll, 1.0);
+        .with_flex_child(scroll.expand_width(), 1.0);
     flex
 }
 
