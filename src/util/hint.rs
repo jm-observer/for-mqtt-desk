@@ -8,3 +8,5 @@ pub const CONNECT_SUCCESS: &str = "connect success!";
 pub const DISCONNECT_SUCCESS: &str = "disconnect success!";
 pub const SUBSCRIBE_SUCCESS: &str = "subscribe success!";
 pub const PUBLISH_SUCCESS: &str = "publish success!";
+
+pub const UNSUBSCRIBE_SUCCESS: &str = "unsubscribe success!";

@@ -337,9 +337,19 @@ impl AppData {
         }
         if let Some(index) = selected_index {
             let broker = self.brokers.remove(index);
+            if let Some((index, _)) = self
+                .broker_tabs
+                .iter()
+                .enumerate()
+                .find(|x| *(*x).1 == broker.id)
+            {
+                self.broker_tabs.remove(index);
+                debug!("close_tab：{} {}", index, self.broker_tabs.len());
+            }
+            self.tab_statuses.remove(&broker.id);
             self.db.delete_broker(broker.id)?;
             self.db.tx.send(AppEvent::Disconnect(index))?;
-            self.db.tx.send(AppEvent::CloseBrokerTab(index))?;
+            // self.db.tx.send(AppEvent::CloseBrokerTab(index))?;
         } else {
             bail!("not selected broker to delete");
         }

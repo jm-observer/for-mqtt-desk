@@ -278,6 +278,24 @@ impl Lens<Msg, QoS> for MsgTopicLens {
         })
     }
 }
+pub struct MsgQosLens;
+impl Lens<Msg, String> for MsgQosLens {
+    fn with<V, F: FnOnce(&String) -> V>(&self, data: &Msg, f: F) -> V {
+        let qos = match data {
+            Msg::Public(msg) => msg.qos.to_string(),
+            Msg::Subscribe(msg) => msg.qos.to_string(),
+        };
+        f(&qos)
+    }
+
+    fn with_mut<V, F: FnOnce(&mut String) -> V>(&self, data: &mut Msg, f: F) -> V {
+        let mut qos = match data {
+            Msg::Public(msg) => msg.qos.to_string(),
+            Msg::Subscribe(msg) => msg.qos.to_string(),
+        };
+        f(&mut qos)
+    }
+}
 
 pub struct PortLens;
 

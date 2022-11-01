@@ -3,10 +3,10 @@ use crate::data::{AppEvent, EventUnSubscribe};
 use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::{Broker, Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
-use crate::ui::tabs::{ID_ONE, INCREMENT};
+use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
-    SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS,
+    SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
 };
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -166,6 +166,8 @@ fn un_sub_ack(event_sink: &druid::ExtEventSink, broke_id: usize, unsubscribe_pk_
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.unsubscribe_ack(broke_id, unsubscribe_pk_id) {
             error!("{:?}", e);
+        } else {
+            info!("{}", UNSUBSCRIBE_SUCCESS)
         }
     });
 }
@@ -270,7 +272,7 @@ fn sub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: SubAck) {
     });
 }
 fn select_tabs(event_sink: &druid::ExtEventSink, id: usize) {
-    if let Err(e) = event_sink.submit_command(INCREMENT, id, ID_ONE) {
+    if let Err(e) = event_sink.submit_command(SELECTOR_TABS_SELECTED, id, TABS_ID) {
         error!("{:?}", e);
     }
 }

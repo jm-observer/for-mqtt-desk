@@ -1,12 +1,12 @@
-use crate::data::common::{Msg, PublicInput, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Msg, PublicInput, QoS, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
-    BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgTopicLens,
+    BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgQosLens, MsgTopicLens,
 };
-use crate::data::AppEvent;
+use crate::data::{AString, AppEvent};
 use crate::ui::common::{
-    error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS, TOPIC, YELLOW,
+    error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS, SILVER, TOPIC, YELLOW,
 };
 use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
 use crate::ui::icons::removed_icon;
@@ -85,8 +85,9 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
                 QOS().background(GREEN).lens(SubscribeTopic::qos),
                 QOS().background(YELLOW).lens(SubscribeTopic::qos),
             ))
-            .with_child(TOPIC().lens(SubscribeTopic::topic))
+            .with_child(TextBox::new().lens(SubscribeTopic::topic).fix_width(150.0))
             .align_left()
+            // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
             .expand_width()
     });
 
@@ -99,59 +100,64 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
     scroll
 }
 
-// fn init_subscribe_his_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
-//     let list: List<SubscribeHis> = List::new(move || {
-//         let tx = tx.clone();
-//         Flex::row()
-//             .with_child(QOS().lens(SubscribeHis::qos))
-//             .with_child(TOPIC().lens(SubscribeHis::topic))
-//             .expand_width()
-//             .on_click(
-//                 move |_ctx: &mut EventCtx, data: &mut SubscribeHis, _env: &Env| {
-//                     if let Err(_e) = tx.send(AppEvent::ClickSubscribeHis(data.clone())) {
-//                         error!("fail to send");
-//                     }
-//                 },
-//             )
-//     });
-//     let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
-//         .vertical()
-//         .lens(BrokerIndexLensVecSubscribeHis(id));
-//     scroll
-//
-//     // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-//     // let flex = flex
-//     //     .with_child(scroll.vertical().lens(BrokerIndex(id)))
-//     //     .align_vertical(UnitPoint::TOP);
-//     // flex
-// }
-
 fn init_msgs_list(id: usize) -> impl Widget<AppData> {
     let list: List<Msg> = List::new(move || {
         Either::new(
             |data: &Msg, _env| data.is_public(),
-            Flex::column()
+            Flex::row()
                 .with_child(
-                    Flex::row()
-                        .with_child(Either::new(
-                            |data: &Msg, _env| data.is_sucess(),
-                            QOS().background(GREEN).lens(MsgTopicLens),
-                            QOS().background(YELLOW).lens(MsgTopicLens),
-                        ))
-                        .with_child(TOPIC().lens(MsgTopicLens))
-                        .align_horizontal(UnitPoint::RIGHT),
+                    Flex::column()
+                        .with_child(
+                            Flex::row()
+                                .with_child(
+                                    TextBox::<String>::new()
+                                        .fix_width(15.0)
+                                        .padding(1.0)
+                                        .lens(MsgQosLens),
+                                )
+                                .with_flex_child(
+                                    Either::new(
+                                        |data: &Msg, _env| data.is_sucess(),
+                                        TextBox::<AString>::new()
+                                            .background(GREEN)
+                                            .lens(MsgTopicLens),
+                                        TextBox::<AString>::new()
+                                            .background(SILVER)
+                                            .lens(MsgTopicLens),
+                                    )
+                                    .expand_width(),
+                                    1.0,
+                                )
+                                .expand_width(),
+                        )
+                        .with_child(
+                            TextBox::multiline()
+                                // .fix_height(50.0)
+                                .expand_width()
+                                .lens(MsgMsgLens)
+                                .padding(1.5),
+                        )
+                        .border(BORDER_LIGHT, 1.0)
+                        .fix_width(250.),
                 )
-                .with_child(MSG().lens(MsgMsgLens).align_horizontal(UnitPoint::RIGHT)),
+                .align_horizontal(UnitPoint::TOP_RIGHT)
+                .expand_width(),
             Flex::column()
                 .with_child(
                     Flex::row()
                         .with_child(QOS().background(GREEN).lens(MsgTopicLens))
-                        .with_child(TOPIC().lens(MsgTopicLens))
+                        .with_child(TextBox::<AString>::new().lens(MsgTopicLens))
                         .align_horizontal(UnitPoint::LEFT),
                 )
-                .with_child(MSG().lens(MsgMsgLens).align_horizontal(UnitPoint::LEFT)),
+                .with_child(
+                    TextBox::multiline()
+                        .lens(MsgMsgLens)
+                        .align_horizontal(UnitPoint::LEFT),
+                )
+                .fix_width(200.),
         )
-        .fix_width(380.)
+        .expand_width()
+        .padding(5.0)
         .align_horizontal(UnitPoint::LEFT)
     });
     let scroll = Scroll::<Vector<Msg>, List<Msg>>::new(list)
@@ -160,13 +166,7 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
         .align_vertical(UnitPoint::TOP)
         .expand_width()
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
-    // let flex = Flex::column().cross_axis_alignment(CrossAxisAlignment::Start);
-    // let flex = flex
-    //     .with_child(scroll)
-    //     .align_vertical(UnitPoint::TOP)
-    //     .expand_width()
-    //     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
-    // flex
+
     scroll
 }
 

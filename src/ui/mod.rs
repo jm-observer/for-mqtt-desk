@@ -15,7 +15,7 @@ mod connection;
 mod debug;
 pub mod formatter;
 pub mod icons;
-mod ids;
+pub mod ids;
 pub mod tabs;
 
 pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {

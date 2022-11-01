@@ -136,3 +136,7 @@ impl<T, W: Widget<Option<ValidationError>>> Widget<T> for ErrorController<W> {
         Some(self.child.id())
     }
 }
+
+pub const TABS_ID: WidgetId = WidgetId::reserved(1);
+pub const SELECTOR_TABS_SELECTED: Selector<usize> = Selector::new("tabs.selected");
+pub const SELECTOR_TABS_CLOSE: Selector<usize> = Selector::new("tabs.close");

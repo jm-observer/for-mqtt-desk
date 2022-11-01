@@ -1,5 +1,6 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
+use crate::ui::ids::{SELECTOR_TABS_CLOSE, SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::ui::tabs::brokers_tab::BrokersTabs;
 use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
@@ -15,17 +16,13 @@ pub fn init_brokers_tabs(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .with_edge(TabsEdge::Leading)
         .with_transition(TabsTransition::Instant)
         .controller(TabsControler)
-        .with_id(ID_ONE)
+        .with_id(TABS_ID)
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
         .padding(5.0);
-
-    // tabs.fix_width(600.0).fix_height(700.0)
     tabs
 }
 
 struct TabsControler;
-pub const INCREMENT: Selector<usize> = Selector::new("identity-example.increment");
-pub const ID_ONE: WidgetId = WidgetId::reserved(1);
 
 impl Controller<AppData, Tabs<BrokersTabs>> for TabsControler {
     fn event(
@@ -38,7 +35,9 @@ impl Controller<AppData, Tabs<BrokersTabs>> for TabsControler {
     ) {
         match event {
             Event::Command(cmd) => {
-                if let Some(index) = cmd.get(INCREMENT) {
+                if let Some(index) = cmd.get(SELECTOR_TABS_SELECTED) {
+                    child.set_tab_index(*index);
+                } else if let Some(index) = cmd.get(SELECTOR_TABS_CLOSE) {
                     child.set_tab_index(*index);
                 }
             }

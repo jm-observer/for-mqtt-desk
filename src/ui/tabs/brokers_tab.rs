@@ -23,22 +23,7 @@ impl TabsPolicy for BrokersTabs {
     type BodyWidget = impl Widget<AppData>;
 
     fn tabs_changed(&self, old_data: &Self::Input, data: &Self::Input) -> bool {
-        if !(data.broker_tabs == old_data.broker_tabs) {
-            return true;
-        }
-        for id in &old_data.broker_tabs {
-            if let Some(old_broker) = old_data.brokers.iter().find(|x| x.id == *id) {
-                if let Some(broker) = data.brokers.iter().find(|x| x.id == *id) {
-                    if !old_broker.same(broker) {
-                        return true;
-                    } else {
-                        continue;
-                    }
-                }
-            }
-            return true;
-        }
-        false
+        check_data(data, old_data)
     }
 
     fn tabs(&self, data: &Self::Input) -> Vec<Self::Key> {
@@ -46,8 +31,6 @@ impl TabsPolicy for BrokersTabs {
     }
 
     fn tab_info(&self, key: Self::Key, _data: &Self::Input) -> TabInfo<Self::Input> {
-        // if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
-        //     debug!("{}", tabs.name);
         return TabInfo::new(
             move |data: &AppData, _: &Env| {
                 if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
@@ -55,12 +38,9 @@ impl TabsPolicy for BrokersTabs {
                 } else {
                     "".to_string()
                 }
-                // debug!("data.name={}", data.name);
             },
             true,
         );
-        // }
-        // unreachable!()
     }
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
@@ -75,20 +55,6 @@ impl TabsPolicy for BrokersTabs {
         if let Err(_) = data.db.tx.send(AppEvent::CloseBrokerTab(key)) {
             error!("fail to send event");
         }
-        // if let Err(e) = data.close_tab(key) {
-        //     error!("{:?}", e);
-        // }
-        // if let Some((index, _)) = data
-        //     .broker_tabs
-        //     .iter()
-        //     .enumerate()
-        //     .map(|x| (x.0, *x.1))
-        //     .find(|x| (*x).1 == key)
-        // {
-        //     data.broker_tabs.remove(index);
-        //     return;
-        // }
-        // unreachable!()
     }
 
     fn tab_label(
@@ -98,7 +64,24 @@ impl TabsPolicy for BrokersTabs {
         _data: &Self::Input,
     ) -> Self::LabelWidget {
         Self::default_make_label(_info)
-        // .with_text_size(8.0)
-        // .fix_size(20.0, 15.0)
     }
+}
+
+fn check_data(data: &AppData, old_data: &AppData) -> bool {
+    if !(data.broker_tabs == old_data.broker_tabs) {
+        return true;
+    }
+    for id in &old_data.broker_tabs {
+        if let Some(old_broker) = old_data.brokers.iter().find(|x| x.id == *id) {
+            if let Some(broker) = data.brokers.iter().find(|x| x.id == *id) {
+                if !old_broker.same(broker) {
+                    return true;
+                } else {
+                    continue;
+                }
+            }
+        }
+        return true;
+    }
+    false
 }
