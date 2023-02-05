@@ -6,12 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-druid = { git = "https://github.com/linebender/druid.git", features = ["im", "serde", "svg"] }
-custom-utils = "0.10.11"
+druid = { version = "0.8.2", features = ["im", "serde", "svg"] }
+custom-utils = "0.10.12"
 log = "0.4.17"
 anyhow = "1.0.64"
 sled = "0.34.7"
-rumqttc = { path = "../rumqtt/rumqttc"}
 serde = {version ="1.0.144", features = ["derive", "rc"]}
 serde_json = "1.0.85"
 tokio = {version ="1.21.0", features = ["macros", "rt-multi-thread"]}
@@ -25,8 +24,11 @@ thiserror = "1.0.37"
 rand = "0.8.5"
 flexi_logger = { version = "0.24.0", features = ["specfile_without_notification", "specfile", "colors"], default-features = false }
 crossbeam-channel = "0.5.6"
-[patch."https://github.com/linebender/druid.git"]
-druid = { path = "../druid-fork/druid"}
+
+for-mqtt-client = { git = "https://github.com/jm-observer/for-mqtt-client.git"}
+
+[patch."https://github.com/jm-observer/for-mqtt-client.git"]
+for-mqtt-client = { path = "../for-mqtt-client"}
 
 #[patch.crates-io]
 #custom-utils = { path = "../custom-utils"}

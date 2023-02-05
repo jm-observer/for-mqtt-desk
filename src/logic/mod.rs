@@ -3,6 +3,7 @@ use crate::data::{AppEvent, EventUnSubscribe};
 use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::{Broker, Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
+use crate::mqtt::Client;
 use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
@@ -11,11 +12,9 @@ use crate::util::hint::{
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
+use for_mqtt_client::v3_1_1::{PubAck, SubAck};
+use for_mqtt_client::SubscribeAck;
 use log::{debug, error, info, warn};
-use rumqttc::v5::{
-    mqttbytes::{PubAck, SubAck},
-    AsyncClient,
-};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
@@ -27,7 +26,7 @@ pub async fn deal_event(
     rx: Receiver<AppEvent>,
     tx: Sender<AppEvent>,
 ) -> Result<()> {
-    let mut mqtt_clients: HashMap<usize, AsyncClient> = HashMap::new();
+    let mut mqtt_clients: HashMap<usize, Client> = HashMap::new();
     let mut clicks: HashMap<usize, usize> = HashMap::new();
     let mut click_his: Option<SubscribeHis> = None;
     loop {
@@ -45,8 +44,8 @@ pub async fn deal_event(
             AppEvent::UnSubscribeIng(event) => {
                 un_subscribe_ing(&event_sink, event, &mqtt_clients).await
             }
-            AppEvent::UnSubAck(broke_id, unsubscribe_pk_id) => {
-                un_sub_ack(&event_sink, broke_id, unsubscribe_pk_id)
+            AppEvent::UnSubAck(broke_id, unsubscribe_ack) => {
+                un_sub_ack(&event_sink, broke_id, unsubscribe_ack.id)
             }
             AppEvent::Connect(broker) => {
                 connect(&event_sink, &mut mqtt_clients, tx.clone(), broker).await
@@ -85,6 +84,7 @@ pub async fn deal_event(
             AppEvent::UpdateStatusBar(msg) => {
                 update_status_bar(&event_sink, msg);
             }
+            AppEvent::ClearMsg(id) => clear_msg(&event_sink, id),
         }
     }
 }
@@ -130,7 +130,7 @@ fn delete_subscribe_his(event_sink: &druid::ExtEventSink) {
     });
 }
 
-fn to_un_subscribe(event_sink: &druid::ExtEventSink, broker_id: usize, pk_id: u16) {
+fn to_un_subscribe(event_sink: &druid::ExtEventSink, broker_id: usize, pk_id: u32) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.to_unscribe(broker_id, pk_id) {
             error!("{:?}", e);
@@ -141,7 +141,7 @@ fn to_un_subscribe(event_sink: &druid::ExtEventSink, broker_id: usize, pk_id: u1
 async fn un_subscribe_ing(
     event_sink: &druid::ExtEventSink,
     event: EventUnSubscribe,
-    mqtt_clients: &HashMap<usize, AsyncClient>,
+    mqtt_clients: &HashMap<usize, Client>,
 ) {
     let EventUnSubscribe {
         broke_id,
@@ -162,7 +162,7 @@ async fn un_subscribe_ing(
     }
 }
 
-fn un_sub_ack(event_sink: &druid::ExtEventSink, broke_id: usize, unsubscribe_pk_id: u16) {
+fn un_sub_ack(event_sink: &druid::ExtEventSink, broke_id: usize, unsubscribe_pk_id: u32) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.unsubscribe_ack(broke_id, unsubscribe_pk_id) {
             error!("{:?}", e);
@@ -174,7 +174,7 @@ fn un_sub_ack(event_sink: &druid::ExtEventSink, broke_id: usize, unsubscribe_pk_
 
 async fn connect(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &mut HashMap<usize, AsyncClient>,
+    mqtt_clients: &mut HashMap<usize, Client>,
     tx: Sender<AppEvent>,
     broker: Broker,
 ) {
@@ -196,7 +196,7 @@ async fn connect(
 
 async fn subscribe(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &HashMap<usize, AsyncClient>,
+    mqtt_clients: &HashMap<usize, Client>,
     index: usize,
     input: SubscribeInput,
 ) {
@@ -216,7 +216,7 @@ async fn subscribe(
 
 async fn subscribe_from_his(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &HashMap<usize, AsyncClient>,
+    mqtt_clients: &HashMap<usize, Client>,
     input: SubscribeHis,
 ) {
     match mqtt_subscribe(input.broker_id, input.clone().into(), &mqtt_clients).await {
@@ -235,7 +235,7 @@ async fn subscribe_from_his(
 
 async fn publish(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &HashMap<usize, AsyncClient>,
+    mqtt_clients: &HashMap<usize, Client>,
     index: usize,
     input: PublicInput,
 ) {
@@ -258,14 +258,14 @@ fn receive_public(event_sink: &druid::ExtEventSink, index: usize, msg: Subscribe
     });
 }
 
-fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: PubAck) {
+fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, trace_id: u32) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.puback(id, ack);
+        data.puback(id, trace_id);
         info!("{}", PUBLISH_SUCCESS);
     });
 }
 
-fn sub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: SubAck) {
+fn sub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: SubscribeAck) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.suback(id, ack);
         info!("{}", SUBSCRIBE_SUCCESS);
@@ -310,7 +310,7 @@ fn db_click_check(clicks: &mut HashMap<usize, usize>, id: usize) {
 async fn click_subscribe_his(
     event_sink: &druid::ExtEventSink,
     tx: Sender<AppEvent>,
-    mqtt_clients: &HashMap<usize, AsyncClient>,
+    mqtt_clients: &HashMap<usize, Client>,
     click_his: &mut Option<SubscribeHis>,
     his: SubscribeHis,
 ) {
@@ -319,10 +319,7 @@ async fn click_subscribe_his(
         if _previous == his {
             // double
             if let Some(client) = mqtt_clients.get(&index) {
-                let Ok(pkid) = client.subscribe_and_tracing(his.topic.as_str(), his.qos.into()).await else {
-                    error!("!!!!!!");
-                    return;
-                };
+                let pkid = client.subscribe(his.topic.clone(), his.qos.into()).await.id;
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     if let Err(e) = data.subscribe(index, _previous, pkid) {
                         error!("{:?}", e);
@@ -356,13 +353,11 @@ async fn db_click_check_subscribe_his(click_his: &mut Option<SubscribeHis>, his:
 
 async fn re_connect(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &mut HashMap<usize, AsyncClient>,
+    mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
 ) {
     if let Some(client) = mqtt_clients.remove(&id) {
-        if let Err(e) = client.disconnect().await {
-            error!("{:?}", e);
-        }
+        client.disconnect().await;
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.reconnect(id) {
@@ -373,13 +368,11 @@ async fn re_connect(
 
 async fn disconnect(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &mut HashMap<usize, AsyncClient>,
+    mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
 ) {
     if let Some(client) = mqtt_clients.remove(&id) {
-        if let Err(e) = client.disconnect().await {
-            error!("{:?}", e);
-        }
+        client.disconnect().await;
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.disconnect(id) {
@@ -399,13 +392,11 @@ fn close_broker_tab(event_sink: &druid::ExtEventSink, id: usize) {
 }
 async fn close_connection_tab(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &mut HashMap<usize, AsyncClient>,
+    mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
 ) {
     if let Some(client) = mqtt_clients.remove(&id) {
-        if let Err(e) = client.disconnect().await {
-            error!("{:?}", e);
-        }
+        client.disconnect().await;
     } else {
         error!("can't find client");
     }
@@ -427,6 +418,15 @@ fn connect_ack_success(event_sink: &druid::ExtEventSink, id: usize) {
     info!("connect success!");
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.connected(id) {
+            error!("{:?}", e);
+        }
+    });
+}
+
+fn clear_msg(event_sink: &druid::ExtEventSink, id: usize) {
+    info!("clear_msg");
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.clear_msg(id) {
             error!("{:?}", e);
         }
     });

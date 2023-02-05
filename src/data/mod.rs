@@ -5,7 +5,8 @@ pub mod lens;
 
 use crate::data::common::{Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
 use common::Broker;
-use rumqttc::v5::mqttbytes::{PubAck, SubAck};
+use for_mqtt_client::v3_1_1::{PubAck, SubAck};
+use for_mqtt_client::{SubscribeAck, UnsubscribeAck};
 use std::sync::Arc;
 
 pub type AString = Arc<String>;
@@ -23,15 +24,15 @@ pub enum AppEvent {
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
     SubscribeFromHis(SubscribeHis),
-    ToUnSubscribe { broker_id: usize, pk_id: u16 },
+    ToUnSubscribe { broker_id: usize, pk_id: u32 },
     UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
     Public(PublicInput, usize),
     ReceivePublic(usize, SubscribeMsg),
-    PubAck(usize, PubAck),
-    SubAck(usize, SubAck),
-    UnSubAck(usize, u16),
+    PubAck(usize, u32),
+    SubAck(usize, SubscribeAck),
+    UnSubAck(usize, UnsubscribeAck),
     ClickBroker(usize),
     DbClickCheck(usize),
     // ClickSubscribeHis(usize, SubscribeHis),
@@ -43,10 +44,12 @@ pub enum AppEvent {
     // e.g: delete broker; close tab; click button "disconnect"
     Disconnect(usize),
     UpdateStatusBar(String),
+    //
+    ClearMsg(usize),
 }
 #[derive(Debug, Clone)]
 pub struct EventUnSubscribe {
     pub broke_id: usize,
-    pub subscribe_pk_id: u16,
+    pub subscribe_pk_id: u32,
     pub topic: String,
 }

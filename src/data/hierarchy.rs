@@ -11,8 +11,9 @@ use anyhow::Result;
 use custom_utils::{tx, tx_async};
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
+use for_mqtt_client::v3_1_1::{PubAck, SubAck, SubscribeReasonCode};
+use for_mqtt_client::{SubscribeAck, SubscribeFilterAck};
 use log::{debug, error, warn};
-use rumqttc::v5::mqttbytes::*;
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
@@ -138,8 +139,8 @@ impl AppData {
     pub fn unscribeing(
         &mut self,
         broker_id: usize,
-        subscribe_pkid: u16,
-        unsubscribe_pkid: u16,
+        subscribe_pkid: u32,
+        unsubscribe_pkid: u32,
     ) -> Result<()> {
         if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(list) = self.unsubscribe_ing.get_mut(&broker_id) {
@@ -161,13 +162,13 @@ impl AppData {
         Ok(())
     }
 
-    pub fn unsubscribe_ack(&mut self, broker_id: usize, unsubscribe_pkid: u16) -> Result<()> {
+    pub fn unsubscribe_ack(&mut self, broker_id: usize, unsubscribe_trace_id: u32) -> Result<()> {
         if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(list) = self.unsubscribe_ing.get_mut(&broker_id) {
                 if let Some(index) = list
                     .iter()
                     .enumerate()
-                    .find(|(_index, x)| x.unsubscribe_pk_id == unsubscribe_pkid)
+                    .find(|(_index, x)| x.unsubscribe_pk_id == unsubscribe_trace_id)
                     .map(|(index, _x)| index)
                 {
                     let tracing = list.remove(index);
@@ -175,7 +176,7 @@ impl AppData {
                         if let Some(index) = list
                             .iter_mut()
                             .enumerate()
-                            .find(|(_index, his)| (*his).pkid == tracing.subscribe_pk_id)
+                            .find(|(_index, his)| (*his).trace_id == tracing.subscribe_pk_id)
                             .map(|(index, _x)| index)
                         {
                             list.remove(index);
@@ -195,14 +196,14 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn to_unscribe(&mut self, broker_id: usize, pkid: u16) -> Result<()> {
+    pub fn to_unscribe(&mut self, broker_id: usize, trace_id: u32) -> Result<()> {
         if let Some(_broker) = self.find_broker(broker_id) {
             if let Some(list) = self.subscribe_topics.get_mut(&broker_id) {
-                if let Some(index) = list.iter_mut().find(|his| (*his).pkid == pkid) {
+                if let Some(index) = list.iter_mut().find(|his| (*his).trace_id == trace_id) {
                     index.status = SubscribeStatus::UnSubscribeIng;
                     let event = EventUnSubscribe {
                         broke_id: broker_id,
-                        subscribe_pk_id: index.pkid,
+                        subscribe_pk_id: index.trace_id,
                         topic: index.topic.as_ref().clone(),
                     };
                     tx!(self.db.tx, AppEvent::UnSubscribeIng(event));
@@ -213,9 +214,9 @@ impl AppData {
         warn!("can't find the subscribe to unsubscibe");
         Ok(())
     }
-    pub fn subscribe(&mut self, id: usize, input: SubscribeHis, pkid: u16) -> Result<()> {
+    pub fn subscribe(&mut self, id: usize, input: SubscribeHis, trace_id: u32) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
-            let sub = SubscribeTopic::from_his(input, pkid);
+            let sub = SubscribeTopic::from_his(input, trace_id);
             subscribe_topics.push_back(sub.into());
         }
         Ok(())
@@ -242,7 +243,7 @@ impl AppData {
         &mut self,
         id: usize,
         input: SubscribeInput,
-        pkid: u16,
+        pkid: u32,
     ) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
             let sub = SubscribeTopic::from(input.clone(), pkid);
@@ -259,22 +260,27 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn suback(&mut self, id: usize, input: SubAck) {
+    pub fn suback(&mut self, id: usize, mut input: SubscribeAck) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
-            for msg in subscribe_topics.iter_mut() {
-                if msg.pkid == input.pkid {
-                    let code = input.return_codes[0];
-                    if code == SubscribeReasonCode::QoS0
-                        || code == SubscribeReasonCode::QoS1
-                        || code == SubscribeReasonCode::QoS2
-                    {
-                        msg.status = SubscribeStatus::SubscribeSuccess;
+            let (id, ack) = (input.id, input.filter_ack.remove(0));
+            if let Some(subscribe_topic) = subscribe_topics.iter_mut().find(|x| x.trace_id == id) {
+                match ack.ack {
+                    SubscribeReasonCode::Success(qos) => {
+                        subscribe_topic.qos = qos.into();
+                        subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
+                    }
+                    SubscribeReasonCode::Failure => {
+                        subscribe_topic.status = SubscribeStatus::SubscribeFail;
                     }
                 }
+            } else {
+                warn!("todo");
             }
+        } else {
+            warn!("todo");
         }
     }
-    pub fn public(&mut self, id: usize, input: PublicInput, pkid: u16) {
+    pub fn public(&mut self, id: usize, input: PublicInput, pkid: u32) {
         if let Some(msgs) = self.msgs.get_mut(&id) {
             let sub: Msg = PublicMsg::from(input.clone(), pkid).into();
             msgs.push_back(sub.into());
@@ -393,14 +399,12 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn puback(&mut self, id: usize, input: PubAck) {
+    pub fn puback(&mut self, id: usize, trace_id: u32) {
         if let Some(msgs) = self.msgs.get_mut(&id) {
             for msg in msgs.iter_mut() {
                 if let Msg::Public(msg) = msg {
-                    if msg.pkid == input.pkid {
-                        if input.reason == PubAckReason::Success {
-                            msg.status = PublicStatus::Success;
-                        }
+                    if msg.pkid == trace_id {
+                        msg.status = PublicStatus::Success;
                     }
                 }
             }
@@ -412,9 +416,12 @@ impl AppData {
             msgs.push_back(sub.into());
         }
     }
+    pub fn clear_msg(&mut self, id: usize) -> Result<()> {
+        todo!()
+    }
 }
 #[derive(Debug, Clone, Data)]
 pub struct UnsubcribeTracing {
-    pub subscribe_pk_id: u16,
-    pub unsubscribe_pk_id: u16,
+    pub subscribe_pk_id: u32,
+    pub unsubscribe_pk_id: u32,
 }

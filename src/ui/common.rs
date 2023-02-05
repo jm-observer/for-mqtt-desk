@@ -72,7 +72,7 @@ pub fn label_static_expand_width<T: druid::Data>(
 }
 
 pub const QOS: fn() -> SizedBox<QoS> = || {
-    Label::dynamic(|qos: &QoS, _: &Env| format!("{}", *qos as u8))
+    Label::dynamic(|qos: &QoS, _: &Env| format!("{}", qos.to_u8()))
         .with_text_size(8.)
         .fix_width(20f64)
 };

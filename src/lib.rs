@@ -1,5 +1,4 @@
 #![feature(type_alias_impl_trait)]
-#![feature(let_else)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]

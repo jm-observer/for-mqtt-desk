@@ -21,7 +21,7 @@ impl Default for Id {
 
 #[derive(Data, Clone, Debug, Lens)]
 pub struct SubscribeTopic {
-    pub pkid: u16,
+    pub trace_id: u32,
     #[data(ignore)]
     pub topic: AString,
     #[data(ignore)]
@@ -69,7 +69,7 @@ impl Msg {
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
 pub struct PublicMsg {
-    pub pkid: u16,
+    pub pkid: u32,
     pub topic: AString,
     pub msg: AString,
     pub qos: QoS,
@@ -130,20 +130,6 @@ pub enum QoS {
     AtLeastOnce = 1,
     ExactlyOnce = 2,
 }
-impl Default for QoS {
-    fn default() -> Self {
-        QoS::AtMostOnce
-    }
-}
-impl ToString for QoS {
-    fn to_string(&self) -> String {
-        match self {
-            QoS::AtMostOnce => "0".to_string(),
-            QoS::AtLeastOnce => "1".to_string(),
-            QoS::ExactlyOnce => "2".to_string(),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Data, Lens)]
 pub struct Broker {
@@ -185,5 +171,29 @@ impl Broker {
 impl PartialEq for SubscribeHis {
     fn eq(&self, other: &Self) -> bool {
         self.broker_id == other.broker_id && self.topic == other.topic && self.qos == other.qos
+    }
+}
+
+impl Default for QoS {
+    fn default() -> Self {
+        QoS::AtMostOnce
+    }
+}
+impl ToString for QoS {
+    fn to_string(&self) -> String {
+        match self {
+            QoS::AtMostOnce => "0".to_string(),
+            QoS::AtLeastOnce => "1".to_string(),
+            QoS::ExactlyOnce => "2".to_string(),
+        }
+    }
+}
+impl QoS {
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            QoS::AtMostOnce => 0,
+            QoS::AtLeastOnce => 1,
+            QoS::ExactlyOnce => 2,
+        }
     }
 }

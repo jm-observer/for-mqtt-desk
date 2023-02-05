@@ -30,9 +30,9 @@ pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData>
     let subscribe_list = Padding::new(
         0.5,
         Container::new(
-            init_subscribe_list(id, tx), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
-                                         //     .split_point(0.75)
-                                         //     .bar_size(1.0),
+            init_subscribe_list(id, tx.clone()), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
+                                                 //     .split_point(0.75)
+                                                 //     .bar_size(1.0),
         ), // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
     );
     let subscribe = Padding::new(
@@ -49,7 +49,7 @@ pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData>
         0.5,
         Container::new(
             Split::rows(
-                Align::centered(init_msgs_list(id)),
+                Align::centered(init_msgs_list(id, tx.clone())),
                 Align::centered(init_public_input(id)),
             )
             .split_point(0.65)
@@ -74,7 +74,7 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
                 move |_ctx, data: &mut SubscribeTopic, _env| {
                     if let Err(_) = tx.send(AppEvent::ToUnSubscribe {
                         broker_id: id,
-                        pk_id: data.pkid,
+                        pk_id: data.trace_id,
                     }) {
                         error!("fail to send event")
                     }
@@ -100,7 +100,7 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
     scroll
 }
 
-fn init_msgs_list(id: usize) -> impl Widget<AppData> {
+fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let list: List<Msg> = List::new(move || {
         Either::new(
             |data: &Msg, _env| data.is_public(),
@@ -165,13 +165,24 @@ fn init_msgs_list(id: usize) -> impl Widget<AppData> {
         .lens(BrokerIndexLensVecMsg(id))
         .align_vertical(UnitPoint::TOP)
         .expand_width()
+        .expand_height()
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
-
-    scroll
+    let clear_tx = tx.clone();
+    let tools = Flex::row()
+        .with_child(Button::new("Clear").on_click(move |_, _, _| {
+            if clear_tx.send(AppEvent::ClearMsg(id)).is_err() {
+                error!("could not to send clear command");
+            }
+        }))
+        .with_child(Button::new("hex").on_click(move |_, _, _| {}))
+        .align_left();
+    Flex::column()
+        .with_child(tools)
+        .with_flex_child(scroll, 1.0)
 }
 
 //
-pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
+fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
@@ -246,7 +257,7 @@ pub fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
     connection
 }
 
-pub fn init_public_input(id: usize) -> impl Widget<AppData> {
+fn init_public_input(id: usize) -> impl Widget<AppData> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
