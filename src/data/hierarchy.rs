@@ -420,7 +420,10 @@ impl AppData {
         }
     }
     pub fn clear_msg(&mut self, id: usize) -> Result<()> {
-        todo!()
+        if let Some(msgs) = self.msgs.get_mut(&id) {
+            msgs.clear();
+        }
+        Ok(())
     }
 }
 #[derive(Debug, Clone, Data)]
