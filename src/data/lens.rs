@@ -277,6 +277,22 @@ impl Lens<Msg, Arc<String>> for MsgQosLens {
         f(qos)
     }
 }
+pub struct MsgPayloadTyLens;
+impl Lens<Msg, AString> for MsgPayloadTyLens {
+    fn with<V, F: FnOnce(&AString) -> V>(&self, data: &Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &msg.payload_ty,
+            Msg::Subscribe(msg) => &msg.payload_ty,
+        })
+    }
+
+    fn with_mut<V, F: FnOnce(&mut AString) -> V>(&self, data: &mut Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &mut msg.payload_ty,
+            Msg::Subscribe(msg) => &mut msg.payload_ty,
+        })
+    }
+}
 
 pub struct PortLens;
 
@@ -299,5 +315,27 @@ impl Lens<SubscribeHis, Arc<String>> for LensSubscribeHisQoS {
 
     fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut SubscribeHis, f: F) -> V {
         f(&mut data.qos.qos_to_string())
+    }
+}
+
+pub struct SubscribeTopicPayloadLens;
+impl Lens<SubscribeTopic, Arc<String>> for SubscribeTopicPayloadLens {
+    fn with<V, F: FnOnce(&Arc<String>) -> V>(&self, data: &SubscribeTopic, f: F) -> V {
+        f(&data.payload_ty.to_arc_string())
+    }
+
+    fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut SubscribeTopic, f: F) -> V {
+        f(&mut data.payload_ty.to_arc_string())
+    }
+}
+
+pub struct SubscribeHisPayloadLens;
+impl Lens<SubscribeHis, Arc<String>> for SubscribeHisPayloadLens {
+    fn with<V, F: FnOnce(&Arc<String>) -> V>(&self, data: &SubscribeHis, f: F) -> V {
+        f(&data.payload_ty.to_arc_string())
+    }
+
+    fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut SubscribeHis, f: F) -> V {
+        f(&mut data.payload_ty.to_arc_string())
     }
 }

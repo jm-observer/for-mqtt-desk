@@ -102,11 +102,3 @@ pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
         .with_id(id),
     )
 }
-
-pub fn down_select_qos() -> impl Widget<QoS> {
-    DropdownSelect::new(vec![
-        ("0", QoS::AtMostOnce),
-        ("1", QoS::AtLeastOnce),
-        ("2", QoS::ExactlyOnce),
-    ])
-}

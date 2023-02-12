@@ -68,16 +68,8 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                         topic,
                         payload,
                     } = msg;
-                    if let Err(_) = tx.send(AppEvent::ReceivePublic(
-                        id,
-                        SubscribeMsg {
-                            topic: topic.clone(),
-                            msg: String::from_utf8_lossy(payload.as_bytes())
-                                .to_string()
-                                .into(),
-                            qos: qos.qos_to_string(),
-                        },
-                    )) {
+                    if let Err(_) = tx.send(AppEvent::ReceivePublic(id, topic, payload, qos.into()))
+                    {
                         error!("fail to send event!");
                     };
                 }

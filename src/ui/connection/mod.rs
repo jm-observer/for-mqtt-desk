@@ -2,12 +2,12 @@ use crate::data::common::{Msg, PublicInput, QoS, SubscribeInput, SubscribeTopic}
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
-    BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgQosLens, MsgTopicLens,
+    BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgPayloadTyLens, MsgQosLens,
+    MsgTopicLens, SubscribeTopicPayloadLens,
 };
 use crate::data::{AString, AppEvent};
 use crate::ui::common::{
-    down_select_qos, error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS,
-    SILVER, TOPIC, YELLOW,
+    error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS, SILVER, TOPIC, YELLOW,
 };
 use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
 use crate::ui::icons::removed_icon;
@@ -15,7 +15,8 @@ use crate::ui::ids::{
     TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
     ID_SUBSCRIBE_TOPIC,
 };
-use crate::ui::qos::{qos_init, qos_success};
+use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
+use crate::ui::qos::{down_select_qos, qos_init, qos_success};
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::EditableText;
@@ -87,6 +88,7 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
                 qos_success(SubscribeTopic::qos),
                 qos_init(SubscribeTopic::qos),
             ))
+            .with_child(payload_ty_init(SubscribeTopicPayloadLens))
             .with_child(TextBox::new().lens(SubscribeTopic::topic).fix_width(150.0))
             .align_left()
             // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
@@ -116,6 +118,7 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
                                     qos_success(MsgQosLens),
                                     qos_init(MsgQosLens),
                                 ))
+                                .with_child(payload_ty_init(MsgPayloadTyLens))
                                 .with_flex_child(
                                     TextBox::<AString>::new().lens(MsgTopicLens).expand_width(),
                                     1.0,
@@ -140,6 +143,7 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
                         .with_child(
                             Flex::row()
                                 .with_child(qos_success(MsgQosLens))
+                                .with_child(payload_ty_init(MsgPayloadTyLens))
                                 .with_flex_child(
                                     TextBox::<AString>::new().lens(MsgTopicLens).expand_width(),
                                     1.0,
@@ -176,7 +180,6 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
                 error!("could not to send clear command");
             }
         }))
-        .with_child(Button::new("hex").on_click(move |_, _, _| {}))
         .align_left();
     Flex::column()
         .with_child(tools)
@@ -209,18 +212,20 @@ fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("QoS", UnitPoint::RIGHT))
                 .with_child(
                     down_select_qos()
-                        // .with_placeholder("0/1/2")
-                        // .with_formatter(MustInput)
-                        // .update_data_while_editing(true)
-                        // .validate_while_editing(true)
-                        // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_QOS, check_qos)
-                        //         .sends_partial_errors(true),
-                        // )
                         .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos))
                         .fix_width(150.),
                 )
                 .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("Byte Type", UnitPoint::RIGHT))
+                .with_child(
+                    down_select_payload_ty()
+                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::payload_ty)),
+                )
+                // .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
         )
         .with_child(
@@ -288,6 +293,16 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                         .fix_width(300.),
                 )
                 .with_child(error_display_widget(ID_PUBLISH_QOS))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("Byte Type", UnitPoint::RIGHT))
+                .with_child(
+                    down_select_payload_ty()
+                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::payload_ty)),
+                )
+                // .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
         )
         .with_child(

@@ -3,13 +3,22 @@ use for_mqtt_client::QoSWithPacketId;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 lazy_static! {
-    pub static ref QOS0: Arc<String> = Arc::new("0".to_string());
+    pub static ref QOS_0: Arc<String> = Arc::new("0".to_string());
 }
 lazy_static! {
-    pub static ref QOS1: Arc<String> = Arc::new("1".to_string());
+    pub static ref QOS_1: Arc<String> = Arc::new("1".to_string());
 }
 lazy_static! {
-    pub static ref QOS2: Arc<String> = Arc::new("2".to_string());
+    pub static ref QOS_2: Arc<String> = Arc::new("2".to_string());
+}
+lazy_static! {
+    pub static ref TY_TEXT: Arc<String> = Arc::new("T".to_string());
+}
+lazy_static! {
+    pub static ref TY_JSON: Arc<String> = Arc::new("J".to_string());
+}
+lazy_static! {
+    pub static ref TY_HEX: Arc<String> = Arc::new("H".to_string());
 }
 
 pub trait QosToString {
@@ -18,27 +27,27 @@ pub trait QosToString {
 impl QosToString for QoS {
     fn qos_to_string(&self) -> Arc<String> {
         match self {
-            QoS::AtMostOnce => QOS0.clone(),
-            QoS::AtLeastOnce => QOS1.clone(),
-            QoS::ExactlyOnce => QOS2.clone(),
+            QoS::AtMostOnce => QOS_0.clone(),
+            QoS::AtLeastOnce => QOS_1.clone(),
+            QoS::ExactlyOnce => QOS_2.clone(),
         }
     }
 }
 impl QosToString for for_mqtt_client::QoS {
     fn qos_to_string(&self) -> Arc<String> {
         match self {
-            for_mqtt_client::QoS::AtMostOnce => QOS0.clone(),
-            for_mqtt_client::QoS::AtLeastOnce => QOS1.clone(),
-            for_mqtt_client::QoS::ExactlyOnce => QOS2.clone(),
+            for_mqtt_client::QoS::AtMostOnce => QOS_0.clone(),
+            for_mqtt_client::QoS::AtLeastOnce => QOS_1.clone(),
+            for_mqtt_client::QoS::ExactlyOnce => QOS_2.clone(),
         }
     }
 }
 impl QosToString for QoSWithPacketId {
     fn qos_to_string(&self) -> Arc<String> {
         match self {
-            QoSWithPacketId::AtMostOnce => QOS0.clone(),
-            QoSWithPacketId::AtLeastOnce(_) => QOS1.clone(),
-            QoSWithPacketId::ExactlyOnce(_) => QOS2.clone(),
+            QoSWithPacketId::AtMostOnce => QOS_0.clone(),
+            QoSWithPacketId::AtLeastOnce(_) => QOS_1.clone(),
+            QoSWithPacketId::ExactlyOnce(_) => QOS_2.clone(),
         }
     }
 }

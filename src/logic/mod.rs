@@ -2,7 +2,9 @@ use crate::data::hierarchy::AppData;
 use crate::data::{AppEvent, EventUnSubscribe};
 use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
-use crate::data::common::{Broker, Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
+use crate::data::common::{
+    Broker, Id, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeMsg,
+};
 use crate::mqtt::Client;
 use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::util::hint::{
@@ -10,6 +12,7 @@ use crate::util::hint::{
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
 };
 use anyhow::Result;
+use bytes::Bytes;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
 use for_mqtt_client::v3_1_1::{PubAck, SubAck};
@@ -59,7 +62,9 @@ pub async fn deal_event(
             AppEvent::Public(input, index) => {
                 publish(&event_sink, &mqtt_clients, index, input).await
             }
-            AppEvent::ReceivePublic(index, msg) => receive_public(&event_sink, index, msg),
+            AppEvent::ReceivePublic(index, topic, payload, qos) => {
+                receive_public(&event_sink, index, topic, payload, qos)
+            }
             AppEvent::PubAck(id, ack) => pub_ack(&event_sink, id, ack),
             AppEvent::SubAck(id, ack) => sub_ack(&event_sink, id, ack),
             AppEvent::SelectTabs(id) => select_tabs(&event_sink, id),
@@ -252,9 +257,15 @@ async fn publish(
     }
 }
 
-fn receive_public(event_sink: &druid::ExtEventSink, index: usize, msg: SubscribeMsg) {
+fn receive_public(
+    event_sink: &druid::ExtEventSink,
+    index: usize,
+    topic: Arc<String>,
+    payload: Arc<Bytes>,
+    qos: QoS,
+) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.receive_msg(index, msg);
+        data.receive_msg(index, topic, payload, qos);
     });
 }
 

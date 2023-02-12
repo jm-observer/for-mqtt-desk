@@ -1,4 +1,4 @@
-use crate::data::common::{Broker, Id};
+use crate::data::common::{Broker, Id, QoS};
 use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
@@ -9,12 +9,14 @@ use crate::util::db::ArcDb;
 use crate::util::hint::*;
 use anyhow::bail;
 use anyhow::Result;
+use bytes::Bytes;
 use custom_utils::{tx, tx_async};
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
 use for_mqtt_client::v3_1_1::{PubAck, SubAck, SubscribeReasonCode};
 use for_mqtt_client::{SubscribeAck, SubscribeFilterAck};
 use log::{debug, error, warn};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Lens, Data)]
 pub struct AppData {
@@ -416,10 +418,23 @@ impl AppData {
             error!("pub_ack could not find pub({})", trace_id);
         }
     }
-    pub fn receive_msg(&mut self, id: usize, input: SubscribeMsg) {
+    pub fn receive_msg(&mut self, id: usize, topic: Arc<String>, payload: Arc<Bytes>, qos: QoS) {
+        let Some(subscribes) = self.subscribe_topics.get(&id) else {
+          todo!()
+        };
+        let Some(subscribe) = subscribes.iter().find(|x| x.topic == topic) else {
+            todo!()
+        };
+        let payload = subscribe.payload_ty.format(payload);
+        let payload_ty = subscribe.payload_ty.to_arc_string();
         let msgs = self.msgs_ref_mut(id);
-        let sub: Msg = input.into();
-        msgs.push_back(sub.into());
+        let msg = SubscribeMsg {
+            topic,
+            msg: Arc::new(payload),
+            qos: qos.qos_to_string(),
+            payload_ty,
+        };
+        msgs.push_back(msg.into());
     }
     pub fn clear_msg(&mut self, id: usize) {
         self.msgs_ref_mut(id).clear()

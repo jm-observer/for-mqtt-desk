@@ -16,6 +16,7 @@ mod debug;
 pub mod formatter;
 pub mod icons;
 pub mod ids;
+mod payload_ty;
 pub mod qos;
 pub mod tabs;
 

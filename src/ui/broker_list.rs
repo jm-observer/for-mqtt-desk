@@ -1,12 +1,16 @@
 use crate::data::common::{Broker, SubscribeHis};
 use crate::data::hierarchy::AppData;
-use crate::data::lens::{BrokerStoredList, LensSelectedSubscribeHis, LensSubscribeHisQoS};
+use crate::data::lens::{
+    BrokerStoredList, LensSelectedSubscribeHis, LensSubscribeHisQoS, SubscribeHisPayloadLens,
+};
 use crate::data::AppEvent;
 use crate::ui::common::{
     label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title, QOS,
     SILVER, TOPIC,
 };
 use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
+use crate::ui::payload_ty::payload_ty_init;
+use crate::ui::qos::qos_init;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
@@ -31,7 +35,8 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let his_fn = move || {
         let tx_click = tx.clone();
         Flex::row()
-            .with_child(QOS().lens(LensSubscribeHisQoS))
+            .with_child(qos_init(LensSubscribeHisQoS))
+            .with_child(payload_ty_init(SubscribeHisPayloadLens))
             .with_child(TOPIC().lens(SubscribeHis::topic))
             .expand_width()
             .on_click(move |_ctx, data: &mut SubscribeHis, _env| {

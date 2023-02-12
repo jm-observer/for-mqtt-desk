@@ -15,6 +15,7 @@ impl SubscribeTopic {
             topic: val.topic.clone(),
             qos: val.qos.qos_to_string(),
             status: SubscribeStatus::SubscribeIng,
+            payload_ty: val.payload_ty,
         }
     }
     pub fn from_his(val: SubscribeHis, trace_id: u32) -> Self {
@@ -23,6 +24,7 @@ impl SubscribeTopic {
             topic: val.topic.clone(),
             qos: val.qos.qos_to_string(),
             status: SubscribeStatus::SubscribeIng,
+            payload_ty: val.payload_ty,
         }
     }
     pub fn is_sucess(&self) -> bool {
@@ -42,6 +44,7 @@ impl PublicMsg {
             msg: val.msg.clone(),
             qos: val.qos.qos_to_string(),
             status: PublicStatus::Ing,
+            payload_ty: val.payload_ty.to_arc_string(),
         }
     }
 }
@@ -54,6 +57,7 @@ impl From<SubscribeInput> for SubscribeHis {
             selected: false,
             topic: val.topic.clone(),
             qos: val.qos.clone(),
+            payload_ty: val.payload_ty,
         }
     }
 }
@@ -75,6 +79,7 @@ impl SubscribeInput {
             broker_id,
             topic: Arc::new("".to_string()),
             qos: QoS::AtMostOnce,
+            payload_ty: Default::default(),
         }
     }
 }

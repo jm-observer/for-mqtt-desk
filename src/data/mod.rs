@@ -3,7 +3,8 @@ pub mod db;
 pub mod hierarchy;
 pub mod lens;
 
-use crate::data::common::{Id, PublicInput, SubscribeHis, SubscribeInput, SubscribeMsg};
+use crate::data::common::{Id, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeMsg};
+use bytes::Bytes;
 use common::Broker;
 use for_mqtt_client::v3_1_1::{PubAck, SubAck};
 use for_mqtt_client::{SubscribeAck, UnsubscribeAck};
@@ -29,7 +30,7 @@ pub enum AppEvent {
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
     Public(PublicInput, usize),
-    ReceivePublic(usize, SubscribeMsg),
+    ReceivePublic(usize, Arc<String>, Arc<Bytes>, QoS),
     PubAck(usize, u32),
     SubAck(usize, SubscribeAck),
     UnSubAck(usize, UnsubscribeAck),
