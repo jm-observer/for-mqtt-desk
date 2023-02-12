@@ -4,9 +4,11 @@ use crate::data::common::{
 };
 use crate::data::hierarchy::AppData;
 use crate::data::AString;
+use crate::util::consts::QosToString;
 use druid::im::Vector;
 use druid::{Data, Lens};
 use log::debug;
+use std::sync::Arc;
 
 pub struct BrokerIndex(pub usize);
 
@@ -263,21 +265,6 @@ impl Lens<Msg, AString> for MsgTopicLens {
         })
     }
 }
-impl Lens<Msg, QoS> for MsgTopicLens {
-    fn with<V, F: FnOnce(&QoS) -> V>(&self, data: &Msg, f: F) -> V {
-        f(match data {
-            Msg::Public(msg) => &msg.qos,
-            Msg::Subscribe(msg) => &msg.qos,
-        })
-    }
-
-    fn with_mut<V, F: FnOnce(&mut QoS) -> V>(&self, data: &mut Msg, f: F) -> V {
-        f(match data {
-            Msg::Public(msg) => &mut msg.qos,
-            Msg::Subscribe(msg) => &mut msg.qos,
-        })
-    }
-}
 pub struct MsgQosLens;
 impl Lens<Msg, String> for MsgQosLens {
     fn with<V, F: FnOnce(&String) -> V>(&self, data: &Msg, f: F) -> V {
@@ -306,5 +293,17 @@ impl Lens<Broker, u16> for PortLens {
 
     fn with_mut<V, F: FnOnce(&mut u16) -> V>(&self, data: &mut Broker, f: F) -> V {
         f(&mut data.port)
+    }
+}
+
+pub struct LensSubscribeHisQoS;
+
+impl Lens<SubscribeHis, Arc<String>> for LensSubscribeHisQoS {
+    fn with<V, F: FnOnce(&Arc<String>) -> V>(&self, data: &SubscribeHis, f: F) -> V {
+        f(&data.qos.qos_to_string())
+    }
+
+    fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut SubscribeHis, f: F) -> V {
+        f(&mut data.qos.qos_to_string())
     }
 }

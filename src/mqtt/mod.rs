@@ -4,6 +4,7 @@ use crate::data::common::Broker;
 use crate::data::common::SubscribeMsg;
 use crate::data::AppEvent;
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
+use crate::util::consts::QosToString;
 use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use druid::piet::TextStorage;
@@ -74,7 +75,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                             msg: String::from_utf8_lossy(payload.as_bytes())
                                 .to_string()
                                 .into(),
-                            qos: qos.into(),
+                            qos: qos.qos_to_string(),
                         },
                     )) {
                         error!("fail to send event!");

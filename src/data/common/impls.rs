@@ -4,6 +4,7 @@ use crate::data::common::{
 };
 use crate::data::AString;
 use crate::mqtt;
+use crate::util::consts::QosToString;
 use druid::Data;
 use std::sync::Arc;
 
@@ -12,15 +13,15 @@ impl SubscribeTopic {
         Self {
             trace_id: packet_id,
             topic: val.topic.clone(),
-            qos: val.qos,
+            qos: val.qos.qos_to_string(),
             status: SubscribeStatus::SubscribeIng,
         }
     }
-    pub fn from_his(val: SubscribeHis, pkid: u32) -> Self {
+    pub fn from_his(val: SubscribeHis, trace_id: u32) -> Self {
         Self {
-            trace_id: pkid,
+            trace_id,
             topic: val.topic.clone(),
-            qos: val.qos,
+            qos: val.qos.qos_to_string(),
             status: SubscribeStatus::SubscribeIng,
         }
     }
@@ -39,7 +40,7 @@ impl PublicMsg {
             trace_id,
             topic: val.topic.clone(),
             msg: val.msg.clone(),
-            qos: val.qos,
+            qos: val.qos.qos_to_string(),
             status: PublicStatus::Ing,
         }
     }
@@ -78,12 +79,12 @@ impl SubscribeInput {
     }
 }
 impl Msg {
-    pub fn qos(&self) -> &QoS {
-        match self {
-            Msg::Subscribe(msg) => &msg.qos,
-            Msg::Public(msg) => &msg.qos,
-        }
-    }
+    // pub fn qos(&self) -> &QoS {
+    //     match self {
+    //         Msg::Subscribe(msg) => &msg.qos,
+    //         Msg::Public(msg) => &msg.qos,
+    //     }
+    // }
     pub fn msg(&self) -> &AString {
         match self {
             Msg::Subscribe(msg) => &msg.msg,

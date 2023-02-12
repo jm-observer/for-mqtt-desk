@@ -7,6 +7,7 @@ use druid::widget::{Either, Label, LabelText, SizedBox, Svg, SvgData};
 use druid::{Color, Data, Env, UnitPoint, Widget, WidgetExt, WidgetId};
 use druid_widget_nursery::DropdownSelect;
 use log::debug;
+use std::sync::Arc;
 
 pub const LABLE_WIDTH: f64 = 80.;
 pub const ERROR_LABLE_WIDTH: f64 = 180.;
@@ -72,8 +73,8 @@ pub fn label_static_expand_width<T: druid::Data>(
     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
 
-pub const QOS: fn() -> SizedBox<QoS> = || {
-    Label::dynamic(|qos: &QoS, _: &Env| format!("{}", qos.to_u8()))
+pub const QOS: fn() -> SizedBox<Arc<String>> = || {
+    Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
         .with_text_size(8.)
         .fix_width(20f64)
 };

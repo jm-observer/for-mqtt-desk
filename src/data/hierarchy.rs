@@ -4,6 +4,7 @@ use crate::data::common::{
     SubscribeStatus, SubscribeTopic, TabStatus,
 };
 use crate::data::{AString, AppEvent, EventUnSubscribe};
+use crate::util::consts::QosToString;
 use crate::util::db::ArcDb;
 use crate::util::hint::*;
 use anyhow::bail;
@@ -266,7 +267,7 @@ impl AppData {
             if let Some(subscribe_topic) = subscribe_topics.iter_mut().find(|x| x.trace_id == id) {
                 match ack.ack {
                     SubscribeReasonCode::Success(qos) => {
-                        subscribe_topic.qos = qos.into();
+                        subscribe_topic.qos = qos.qos_to_string();
                         subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
                     }
                     SubscribeReasonCode::Failure => {

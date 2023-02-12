@@ -25,7 +25,7 @@ pub struct SubscribeTopic {
     #[data(ignore)]
     pub topic: AString,
     #[data(ignore)]
-    pub qos: QoS,
+    pub qos: AString,
     #[data(eq)]
     pub status: SubscribeStatus,
 }
@@ -72,7 +72,7 @@ pub struct PublicMsg {
     pub trace_id: u32,
     pub topic: AString,
     pub msg: AString,
-    pub qos: QoS,
+    pub qos: AString,
     pub status: PublicStatus,
 }
 #[derive(Debug, Data, Clone, Eq, PartialEq)]
@@ -93,7 +93,7 @@ pub struct PublicInput {
 pub struct SubscribeMsg {
     pub topic: AString,
     pub msg: AString,
-    pub qos: QoS,
+    pub qos: AString,
 }
 
 #[derive(Data, Debug, Clone, Eq, PartialEq, Lens)]

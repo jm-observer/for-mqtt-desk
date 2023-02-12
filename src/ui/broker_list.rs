@@ -1,6 +1,6 @@
 use crate::data::common::{Broker, SubscribeHis};
 use crate::data::hierarchy::AppData;
-use crate::data::lens::{BrokerStoredList, LensSelectedSubscribeHis};
+use crate::data::lens::{BrokerStoredList, LensSelectedSubscribeHis, LensSubscribeHisQoS};
 use crate::data::AppEvent;
 use crate::ui::common::{
     label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title, QOS,
@@ -31,7 +31,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let his_fn = move || {
         let tx_click = tx.clone();
         Flex::row()
-            .with_child(QOS().lens(SubscribeHis::qos))
+            .with_child(QOS().lens(LensSubscribeHisQoS))
             .with_child(TOPIC().lens(SubscribeHis::topic))
             .expand_width()
             .on_click(move |_ctx, data: &mut SubscribeHis, _env| {
