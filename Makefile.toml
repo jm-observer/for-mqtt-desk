@@ -1,0 +1,9 @@
+[env]
+#UCLIBC_IMAGE = "/rust_uclibc_openssl:1.65.0_stable_1.0.2u"
+
+# windows
+[tasks.build-win-desktop]
+script = '''
+cargo build --package for-mqtt --bin main --release
+upx --best --lzma -o ./target/for-mqtt.exe ./target/release/main.exe
+'''

@@ -19,7 +19,9 @@ fn main() -> Result<(), PlatformError> {
         .log_to_write(Box::new(CustomWriter(tx.clone())))
         .build();
 
-    let win = WindowDesc::new(init_layout(tx.clone())).title(LocalizedString::new("app-names")); //.menu(menu);
+    let win = WindowDesc::new(init_layout(tx.clone()))
+        .title(LocalizedString::new("app-names"))
+        .window_size((1200.0, 700.0)); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
     let data = db.read_app_data()?;
 
