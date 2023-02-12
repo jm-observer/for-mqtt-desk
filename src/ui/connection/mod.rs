@@ -15,6 +15,7 @@ use crate::ui::ids::{
     TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
     ID_SUBSCRIBE_TOPIC,
 };
+use crate::ui::qos::{qos_init, qos_success};
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::EditableText;
@@ -83,8 +84,8 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
             ))
             .with_child(Either::new(
                 |data: &SubscribeTopic, _env| data.is_sucess(),
-                QOS().background(GREEN).lens(SubscribeTopic::qos),
-                QOS().background(YELLOW).lens(SubscribeTopic::qos),
+                qos_success(SubscribeTopic::qos),
+                qos_init(SubscribeTopic::qos),
             ))
             .with_child(TextBox::new().lens(SubscribeTopic::topic).fix_width(150.0))
             .align_left()
@@ -110,23 +111,13 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
                     Flex::column()
                         .with_child(
                             Flex::row()
-                                .with_child(
-                                    TextBox::<String>::new()
-                                        .fix_width(15.0)
-                                        .padding(1.0)
-                                        .lens(MsgQosLens),
-                                )
+                                .with_child(Either::new(
+                                    |data: &Msg, _env| data.is_sucess(),
+                                    qos_success(MsgQosLens),
+                                    qos_init(MsgQosLens),
+                                ))
                                 .with_flex_child(
-                                    Either::new(
-                                        |data: &Msg, _env| data.is_sucess(),
-                                        TextBox::<AString>::new()
-                                            .background(GREEN)
-                                            .lens(MsgTopicLens),
-                                        TextBox::<AString>::new()
-                                            .background(SILVER)
-                                            .lens(MsgTopicLens),
-                                    )
-                                    .expand_width(),
+                                    TextBox::<AString>::new().lens(MsgTopicLens).expand_width(),
                                     1.0,
                                 )
                                 .expand_width(),
@@ -143,19 +134,29 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
                 )
                 .align_horizontal(UnitPoint::TOP_RIGHT)
                 .expand_width(),
-            Flex::column()
+            Flex::row()
                 .with_child(
-                    Flex::row()
-                        .with_child(QOS().background(GREEN).lens(MsgTopicLens))
-                        .with_child(TextBox::<AString>::new().lens(MsgTopicLens))
-                        .align_horizontal(UnitPoint::LEFT),
+                    Flex::column()
+                        .with_child(
+                            Flex::row()
+                                .with_child(qos_success(MsgQosLens))
+                                .with_flex_child(
+                                    TextBox::<AString>::new().lens(MsgTopicLens).expand_width(),
+                                    1.0,
+                                )
+                                .expand_width(),
+                        )
+                        .with_child(
+                            TextBox::multiline()
+                                .expand_width()
+                                .lens(MsgMsgLens)
+                                .padding(1.5),
+                        )
+                        .border(BORDER_LIGHT, 1.0)
+                        .fix_width(250.),
                 )
-                .with_child(
-                    TextBox::multiline()
-                        .lens(MsgMsgLens)
-                        .align_horizontal(UnitPoint::LEFT),
-                )
-                .fix_width(200.),
+                .align_horizontal(UnitPoint::TOP_LEFT)
+                .expand_width(),
         )
         .expand_width()
         .padding(5.0)
