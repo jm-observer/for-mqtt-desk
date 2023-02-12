@@ -283,10 +283,9 @@ impl AppData {
     }
     pub fn publish(&mut self, id: usize, input: PublicInput, trace_id: u32) {
         debug!("publish: tarce_id {}", trace_id);
-        if let Some(msgs) = self.msgs.get_mut(&id) {
-            let sub: Msg = PublicMsg::from(input.clone(), trace_id).into();
-            msgs.push_back(sub.into());
-        }
+        let msgs = self.msgs_ref_mut(id);
+        let sub: Msg = PublicMsg::from(input.clone(), trace_id).into();
+        msgs.push_back(sub.into());
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
         self.select_broker(id);
@@ -403,27 +402,44 @@ impl AppData {
     }
     pub fn pub_ack(&mut self, id: usize, trace_id: u32) {
         debug!("pub_ack: tarce_id {}", trace_id);
-        if let Some(msgs) = self.msgs.get_mut(&id) {
-            for msg in msgs.iter_mut() {
-                if let Msg::Public(msg) = msg {
-                    if msg.trace_id == trace_id {
-                        msg.status = PublicStatus::Success;
-                    }
+        let msgs = self.msgs_ref_mut(id);
+        let mut is_ack = false;
+        for msg in msgs.iter_mut() {
+            if let Msg::Public(msg) = msg {
+                if msg.trace_id == trace_id {
+                    is_ack = true;
+                    msg.status = PublicStatus::Success;
                 }
             }
         }
+        if !is_ack {
+            error!("pub_ack could not find pub({})", trace_id);
+        }
     }
     pub fn receive_msg(&mut self, id: usize, input: SubscribeMsg) {
-        if let Some(msgs) = self.msgs.get_mut(&id) {
-            let sub: Msg = input.into();
-            msgs.push_back(sub.into());
-        }
+        let msgs = self.msgs_ref_mut(id);
+        let sub: Msg = input.into();
+        msgs.push_back(sub.into());
     }
-    pub fn clear_msg(&mut self, id: usize) -> Result<()> {
-        if let Some(msgs) = self.msgs.get_mut(&id) {
-            msgs.clear();
+    pub fn clear_msg(&mut self, id: usize) {
+        self.msgs_ref_mut(id).clear()
+    }
+
+    pub fn msgs_ref_mut(&mut self, id: usize) -> &mut Vector<Msg> {
+        if !self.msgs.contains_key(&id) {
+            self.msgs.insert(id, Vector::new());
         }
-        Ok(())
+        let Some(msgs) = self.msgs.get_mut(&id) else {
+                unreachable!()
+        };
+        msgs
+    }
+    pub fn msgs_ref(&self, id: usize) -> &Vector<Msg> {
+        if let Some(msgs) = self.msgs.get(&id) {
+            msgs
+        } else {
+            unreachable!()
+        }
     }
 }
 #[derive(Debug, Clone, Data)]

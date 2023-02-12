@@ -106,16 +106,10 @@ pub struct BrokerIndexLensVecMsg(pub usize);
 
 impl druid::Lens<AppData, Vector<Msg>> for BrokerIndexLensVecMsg {
     fn with<V, F: FnOnce(&Vector<Msg>) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.msgs.get(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
+        f(data.msgs_ref(self.0))
     }
     fn with_mut<V, F: FnOnce(&mut Vector<Msg>) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.msgs.get_mut(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
+        f(data.msgs_ref_mut(self.0))
     }
 }
 pub struct BrokerIndexLensSubscribeInput(pub usize);
@@ -276,7 +270,7 @@ impl Lens<Msg, Arc<String>> for MsgQosLens {
     }
 
     fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut Msg, f: F) -> V {
-        let mut qos = match data {
+        let qos = match data {
             Msg::Public(msg) => &mut msg.qos,
             Msg::Subscribe(msg) => &mut msg.qos,
         };

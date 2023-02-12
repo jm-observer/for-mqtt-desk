@@ -424,10 +424,8 @@ fn connect_ack_success(event_sink: &druid::ExtEventSink, id: usize) {
 }
 
 fn clear_msg(event_sink: &druid::ExtEventSink, id: usize) {
-    info!("clear_msg");
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.clear_msg(id) {
-            error!("{:?}", e);
-        }
+        data.clear_msg(id);
+        info!("clear msg success!");
     });
 }
