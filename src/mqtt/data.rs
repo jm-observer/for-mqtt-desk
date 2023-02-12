@@ -1,8 +1,10 @@
-use crate::data::common::{PublicInput, QoS, SubscribeHis, SubscribeInput};
+use crate::data::common::{PayloadTy, PublicInput, QoS, SubscribeHis, SubscribeInput};
+use bytes::Bytes;
+use std::sync::Arc;
 
 pub struct MqttPublicInput {
-    pub topic: String,
-    pub msg: String,
+    pub topic: Arc<String>,
+    pub msg: Bytes,
     pub qos: QoS,
     pub retain: bool,
 }
@@ -12,16 +14,17 @@ pub struct MqttSubscribeInput {
     pub qos: QoS,
 }
 
-impl From<PublicInput> for MqttPublicInput {
-    fn from(val: PublicInput) -> Self {
-        Self {
-            topic: val.topic.as_ref().clone(),
-            msg: val.msg.as_ref().clone(),
-            qos: QoS::AtLeastOnce,
-            retain: val.retain,
-        }
-    }
-}
+// impl From<PublicInput> for MqttPublicInput {
+//     fn from(val: PublicInput) -> Self {
+//         Self {
+//             topic: val.topic.as_ref().clone(),
+//             msg: val.msg.as_ref().clone(),
+//             qos: QoS::AtLeastOnce,
+//             retain: val.retain,
+//             payload_ty: val.payload_ty,
+//         }
+//     }
+// }
 impl From<SubscribeInput> for MqttSubscribeInput {
     fn from(val: SubscribeInput) -> Self {
         Self {

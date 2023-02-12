@@ -1,4 +1,4 @@
-use crate::data::common::{Broker, Id, QoS};
+use crate::data::common::{Broker, Id, PayloadTy, QoS};
 use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
@@ -283,11 +283,10 @@ impl AppData {
             warn!("todo");
         }
     }
-    pub fn publish(&mut self, id: usize, input: PublicInput, trace_id: u32) {
+    pub fn publish(&mut self, id: usize, input: PublicMsg, trace_id: u32) {
         debug!("publish: tarce_id {}", trace_id);
         let msgs = self.msgs_ref_mut(id);
-        let sub: Msg = PublicMsg::from(input.clone(), trace_id).into();
-        msgs.push_back(sub.into());
+        msgs.push_back(input.into());
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
         self.select_broker(id);
@@ -419,21 +418,25 @@ impl AppData {
         }
     }
     pub fn receive_msg(&mut self, id: usize, topic: Arc<String>, payload: Arc<Bytes>, qos: QoS) {
-        let Some(subscribes) = self.subscribe_topics.get(&id) else {
-          todo!()
+        let payload_ty = if let Some(subscribes) = self.subscribe_topics.get(&id) {
+            if let Some(subscribe) = subscribes.iter().find(|x| x.topic == topic) {
+                subscribe.payload_ty.clone()
+            } else {
+                warn!("could not find this publish's subscribe record");
+                PayloadTy::default()
+            }
+        } else {
+            warn!("could not find this publish's connection record");
+            return;
         };
-        let Some(subscribe) = subscribes.iter().find(|x| x.topic == topic) else {
-            todo!()
-        };
-        let payload = subscribe.payload_ty.format(payload);
-        let payload_ty = subscribe.payload_ty.to_arc_string();
-        let msgs = self.msgs_ref_mut(id);
+        let payload = payload_ty.format(payload);
         let msg = SubscribeMsg {
             topic,
             msg: Arc::new(payload),
             qos: qos.qos_to_string(),
-            payload_ty,
+            payload_ty: payload_ty.to_arc_string(),
         };
+        let msgs = self.msgs_ref_mut(id);
         msgs.push_back(msg.into());
     }
     pub fn clear_msg(&mut self, id: usize) {

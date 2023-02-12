@@ -3,10 +3,13 @@ use crate::data::{AppEvent, EventUnSubscribe};
 use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::common::{
-    Broker, Id, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeMsg,
+    Broker, Id, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput,
+    SubscribeMsg,
 };
+use crate::mqtt::data::MqttPublicInput;
 use crate::mqtt::Client;
 use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
+use crate::util::consts::QosToString;
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
@@ -60,7 +63,9 @@ pub async fn deal_event(
                 subscribe_from_his(&event_sink, &mqtt_clients, his).await
             }
             AppEvent::Public(input, index) => {
-                publish(&event_sink, &mqtt_clients, index, input).await
+                if let Err(e) = publish(&event_sink, &mqtt_clients, index, input).await {
+                    error!("{:?}", e);
+                }
             }
             AppEvent::ReceivePublic(index, topic, payload, qos) => {
                 receive_public(&event_sink, index, topic, payload, qos)
@@ -85,7 +90,7 @@ pub async fn deal_event(
             }
             AppEvent::DeleteBroker => delete_broker(&event_sink),
             AppEvent::ConnectAckSuccess(id) => connect_ack_success(&event_sink, id), // _ => {}
-            AppEvent::ConnectAckFail(_id, _msg) => todo!(),
+            AppEvent::ConnectAckFail(_id, _msg) => error!("{}", _msg.to_string()),
             AppEvent::UpdateStatusBar(msg) => {
                 update_status_bar(&event_sink, msg);
             }
@@ -243,18 +248,28 @@ async fn publish(
     mqtt_clients: &HashMap<usize, Client>,
     index: usize,
     input: PublicInput,
-) {
-    debug!("{:?}", input);
-    match mqtt_public(index, input.clone().into(), &mqtt_clients).await {
-        Ok(id) => {
-            event_sink.add_idle_callback(move |data: &mut AppData| {
-                data.publish(index, input, id);
-            });
-        }
-        Err(e) => {
-            error!("{:?}", e);
-        }
-    }
+) -> anyhow::Result<()> {
+    let (payload, payload_str) = input.payload_ty.to_bytes(&input.msg)?;
+    debug!("{:?} {:x}", payload_str, payload);
+    let publish = MqttPublicInput {
+        topic: input.topic.clone(),
+        msg: payload,
+        qos: input.qos.clone(),
+        retain: input.retain,
+    };
+    let id = mqtt_public(index, publish, &mqtt_clients).await?;
+    let msg = PublicMsg {
+        trace_id: id,
+        topic: input.topic,
+        msg: Arc::new(payload_str),
+        qos: input.qos.qos_to_string(),
+        status: PublicStatus::Ing,
+        payload_ty: input.payload_ty.to_arc_string(),
+    };
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        data.publish(index, msg, id);
+    });
+    Ok(())
 }
 
 fn receive_public(

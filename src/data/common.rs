@@ -3,13 +3,15 @@ mod impls;
 use crate::data::db::BrokerDB;
 use crate::data::{AString, AppEvent};
 use crate::util::consts::{TY_HEX, TY_JSON, TY_TEXT};
-use bytes::Bytes;
+use anyhow::bail;
+use bytes::{BufMut, Bytes, BytesMut};
 use crossbeam_channel::Sender;
 use druid::{Data, Lens};
 use log::{debug, error, warn};
 use pretty_hex::simple_hex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
@@ -234,6 +236,47 @@ impl PayloadTy {
             },
             PayloadTy::Hex => simple_hex(data.as_ref()),
         }
+    }
+    pub fn to_bytes(&self, msg: &String) -> anyhow::Result<(Bytes, String)> {
+        Ok(match self {
+            PayloadTy::Text | PayloadTy::Json => {
+                (Bytes::from(msg.as_bytes().to_vec()), msg.clone())
+            }
+            PayloadTy::Hex => {
+                let mut chars = msg.chars();
+                let mut hex_datas = Vec::with_capacity(chars.clone().count());
+                let mut data_str = String::with_capacity(msg.len());
+                // 去除非16进制字符，且暂时将16进制转成8进制
+                let mut len = 0;
+                while let Some(c) = chars.next() {
+                    if c.is_ascii_hexdigit() {
+                        let Some(digit) = c.to_digit(16) else {
+                            debug!("{} to_digit fail", c);
+                            continue;
+                        };
+                        hex_datas.push(digit as u8);
+                        len += 1;
+                        data_str.push(c);
+                        if len % 2 == 0 {
+                            data_str.push(' ');
+                        }
+                    }
+                }
+                // 判定长度
+                if len % 2 != 0 {
+                    bail!("ascii_hexdigit len % 2 != 0!");
+                }
+                // 合并2位16进制至8进制
+                let mut i = 0;
+                let mut datas = Vec::with_capacity(len / 2);
+                while i < len {
+                    // debug!("{} {} {}", hex_datas[i], hex_datas[i] << 4, hex_datas[i + 1], )
+                    datas.push((hex_datas[i] << 4) | (hex_datas[i + 1]));
+                    i += 2;
+                }
+                (datas.into(), data_str)
+            }
+        })
     }
 }
 
