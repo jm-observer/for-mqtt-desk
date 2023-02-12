@@ -243,10 +243,10 @@ impl AppData {
         &mut self,
         id: usize,
         input: SubscribeInput,
-        pkid: u32,
+        packet_id: u32,
     ) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
-            let sub = SubscribeTopic::from(input.clone(), pkid);
+            let sub = SubscribeTopic::from(input.clone(), packet_id);
             subscribe_topics.push_back(sub.into());
         }
         if let Some(subscribe_hises) = self.subscribe_hises.get_mut(&id) {
@@ -280,9 +280,10 @@ impl AppData {
             warn!("todo");
         }
     }
-    pub fn public(&mut self, id: usize, input: PublicInput, pkid: u32) {
+    pub fn publish(&mut self, id: usize, input: PublicInput, trace_id: u32) {
+        debug!("publish: tarce_id {}", trace_id);
         if let Some(msgs) = self.msgs.get_mut(&id) {
-            let sub: Msg = PublicMsg::from(input.clone(), pkid).into();
+            let sub: Msg = PublicMsg::from(input.clone(), trace_id).into();
             msgs.push_back(sub.into());
         }
     }
@@ -399,11 +400,12 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn puback(&mut self, id: usize, trace_id: u32) {
+    pub fn pub_ack(&mut self, id: usize, trace_id: u32) {
+        debug!("pub_ack: tarce_id {}", trace_id);
         if let Some(msgs) = self.msgs.get_mut(&id) {
             for msg in msgs.iter_mut() {
                 if let Msg::Public(msg) = msg {
-                    if msg.pkid == trace_id {
+                    if msg.trace_id == trace_id {
                         msg.status = PublicStatus::Success;
                     }
                 }

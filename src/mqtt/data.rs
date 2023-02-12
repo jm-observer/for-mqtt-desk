@@ -1,5 +1,4 @@
-use crate::data::common::{PublicInput, SubscribeHis, SubscribeInput};
-use rumqttc::v5::mqttbytes::QoS;
+use crate::data::common::{PublicInput, QoS, SubscribeHis, SubscribeInput};
 
 pub struct MqttPublicInput {
     pub topic: String,

@@ -243,7 +243,7 @@ async fn publish(
     match mqtt_public(index, input.clone().into(), &mqtt_clients).await {
         Ok(id) => {
             event_sink.add_idle_callback(move |data: &mut AppData| {
-                data.public(index, input, id);
+                data.publish(index, input, id);
             });
         }
         Err(e) => {
@@ -260,7 +260,7 @@ fn receive_public(event_sink: &druid::ExtEventSink, index: usize, msg: Subscribe
 
 fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, trace_id: u32) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.puback(id, trace_id);
+        data.pub_ack(id, trace_id);
         info!("{}", PUBLISH_SUCCESS);
     });
 }

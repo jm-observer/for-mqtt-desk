@@ -27,6 +27,9 @@ crossbeam-channel = "0.5.6"
 
 for-mqtt-client = { git = "https://github.com/jm-observer/for-mqtt-client.git"}
 
+druid-widget-nursery = {git = "https://github.com/linebender/druid-widget-nursery.git"}
+
+
 [patch."https://github.com/jm-observer/for-mqtt-client.git"]
 for-mqtt-client = { path = "../for-mqtt-client"}
 

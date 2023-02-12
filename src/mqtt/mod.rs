@@ -8,79 +8,78 @@ use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use druid::piet::TextStorage;
 use log::{debug, error};
-use rumqttc::v5::mqttbytes::v5::Packet;
-use rumqttc::v5::{
-    mqttbytes::{ConnectReturnCode, Publish},
-    AsyncClient, Event, MqttOptions,
-};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
 
-pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncClient> {
+use for_mqtt_client::v3_1_1::{MqttOptions, Publish};
+use for_mqtt_client::MqttEvent;
+pub use for_mqtt_client::{
+    v3_1_1::{PubAck, SubAck},
+    Client, QoS, QoSWithPacketId,
+};
+
+pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client> {
     let mut mqttoptions =
-        MqttOptions::new(broker.client_id.as_str(), broker.addr.as_str(), broker.port);
+        MqttOptions::new(broker.client_id.clone(), broker.addr.as_str(), broker.port);
     if broker.use_credentials {
-        mqttoptions.set_credentials(&*broker.user_name, &*broker.password);
+        mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }
     let some = serde_json::from_str(broker.params.as_str())?;
     update_option(&mut mqttoptions, some);
 
     debug!("{:?}", mqttoptions);
-    let (client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
-    let _client_tmp = client.clone();
+    let (client, mut eventloop) = mqttoptions.run().await;
     let id = broker.id;
     debug!("start");
     tokio::spawn(async move {
         debug!("start");
-        while let Ok(event) = eventloop.poll().await {
-            let event = match event {
-                Event::Incoming(event) => event,
-                _ => continue,
-            };
+        while let Ok(event) = eventloop.recv().await {
             let tx = tx.clone();
             debug!("{:?}", event);
-            match *event {
-                Packet::ConnAck(ack) => {
-                    deal_conn_ack(ack.code, tx, id);
+            match event {
+                MqttEvent::ConnectSuccess => {
+                    deal_conn_success(tx, id);
                 }
-                Packet::PubAck(ack, _) => {
-                    if let Err(_) = tx.send(AppEvent::PubAck(id, ack)) {
+                MqttEvent::ConnectFail(err) => {
+                    deal_conn_fail(err, tx, id);
+                }
+                MqttEvent::PublishSuccess(packet_id) => {
+                    if let Err(_) = tx.send(AppEvent::PubAck(id, packet_id)) {
                         error!("fail to send event!");
                     };
                 }
-                Packet::SubAck(ack, _) => {
-                    if let Err(_) = tx.send(AppEvent::SubAck(id, ack)) {
+                MqttEvent::SubscribeAck(packet) => {
+                    if let Err(_) = tx.send(AppEvent::SubAck(id, packet)) {
                         error!("fail to send event!");
                     };
                 }
-                Packet::UnsubAck(ack) => {
-                    if let Err(_) = tx.send(AppEvent::UnSubAck(id, ack.pkid)) {
+                MqttEvent::UnsubscribeAck(packet) => {
+                    if let Err(_) = tx.send(AppEvent::UnSubAck(id, packet)) {
                         error!("fail to send event!");
                     };
                 }
-                Packet::Publish(msg, _) => {
+                MqttEvent::Publish(msg) => {
                     let Publish {
                         dup: _,
                         qos,
                         retain: _,
                         topic,
-                        pkid,
                         payload,
                     } = msg;
                     if let Err(_) = tx.send(AppEvent::ReceivePublic(
                         id,
                         SubscribeMsg {
-                            pkid,
-                            topic: String::from_utf8_lossy(topic.as_ref()).to_string().into(),
-                            msg: String::from_utf8_lossy(payload.as_ref()).to_string().into(),
+                            topic: topic.clone(),
+                            msg: String::from_utf8_lossy(payload.as_bytes())
+                                .to_string()
+                                .into(),
                             qos: qos.into(),
                         },
                     )) {
                         error!("fail to send event!");
                     };
                 }
-                _ => {}
             }
         }
         debug!("end");
@@ -88,55 +87,52 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<AsyncC
     Ok(client)
 }
 
-fn deal_conn_ack(ack_code: ConnectReturnCode, tx: Sender<AppEvent>, id: usize) {
-    match ack_code {
-        ConnectReturnCode::Success => {
-            debug!("connect success!");
-            if let Err(_) = tx.send(AppEvent::ConnectAckSuccess(id)) {
-                error!("fail to send event!");
-            }
-        }
-        error => {
-            if let Err(_) = tx.send(AppEvent::ConnectAckFail(id, format!("{:?}", error).into())) {
-                error!("fail to send event!");
-            }
-        }
+fn deal_conn_success(tx: Sender<AppEvent>, id: usize) {
+    debug!("connect success!");
+    if let Err(_) = tx.send(AppEvent::ConnectAckSuccess(id)) {
+        error!("fail to send event!");
+    }
+}
+fn deal_conn_fail(err: String, tx: Sender<AppEvent>, id: usize) {
+    if let Err(_) = tx.send(AppEvent::ConnectAckFail(id, err.into())) {
+        error!("fail to send event!");
     }
 }
 
 pub async fn mqtt_subscribe(
     index: usize,
     input: MqttSubscribeInput,
-    clients: &HashMap<usize, AsyncClient>,
-) -> Result<u16> {
+    clients: &HashMap<usize, Client>,
+) -> Result<u32> {
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.subscribe_and_tracing(input.topic, input.qos).await?)
+    Ok(client.subscribe(input.topic, input.qos.into()).await.id)
 }
 
 pub async fn to_unsubscribe(
     index: usize,
     topic: String,
-    clients: &HashMap<usize, AsyncClient>,
-) -> Result<u16> {
+    clients: &HashMap<usize, Client>,
+) -> Result<u32> {
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.unsubscribe_and_tracing(topic).await?)
+    Ok(client.unsubscribe(topic).await.id)
 }
 
 pub async fn mqtt_public(
     index: usize,
     input: MqttPublicInput,
-    clients: &HashMap<usize, AsyncClient>,
-) -> Result<u16> {
+    clients: &HashMap<usize, Client>,
+) -> Result<u32> {
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
     Ok(client
-        .publish_and_tracing(input.topic, input.qos, input.retain, input.msg)
-        .await?)
+        .publish(input.topic, input.qos.into(), input.msg, input.retain)
+        .await?
+        .id())
 }
 
 fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
@@ -149,7 +145,7 @@ fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
         conn_timeout,
     } = some;
     option
-        .set_keep_alive(Duration::from_secs(keep_alive))
+        .set_keep_alive(keep_alive)
         .set_clean_session(clean_session)
         .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size)
         .set_inflight(inflight)
@@ -159,7 +155,7 @@ fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SomeMqttOption {
     // seconds
-    keep_alive: u64,
+    keep_alive: u16,
     clean_session: bool,
     max_incoming_packet_size: usize,
     max_outgoing_packet_size: usize,

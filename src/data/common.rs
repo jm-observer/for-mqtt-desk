@@ -69,7 +69,7 @@ impl Msg {
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
 pub struct PublicMsg {
-    pub pkid: u32,
+    pub trace_id: u32,
     pub topic: AString,
     pub msg: AString,
     pub qos: QoS,
@@ -91,7 +91,6 @@ pub struct PublicInput {
 
 #[derive(Data, Clone, Debug, Eq, PartialEq)]
 pub struct SubscribeMsg {
-    pub pkid: u16,
     pub topic: AString,
     pub msg: AString,
     pub qos: QoS,

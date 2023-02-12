@@ -5,6 +5,7 @@ use druid::text::ValidationError;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Either, Label, LabelText, SizedBox, Svg, SvgData};
 use druid::{Color, Data, Env, UnitPoint, Widget, WidgetExt, WidgetId};
+use druid_widget_nursery::DropdownSelect;
 use log::debug;
 
 pub const LABLE_WIDTH: f64 = 80.;
@@ -99,4 +100,12 @@ pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
         )
         .with_id(id),
     )
+}
+
+pub fn down_select_qos() -> impl Widget<QoS> {
+    DropdownSelect::new(vec![
+        ("0", QoS::AtMostOnce),
+        ("1", QoS::AtLeastOnce),
+        ("2", QoS::ExactlyOnce),
+    ])
 }

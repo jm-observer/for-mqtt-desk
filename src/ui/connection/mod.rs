@@ -6,7 +6,8 @@ use crate::data::lens::{
 };
 use crate::data::{AString, AppEvent};
 use crate::ui::common::{
-    error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS, SILVER, TOPIC, YELLOW,
+    down_select_qos, error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS,
+    SILVER, TOPIC, YELLOW,
 };
 use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
 use crate::ui::icons::removed_icon;
@@ -204,17 +205,17 @@ fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("qos", UnitPoint::RIGHT))
+                .with_child(label_static("QoS", UnitPoint::RIGHT))
                 .with_child(
-                    TextBox::new()
-                        .with_placeholder("0/1/2")
-                        .with_formatter(MustInput)
-                        .update_data_while_editing(true)
-                        .validate_while_editing(true)
-                        .delegate(
-                            TextBoxErrorDelegate::new(ID_SUBSCRIBE_QOS, check_qos)
-                                .sends_partial_errors(true),
-                        )
+                    down_select_qos()
+                        // .with_placeholder("0/1/2")
+                        // .with_formatter(MustInput)
+                        // .update_data_while_editing(true)
+                        // .validate_while_editing(true)
+                        // .delegate(
+                        //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_QOS, check_qos)
+                        //         .sends_partial_errors(true),
+                        // )
                         .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos))
                         .fix_width(150.),
                 )
@@ -279,16 +280,9 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("qos", UnitPoint::RIGHT))
+                .with_child(label_static("QoS", UnitPoint::RIGHT))
                 .with_child(
-                    TextBox::new()
-                        .with_placeholder("0/1/2")
-                        .with_formatter(MustInput)
-                        .validate_while_editing(false)
-                        .delegate(
-                            TextBoxErrorDelegate::new(ID_PUBLISH_QOS, check_qos)
-                                .sends_partial_errors(true),
-                        )
+                    down_select_qos()
                         .lens(BrokerIndexLensPublicInput(id).then(PublicInput::qos))
                         .fix_width(300.),
                 )

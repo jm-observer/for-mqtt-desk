@@ -16,7 +16,6 @@ fn main() -> Result<(), PlatformError> {
     let (tx, rx) = crossbeam_channel::bounded(1024);
     let _logger = custom_utils::logger::logger_feature("for-mqtt", Debug, Info)
         .module("sled", Info)
-        .module("rumqttc", Info)
         .log_to_write(Box::new(CustomWriter(tx.clone())))
         .build();
 

@@ -3,21 +3,22 @@ use crate::data::common::{
     SubscribeStatus, SubscribeTopic,
 };
 use crate::data::AString;
+use crate::mqtt;
 use druid::Data;
 use std::sync::Arc;
 
 impl SubscribeTopic {
-    pub fn from(val: SubscribeInput, pkid: u16) -> Self {
+    pub fn from(val: SubscribeInput, packet_id: u32) -> Self {
         Self {
-            pkid,
+            trace_id: packet_id,
             topic: val.topic.clone(),
             qos: val.qos,
             status: SubscribeStatus::SubscribeIng,
         }
     }
-    pub fn from_his(val: SubscribeHis, pkid: u16) -> Self {
+    pub fn from_his(val: SubscribeHis, pkid: u32) -> Self {
         Self {
-            pkid,
+            trace_id: pkid,
             topic: val.topic.clone(),
             qos: val.qos,
             status: SubscribeStatus::SubscribeIng,
@@ -33,9 +34,9 @@ impl SubscribeTopic {
 }
 
 impl PublicMsg {
-    pub fn from(val: PublicInput, pkid: u16) -> Self {
+    pub fn from(val: PublicInput, trace_id: u32) -> Self {
         Self {
-            pkid,
+            trace_id,
             topic: val.topic.clone(),
             msg: val.msg.clone(),
             qos: val.qos,
@@ -97,16 +98,25 @@ impl Msg {
     }
 }
 
-impl From<rumqttc::v5::mqttbytes::QoS> for QoS {
-    fn from(qos: rumqttc::v5::mqttbytes::QoS) -> Self {
+impl From<mqtt::QoS> for QoS {
+    fn from(qos: mqtt::QoS) -> Self {
         match qos {
-            rumqttc::v5::mqttbytes::QoS::AtLeastOnce => Self::AtLeastOnce,
-            rumqttc::v5::mqttbytes::QoS::AtMostOnce => Self::AtMostOnce,
-            rumqttc::v5::mqttbytes::QoS::ExactlyOnce => Self::ExactlyOnce,
+            mqtt::QoS::AtLeastOnce => Self::AtLeastOnce,
+            mqtt::QoS::AtMostOnce => Self::AtMostOnce,
+            mqtt::QoS::ExactlyOnce => Self::ExactlyOnce,
         }
     }
 }
-impl From<QoS> for rumqttc::v5::mqttbytes::QoS {
+impl From<mqtt::QoSWithPacketId> for QoS {
+    fn from(qos: mqtt::QoSWithPacketId) -> Self {
+        match qos {
+            mqtt::QoSWithPacketId::AtLeastOnce(_) => Self::AtLeastOnce,
+            mqtt::QoSWithPacketId::AtMostOnce => Self::AtMostOnce,
+            mqtt::QoSWithPacketId::ExactlyOnce(_) => Self::ExactlyOnce,
+        }
+    }
+}
+impl From<QoS> for mqtt::QoS {
     fn from(qos: QoS) -> Self {
         match qos {
             QoS::AtLeastOnce => Self::AtLeastOnce,
