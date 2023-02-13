@@ -5,6 +5,7 @@ use crate::data::common::{
 use crate::data::AString;
 use crate::mqtt;
 use crate::util::consts::QosToString;
+use crate::util::now_time;
 use druid::Data;
 use std::sync::Arc;
 
@@ -45,6 +46,7 @@ impl PublicMsg {
             qos: val.qos.qos_to_string(),
             status: PublicStatus::Ing,
             payload_ty: val.payload_ty.to_arc_string(),
+            time: Arc::new(now_time()),
         }
     }
 }

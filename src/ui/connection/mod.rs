@@ -3,7 +3,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
     BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgPayloadTyLens, MsgQosLens,
-    MsgTopicLens, SubscribeTopicPayloadLens,
+    MsgTimeLens, MsgTopicLens, SubscribeTopicPayloadLens,
 };
 use crate::data::{AString, AppEvent};
 use crate::ui::common::{
@@ -111,6 +111,7 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Flex::row()
                 .with_child(
                     Flex::column()
+                        .with_child(TextBox::new().expand_width().lens(MsgTimeLens).padding(1.5))
                         .with_child(
                             Flex::row()
                                 .with_child(Either::new(
@@ -140,6 +141,7 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Flex::row()
                 .with_child(
                     Flex::column()
+                        .with_child(TextBox::new().expand_width().lens(MsgTimeLens).padding(1.5))
                         .with_child(
                             Flex::row()
                                 .with_child(qos_success(MsgQosLens))

@@ -7,6 +7,7 @@ use crate::data::{AString, AppEvent, EventUnSubscribe};
 use crate::util::consts::QosToString;
 use crate::util::db::ArcDb;
 use crate::util::hint::*;
+use crate::util::now_time;
 use anyhow::bail;
 use anyhow::Result;
 use bytes::Bytes;
@@ -435,6 +436,7 @@ impl AppData {
             msg: Arc::new(payload),
             qos: qos.qos_to_string(),
             payload_ty: payload_ty.to_arc_string(),
+            time: Arc::new(now_time()),
         };
         let msgs = self.msgs_ref_mut(id);
         msgs.push_back(msg.into());

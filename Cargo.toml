@@ -32,6 +32,10 @@ druid-widget-nursery = {git = "https://github.com/linebender/druid-widget-nurser
 bytes = "1.4.0"
 lazy_static = "1.4.0"
 pretty-hex = "0.3.0"
+
+
+chrono = "0.4.23"
+
 [patch."https://github.com/jm-observer/for-mqtt-client.git"]
 for-mqtt-client = { path = "../for-mqtt-client"}
 

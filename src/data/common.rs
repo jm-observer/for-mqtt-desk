@@ -83,6 +83,7 @@ pub struct PublicMsg {
     pub qos: AString,
     pub status: PublicStatus,
     pub payload_ty: AString,
+    pub time: AString,
 }
 #[derive(Debug, Data, Clone, Eq, PartialEq)]
 pub enum PublicStatus {
@@ -105,6 +106,7 @@ pub struct SubscribeMsg {
     pub msg: AString,
     pub qos: AString,
     pub payload_ty: AString,
+    pub time: AString,
 }
 
 #[derive(Data, Debug, Clone, Eq, PartialEq, Lens)]

@@ -14,6 +14,7 @@ use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
 };
+use crate::util::now_time;
 use anyhow::Result;
 use bytes::Bytes;
 use crossbeam_channel::{Receiver, Sender};
@@ -265,6 +266,7 @@ async fn publish(
         qos: input.qos.qos_to_string(),
         status: PublicStatus::Ing,
         payload_ty: input.payload_ty.to_arc_string(),
+        time: Arc::new(now_time()),
     };
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.publish(index, msg, id);

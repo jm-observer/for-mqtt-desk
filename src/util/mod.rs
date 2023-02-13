@@ -1,3 +1,4 @@
+use chrono::Local;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 
@@ -20,6 +21,11 @@ pub fn general_id() -> String {
         id.push(ID_CHARS.choose(&mut rng).unwrap().clone());
     }
     id
+}
+
+pub fn now_time() -> String {
+    let now = Local::now();
+    format!("{}", now.format("%H:%M:%S"))
 }
 
 #[cfg(test)]

@@ -293,6 +293,22 @@ impl Lens<Msg, AString> for MsgPayloadTyLens {
         })
     }
 }
+pub struct MsgTimeLens;
+impl Lens<Msg, AString> for MsgTimeLens {
+    fn with<V, F: FnOnce(&AString) -> V>(&self, data: &Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &msg.time,
+            Msg::Subscribe(msg) => &msg.time,
+        })
+    }
+
+    fn with_mut<V, F: FnOnce(&mut AString) -> V>(&self, data: &mut Msg, f: F) -> V {
+        f(match data {
+            Msg::Public(msg) => &mut msg.time,
+            Msg::Subscribe(msg) => &mut msg.time,
+        })
+    }
+}
 
 pub struct PortLens;
 
