@@ -77,17 +77,33 @@ pub async fn deal_event(
             AppEvent::ClickBroker(id) => click_broker(&event_sink, tx.clone(), &mut clicks, id),
             AppEvent::DbClickCheck(id) => db_click_check(&mut clicks, id),
             AppEvent::ClickSubscribeHis(his) => {
-                click_subscribe_his(&event_sink, tx.clone(), &mqtt_clients, &mut click_his, his)
-                    .await
+                if let Err(e) =
+                    click_subscribe_his(&event_sink, tx.clone(), &mqtt_clients, &mut click_his, his)
+                        .await
+                {
+                    error!("{:?}", e);
+                }
             }
             AppEvent::DbClickCheckSubscribeHis(his) => {
                 db_click_check_subscribe_his(&mut click_his, his).await
             }
-            AppEvent::ReConnect(id) => re_connect(&event_sink, &mut mqtt_clients, id).await,
-            AppEvent::Disconnect(id) => disconnect(&event_sink, &mut mqtt_clients, id).await,
-            AppEvent::CloseBrokerTab(id) => close_broker_tab(&event_sink, id),
+            AppEvent::ReConnect(id) => {
+                if let Err(e) = re_connect(&event_sink, &mut mqtt_clients, id).await {
+                    error!("{}", e.to_string());
+                }
+            }
+            AppEvent::Disconnect(id) => {
+                if let Err(e) = disconnect(&event_sink, &mut mqtt_clients, id).await {
+                    error!("{}", e.to_string());
+                }
+            }
+            AppEvent::CloseBrokerTab(id) => {
+                close_broker_tab(&event_sink, id);
+            }
             AppEvent::CloseConnectionTab(id) => {
-                close_connection_tab(&event_sink, &mut mqtt_clients, id).await
+                if let Err(e) = close_connection_tab(&event_sink, &mut mqtt_clients, id).await {
+                    error!("{}", e.to_string());
+                }
             }
             AppEvent::DeleteBroker => delete_broker(&event_sink),
             AppEvent::ConnectAckSuccess(id) => connect_ack_success(&event_sink, id), // _ => {}
@@ -341,20 +357,23 @@ async fn click_subscribe_his(
     mqtt_clients: &HashMap<usize, Client>,
     click_his: &mut Option<SubscribeHis>,
     his: SubscribeHis,
-) {
+) -> Result<()> {
     let index = his.broker_id;
     if let Some(_previous) = click_his.take() {
         if _previous == his {
             // double
             if let Some(client) = mqtt_clients.get(&index) {
-                let pkid = client.subscribe(his.topic.clone(), his.qos.into()).await.id;
+                let packet_id = client
+                    .subscribe(his.topic.clone(), his.qos.into())
+                    .await?
+                    .id;
                 event_sink.add_idle_callback(move |data: &mut AppData| {
-                    if let Err(e) = data.subscribe(index, _previous, pkid) {
+                    if let Err(e) = data.subscribe(index, _previous, packet_id) {
                         error!("{:?}", e);
                     }
                 });
             }
-            return;
+            return Ok(());
         }
     }
     *click_his = Some(his.clone());
@@ -371,6 +390,7 @@ async fn click_subscribe_his(
             error!("{:?}", e);
         }
     });
+    Ok(())
 }
 
 async fn db_click_check_subscribe_his(click_his: &mut Option<SubscribeHis>, his: SubscribeHis) {
@@ -383,24 +403,25 @@ async fn re_connect(
     event_sink: &druid::ExtEventSink,
     mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
-) {
+) -> Result<()> {
     if let Some(client) = mqtt_clients.remove(&id) {
-        client.disconnect().await;
+        client.disconnect().await?;
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.reconnect(id) {
             error!("{:?}", e);
         }
     });
+    Ok(())
 }
 
 async fn disconnect(
     event_sink: &druid::ExtEventSink,
     mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
-) {
+) -> Result<()> {
     if let Some(client) = mqtt_clients.remove(&id) {
-        client.disconnect().await;
+        client.disconnect().await?;
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.disconnect(id) {
@@ -409,6 +430,7 @@ async fn disconnect(
             info!("{}", DISCONNECT_SUCCESS);
         }
     });
+    Ok(())
 }
 
 fn close_broker_tab(event_sink: &druid::ExtEventSink, id: usize) {
@@ -422,15 +444,16 @@ async fn close_connection_tab(
     event_sink: &druid::ExtEventSink,
     mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
-) {
+) -> Result<()> {
     if let Some(client) = mqtt_clients.remove(&id) {
-        client.disconnect().await;
+        client.disconnect().await?;
     } else {
         error!("can't find client");
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.close_connection(id);
     });
+    Ok(())
 }
 
 fn delete_broker(event_sink: &druid::ExtEventSink) {

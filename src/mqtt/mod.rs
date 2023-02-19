@@ -8,7 +8,7 @@ use crate::util::consts::QosToString;
 use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use druid::piet::TextStorage;
-use log::{debug, error};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
@@ -30,7 +30,8 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
     update_option(&mut mqttoptions, some);
 
     debug!("{:?}", mqttoptions);
-    let (client, mut eventloop) = mqttoptions.run().await;
+    let client = mqttoptions.connect().await;
+    let mut eventloop = client.init_receiver();
     let id = broker.id;
     debug!("start");
     tokio::spawn(async move {
@@ -39,11 +40,11 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
             let tx = tx.clone();
             debug!("{:?}", event);
             match event {
-                MqttEvent::ConnectSuccess => {
+                MqttEvent::ConnectSuccess(_) => {
                     deal_conn_success(tx, id);
                 }
                 MqttEvent::ConnectFail(err) => {
-                    deal_conn_fail(err, tx, id);
+                    deal_conn_fail(format!("{:?}", err), tx, id);
                 }
                 MqttEvent::PublishSuccess(packet_id) => {
                     if let Err(_) = tx.send(AppEvent::PubAck(id, packet_id)) {
@@ -73,6 +74,21 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                         error!("fail to send event!");
                     };
                 }
+                MqttEvent::PublishFail(reason) => {
+                    error!("{}", reason);
+                }
+                MqttEvent::SubscribeFail(reason) => {
+                    error!("{}", reason);
+                }
+                MqttEvent::UnsubscribeFail(reason) => {
+                    error!("{}", reason);
+                }
+                MqttEvent::ConnectedErr(reason) => {
+                    error!("{}", reason);
+                }
+                MqttEvent::Disconnected => {
+                    info!("Disconnected");
+                }
             }
         }
         debug!("end");
@@ -100,7 +116,7 @@ pub async fn mqtt_subscribe(
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.subscribe(input.topic, input.qos.into()).await.id)
+    Ok(client.subscribe(input.topic, input.qos.into()).await?.id)
 }
 
 pub async fn to_unsubscribe(
@@ -111,7 +127,7 @@ pub async fn to_unsubscribe(
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.unsubscribe(topic).await.id)
+    Ok(client.unsubscribe(topic).await?.id)
 }
 
 pub async fn mqtt_public(
