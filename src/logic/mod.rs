@@ -19,7 +19,7 @@ use anyhow::Result;
 use bytes::Bytes;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
-use for_mqtt_client::v3_1_1::{PubAck, SubAck};
+use druid::piet::TextStorage;
 use for_mqtt_client::SubscribeAck;
 use log::{debug, error, info, warn};
 use std::collections::HashMap;
@@ -364,9 +364,8 @@ async fn click_subscribe_his(
             // double
             if let Some(client) = mqtt_clients.get(&index) {
                 let packet_id = client
-                    .subscribe(his.topic.clone(), his.qos.into())
-                    .await?
-                    .id;
+                    .to_subscribe(his.topic.as_str().clone(), his.qos.into())
+                    .await?;
                 event_sink.add_idle_callback(move |data: &mut AppData| {
                     if let Err(e) = data.subscribe(index, _previous, packet_id) {
                         error!("{:?}", e);

@@ -1,7 +1,7 @@
 pub mod data;
 
-use crate::data::common::Broker;
 use crate::data::common::SubscribeMsg;
+use crate::data::common::{Broker, Protocol};
 use crate::data::AppEvent;
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
 use crate::util::consts::QosToString;
@@ -13,10 +13,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
 
-use for_mqtt_client::v3_1_1::{MqttOptions, Publish};
+use for_mqtt_client::protocol::packet::Publish;
+use for_mqtt_client::protocol::MqttOptions;
 use for_mqtt_client::MqttEvent;
 pub use for_mqtt_client::{
-    v3_1_1::{PubAck, SubAck},
+    protocol::packet::{PubAck, SubAck},
     Client, QoS, QoSWithPacketId,
 };
 
@@ -30,7 +31,10 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
     update_option(&mut mqttoptions, some);
 
     debug!("{:?}", mqttoptions);
-    let client = mqttoptions.connect().await;
+    let client = match broker.protocol {
+        Protocol::V4 => mqttoptions.connect_to_v4().await,
+        Protocol::V5 => mqttoptions.connect_to_v5().await,
+    };
     let mut eventloop = client.init_receiver();
     let id = broker.id;
     debug!("start");
@@ -68,6 +72,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                         retain: _,
                         topic,
                         payload,
+                        ..
                     } = msg;
                     if let Err(_) = tx.send(AppEvent::ReceivePublic(id, topic, payload, qos.into()))
                     {
@@ -116,7 +121,7 @@ pub async fn mqtt_subscribe(
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.subscribe(input.topic, input.qos.into()).await?.id)
+    Ok(client.to_subscribe(input.topic, input.qos.into()).await?)
 }
 
 pub async fn to_unsubscribe(
@@ -127,7 +132,7 @@ pub async fn to_unsubscribe(
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.unsubscribe(topic).await?.id)
+    Ok(client.unsubscribe(topic).await?)
 }
 
 pub async fn mqtt_public(
@@ -140,8 +145,7 @@ pub async fn mqtt_public(
     };
     Ok(client
         .publish(input.topic, input.qos.into(), input.msg, input.retain)
-        .await?
-        .id())
+        .await?)
 }
 
 fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
@@ -157,8 +161,9 @@ fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
         .set_keep_alive(keep_alive)
         .set_clean_session(clean_session)
         .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size)
-        .set_inflight(inflight)
-        .set_connection_timeout(conn_timeout);
+        // .set_inflight(inflight)
+        // .set_connection_timeout(conn_timeout)
+    ;
 }
 
 #[derive(Serialize, Deserialize, Debug)]

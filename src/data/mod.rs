@@ -6,7 +6,7 @@ pub mod lens;
 use crate::data::common::{Id, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeMsg};
 use bytes::Bytes;
 use common::Broker;
-use for_mqtt_client::v3_1_1::{PubAck, SubAck};
+use for_mqtt_client::protocol::packet::{PubAck, SubAck};
 use for_mqtt_client::{SubscribeAck, UnsubscribeAck};
 use std::sync::Arc;
 

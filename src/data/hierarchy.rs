@@ -14,8 +14,8 @@ use bytes::Bytes;
 use custom_utils::{tx, tx_async};
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
-use for_mqtt_client::v3_1_1::{PubAck, SubAck, SubscribeReasonCode};
-use for_mqtt_client::{SubscribeAck, SubscribeFilterAck};
+use for_mqtt_client::protocol::packet::{PubAck, SubscribeReasonCode};
+use for_mqtt_client::SubscribeAck;
 use log::{debug, error, warn};
 use std::sync::Arc;
 
@@ -264,21 +264,33 @@ impl AppData {
         }
         Ok(())
     }
-    pub fn suback(&mut self, id: usize, mut input: SubscribeAck) {
+    pub fn suback(&mut self, id: usize, input: SubscribeAck) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
-            let (id, ack) = (input.id, input.filter_ack.remove(0));
-            if let Some(subscribe_topic) = subscribe_topics.iter_mut().find(|x| x.trace_id == id) {
-                match ack.ack {
-                    SubscribeReasonCode::Success(qos) => {
-                        subscribe_topic.qos = qos.qos_to_string();
-                        subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
+            let SubscribeAck { id, mut acks } = input;
+            if let Some(ack) = acks.pop() {
+                if let Some(subscribe_topic) =
+                    subscribe_topics.iter_mut().find(|x| x.trace_id == id)
+                {
+                    match ack {
+                        SubscribeReasonCode::QoS0 => {
+                            subscribe_topic.qos = QoS::AtMostOnce.qos_to_string();
+                            subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
+                        }
+                        SubscribeReasonCode::QoS1 => {
+                            subscribe_topic.qos = QoS::AtLeastOnce.qos_to_string();
+                            subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
+                        }
+                        SubscribeReasonCode::QoS2 => {
+                            subscribe_topic.qos = QoS::ExactlyOnce.qos_to_string();
+                            subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
+                        }
+                        _reasone => {
+                            subscribe_topic.status = SubscribeStatus::SubscribeFail;
+                        }
                     }
-                    SubscribeReasonCode::Failure => {
-                        subscribe_topic.status = SubscribeStatus::SubscribeFail;
-                    }
+                } else {
+                    warn!("todo");
                 }
-            } else {
-                warn!("todo");
             }
         } else {
             warn!("todo");

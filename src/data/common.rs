@@ -147,6 +147,9 @@ pub enum QoS {
 #[derive(Debug, Clone, Data, Lens)]
 pub struct Broker {
     pub id: usize,
+    #[data(ignore)]
+    #[lens(ignore)]
+    pub protocol: Protocol,
     pub client_id: AString,
     pub name: AString,
     pub addr: AString,
@@ -169,6 +172,7 @@ impl Broker {
     pub fn clone_to_db(&self) -> BrokerDB {
         BrokerDB {
             id: self.id,
+            protocol: self.protocol,
             client_id: self.client_id.clone(),
             name: self.name.clone(),
             addr: self.addr.clone(),
@@ -291,4 +295,11 @@ impl Default for PayloadTy {
     fn default() -> Self {
         Self::Text
     }
+}
+
+/// Protocol type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+pub enum Protocol {
+    V4,
+    V5,
 }

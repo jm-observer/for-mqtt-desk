@@ -1,4 +1,4 @@
-use crate::data::common::Broker;
+use crate::data::common::{Broker, Protocol};
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
@@ -46,6 +46,7 @@ impl DbKey {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrokerDB {
     pub id: usize,
+    pub protocol: Protocol,
     pub client_id: AString,
     pub name: AString,
     pub addr: AString,
@@ -60,6 +61,7 @@ impl BrokerDB {
     pub fn to_broker(self, tx: Sender<AppEvent>) -> Broker {
         let Self {
             id,
+            protocol,
             client_id,
             name,
             addr,
@@ -71,6 +73,7 @@ impl BrokerDB {
         } = self;
         Broker {
             id,
+            protocol,
             client_id,
             name,
             addr,

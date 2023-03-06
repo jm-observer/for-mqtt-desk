@@ -3,7 +3,7 @@ use crossbeam_channel::Sender;
 use sled::{Config, Db};
 use std::sync::Arc;
 
-use crate::data::common::{Broker, SubscribeHis};
+use crate::data::common::{Broker, Protocol, SubscribeHis};
 use crate::data::db::{BrokerDB, DbKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
@@ -107,6 +107,7 @@ impl ArcDb {
         self.index += 1;
         Broker {
             id,
+            protocol: Protocol::V4,
             client_id: Arc::new("".to_string()),
             name: Arc::new("".to_string()),
             addr: Arc::new("broker-cn.emqx.io".to_string()),
