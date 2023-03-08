@@ -6,6 +6,7 @@ use crate::data::lens::{
     MsgTimeLens, MsgTopicLens, SubscribeTopicPayloadLens,
 };
 use crate::data::{AString, AppEvent};
+use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
     error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS, SILVER, TOPIC, YELLOW,
 };
@@ -13,7 +14,7 @@ use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
 use crate::ui::icons::removed_icon;
 use crate::ui::ids::{
     TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
-    ID_SUBSCRIBE_TOPIC,
+    ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID,
 };
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
 use crate::ui::qos::{down_select_qos, qos_init, qos_success};
@@ -97,6 +98,8 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
 
     let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list)
         .vertical()
+        .controller(AutoScrollController)
+        .with_id(SCROLL_SUBSCRIBE_ID)
         .lens(BrokerIndexLensVecSubscribeTopic(id))
         .align_vertical(UnitPoint::TOP)
         .expand_width()
@@ -170,6 +173,8 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
     });
     let scroll = Scroll::<Vector<Msg>, List<Msg>>::new(list)
         .vertical()
+        .controller(AutoScrollController)
+        .with_id(SCROLL_MSG_ID)
         .lens(BrokerIndexLensVecMsg(id))
         .align_vertical(UnitPoint::TOP)
         .expand_width()

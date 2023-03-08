@@ -140,3 +140,9 @@ impl<T, W: Widget<Option<ValidationError>>> Widget<T> for ErrorController<W> {
 pub const TABS_ID: WidgetId = WidgetId::reserved(1);
 pub const SELECTOR_TABS_SELECTED: Selector<usize> = Selector::new("tabs.selected");
 pub const SELECTOR_TABS_CLOSE: Selector<usize> = Selector::new("tabs.close");
+
+/// 订阅的topic窗口
+pub const SCROLL_SUBSCRIBE_ID: WidgetId = WidgetId::reserved(2);
+/// 发布、接收订阅发布的窗口
+pub const SCROLL_MSG_ID: WidgetId = WidgetId::reserved(3);
+pub const SELECTOR_AUTO_SCROLL: Selector<()> = Selector::new("scroll.auto");

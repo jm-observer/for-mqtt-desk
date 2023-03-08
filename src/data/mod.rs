@@ -25,7 +25,10 @@ pub enum AppEvent {
     Connect(Broker),
     Subscribe(SubscribeInput, usize),
     SubscribeFromHis(SubscribeHis),
-    ToUnSubscribe { broker_id: usize, pk_id: u32 },
+    ToUnSubscribe {
+        broker_id: usize,
+        pk_id: u32,
+    },
     UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
@@ -47,6 +50,10 @@ pub enum AppEvent {
     UpdateStatusBar(String),
     //
     ClearMsg(usize),
+    /// 滚动消息窗口
+    ScrollMsgWin,
+    /// 滚动订阅窗口
+    ScrollSubscribeWin,
 }
 #[derive(Debug, Clone)]
 pub struct EventUnSubscribe {

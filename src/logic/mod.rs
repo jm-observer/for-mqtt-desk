@@ -8,7 +8,9 @@ use crate::data::common::{
 };
 use crate::mqtt::data::MqttPublicInput;
 use crate::mqtt::Client;
-use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
+use crate::ui::ids::{
+    SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID,
+};
 use crate::util::consts::QosToString;
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
@@ -26,6 +28,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::time::sleep;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 pub async fn deal_event(
@@ -69,7 +72,9 @@ pub async fn deal_event(
                 }
             }
             AppEvent::ReceivePublic(index, topic, payload, qos) => {
-                receive_public(&event_sink, index, topic, payload, qos)
+                if let Err(e) = receive_public(&event_sink, index, topic, payload, qos).await {
+                    error!("{:?}", e);
+                }
             }
             AppEvent::PubAck(id, ack) => pub_ack(&event_sink, id, ack),
             AppEvent::SubAck(id, ack) => sub_ack(&event_sink, id, ack),
@@ -112,7 +117,22 @@ pub async fn deal_event(
                 update_status_bar(&event_sink, msg);
             }
             AppEvent::ClearMsg(id) => clear_msg(&event_sink, id),
+
+            AppEvent::ScrollSubscribeWin => scroll_subscribe_win(&event_sink).await,
+            AppEvent::ScrollMsgWin => scroll_msg_win(&event_sink).await,
         }
+    }
+}
+async fn scroll_subscribe_win(event_sink: &druid::ExtEventSink) {
+    sleep(Duration::from_millis(50)).await;
+    if let Err(e) = event_sink.submit_command(SELECTOR_AUTO_SCROLL, (), SCROLL_SUBSCRIBE_ID) {
+        error!("{:?}", e);
+    }
+}
+async fn scroll_msg_win(event_sink: &druid::ExtEventSink) {
+    sleep(Duration::from_millis(50)).await;
+    if let Err(e) = event_sink.submit_command(SELECTOR_AUTO_SCROLL, (), SCROLL_MSG_ID) {
+        error!("{:?}", e);
     }
 }
 fn update_status_bar(event_sink: &druid::ExtEventSink, msg: String) {
@@ -285,21 +305,26 @@ async fn publish(
         time: Arc::new(now_time()),
     };
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.publish(index, msg, id);
+        if let Err(e) = data.publish(index, msg, id) {
+            error!("{:?}", e);
+        }
     });
     Ok(())
 }
 
-fn receive_public(
+async fn receive_public(
     event_sink: &druid::ExtEventSink,
     index: usize,
     topic: Arc<String>,
     payload: Arc<Bytes>,
     qos: QoS,
-) {
+) -> Result<()> {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.receive_msg(index, topic, payload, qos);
+        if let Err(e) = data.receive_msg(index, topic, payload, qos) {
+            error!("{:?}", e);
+        }
     });
+    Ok(())
 }
 
 fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, trace_id: u32) {
@@ -475,7 +500,10 @@ fn connect_ack_success(event_sink: &druid::ExtEventSink, id: usize) {
 
 fn clear_msg(event_sink: &druid::ExtEventSink, id: usize) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.clear_msg(id);
-        info!("clear msg success!");
+        if let Err(e) = data.clear_msg(id) {
+            error!("{:?}", e);
+        } else {
+            info!("clear msg success!");
+        }
     });
 }

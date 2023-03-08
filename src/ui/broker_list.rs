@@ -4,11 +4,13 @@ use crate::data::lens::{
     BrokerStoredList, LensSelectedSubscribeHis, LensSubscribeHisQoS, SubscribeHisPayloadLens,
 };
 use crate::data::AppEvent;
+use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
     label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title, QOS,
     SILVER, TOPIC,
 };
 use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
+use crate::ui::ids::SCROLL_SUBSCRIBE_ID;
 use crate::ui::payload_ty::payload_ty_init;
 use crate::ui::qos::qos_init;
 use crossbeam_channel::Sender;

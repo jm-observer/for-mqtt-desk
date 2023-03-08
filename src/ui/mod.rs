@@ -8,6 +8,7 @@ use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Container, CrossAxisAlignment, Flex, Label, Padding, Split};
 use druid::{Env, UnitPoint, Widget, WidgetExt};
 
+pub mod auto_scroll;
 mod broker_info;
 mod broker_list;
 pub mod common;

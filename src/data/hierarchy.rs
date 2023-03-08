@@ -198,7 +198,7 @@ impl AppData {
         } else {
             bail!("can't find broker");
         }
-        Ok(())
+        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
     }
     pub fn to_unscribe(&mut self, broker_id: usize, trace_id: u32) -> Result<()> {
         if let Some(_broker) = self.find_broker(broker_id) {
@@ -223,7 +223,7 @@ impl AppData {
             let sub = SubscribeTopic::from_his(input, trace_id);
             subscribe_topics.push_back(sub.into());
         }
-        Ok(())
+        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
     }
     pub fn remove_subscribe_his(&mut self) -> Result<()> {
         let Some(id) = self.get_selected_broker_id() else {
@@ -262,7 +262,7 @@ impl AppData {
                 self.db.update_subscribe_his(id, &subscribe_hises)?;
             }
         }
-        Ok(())
+        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
     }
     pub fn suback(&mut self, id: usize, input: SubscribeAck) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
@@ -296,10 +296,11 @@ impl AppData {
             warn!("todo");
         }
     }
-    pub fn publish(&mut self, id: usize, input: PublicMsg, trace_id: u32) {
+    pub fn publish(&mut self, id: usize, input: PublicMsg, trace_id: u32) -> Result<()> {
         debug!("publish: tarce_id {}", trace_id);
         let msgs = self.msgs_ref_mut(id);
         msgs.push_back(input.into());
+        Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
         self.select_broker(id);
@@ -430,7 +431,13 @@ impl AppData {
             error!("pub_ack could not find pub({})", trace_id);
         }
     }
-    pub fn receive_msg(&mut self, id: usize, topic: Arc<String>, payload: Arc<Bytes>, qos: QoS) {
+    pub fn receive_msg(
+        &mut self,
+        id: usize,
+        topic: Arc<String>,
+        payload: Arc<Bytes>,
+        qos: QoS,
+    ) -> Result<()> {
         let payload_ty = if let Some(subscribes) = self.subscribe_topics.get(&id) {
             if let Some(subscribe) = subscribes.iter().find(|x| x.topic == topic) {
                 subscribe.payload_ty.clone()
@@ -440,7 +447,7 @@ impl AppData {
             }
         } else {
             warn!("could not find this publish's connection record");
-            return;
+            return Ok(());
         };
         let payload = payload_ty.format(payload);
         let msg = SubscribeMsg {
@@ -452,9 +459,11 @@ impl AppData {
         };
         let msgs = self.msgs_ref_mut(id);
         msgs.push_back(msg.into());
+        Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
-    pub fn clear_msg(&mut self, id: usize) {
-        self.msgs_ref_mut(id).clear()
+    pub fn clear_msg(&mut self, id: usize) -> Result<()> {
+        self.msgs_ref_mut(id).clear();
+        Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
 
     pub fn msgs_ref_mut(&mut self, id: usize) -> &mut Vector<Msg> {
