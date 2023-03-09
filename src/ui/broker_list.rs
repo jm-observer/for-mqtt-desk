@@ -1,4 +1,4 @@
-use crate::data::common::{Broker, SubscribeHis};
+use crate::data::common::{Broker, Protocol, SubscribeHis};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerStoredList, LensSelectedSubscribeHis, LensSubscribeHisQoS, SubscribeHisPayloadLens,
@@ -93,6 +93,12 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
 }
 
 pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
+    let version = || {
+        label_dy(|data: &Broker, _: &Env| match data.protocol {
+            Protocol::V4 => "v3".to_string(),
+            Protocol::V5 => "v5".to_string(),
+        })
+    };
     let name = || label_dy(|data: &Broker, _: &Env| format!("{}", data.name));
     let addr =
         || label_dy_expand_width(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port));
@@ -101,6 +107,7 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
         Either::new(
             |data: &Broker, _env| data.selected,
             Flex::row()
+                .with_child(version().fix_width(20.0))
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
@@ -110,6 +117,7 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 })
                 .background(SILVER),
             Flex::row()
+                .with_child(version().fix_width(20.0))
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {

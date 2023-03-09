@@ -147,8 +147,6 @@ pub enum QoS {
 #[derive(Debug, Clone, Data, Lens)]
 pub struct Broker {
     pub id: usize,
-    #[data(ignore)]
-    #[lens(ignore)]
     pub protocol: Protocol,
     pub client_id: AString,
     pub name: AString,
@@ -298,7 +296,7 @@ impl Default for PayloadTy {
 }
 
 /// Protocol type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Data, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Protocol {
     V4,
     V5,

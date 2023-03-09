@@ -1,4 +1,4 @@
-use crate::data::common::Broker;
+use crate::data::common::{Broker, Protocol};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerIndex, PortLens};
 use crate::data::AppEvent;
@@ -10,8 +10,8 @@ use crate::ui::ids::{
     TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_CLIENT_ID, ID_PORT,
 };
 use crate::util::general_id;
-use druid::widget::{Button, Container, Either, Flex, TextBox};
-use druid::{Env, LensExt, UnitPoint};
+use druid::widget::{Button, Container, Either, Flex, Label, Painter, RadioGroup, TextBox};
+use druid::{Color, Data, Env, LensExt, RenderContext, UnitPoint, Widget};
 use druid::{LocalizedString, WidgetExt};
 use log::{debug, error};
 
@@ -71,6 +71,15 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                         .lens(BrokerIndex(id).then(PortLens)),
                 )
                 .with_child(error_display_widget(ID_PORT))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("version", UnitPoint::RIGHT))
+                .with_child(
+                    RadioGroup::row(vec![("v3", Protocol::V4), ("v5", Protocol::V5)])
+                        .lens(BrokerIndex(id).then(Broker::protocol)),
+                )
                 .align_left(),
         )
         .with_child(Either::new(
@@ -149,4 +158,19 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .align_left(),
         );
     Container::new(connection)
+}
+
+fn label_widget<T: Data>(widget: impl Widget<T> + 'static, label: &str) -> impl Widget<T> {
+    Flex::column()
+        .must_fill_main_axis(true)
+        .with_flex_child(widget.center(), 1.0)
+        .with_child(
+            Painter::new(|ctx, _: &_, _: &_| {
+                let size = ctx.size().to_rect();
+                ctx.fill(size, &Color::WHITE)
+            })
+            .fix_height(1.0),
+        )
+        .with_child(Label::new(label).center().fix_height(40.0))
+        .border(Color::WHITE, 1.0)
 }
