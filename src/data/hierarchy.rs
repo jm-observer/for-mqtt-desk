@@ -140,7 +140,7 @@ impl AppData {
             error!("can't find the connection");
         }
     }
-    pub fn unscribeing(
+    pub fn unsubscribe(
         &mut self,
         broker_id: usize,
         subscribe_pkid: u32,
@@ -300,6 +300,9 @@ impl AppData {
         debug!("publish: tarce_id {}", trace_id);
         let msgs = self.msgs_ref_mut(id);
         msgs.push_back(input.into());
+        if msgs.len() > 50 {
+            msgs.pop_front();
+        }
         Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
@@ -459,6 +462,9 @@ impl AppData {
         };
         let msgs = self.msgs_ref_mut(id);
         msgs.push_back(msg.into());
+        if msgs.len() > 50 {
+            msgs.pop_front();
+        }
         Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
     pub fn clear_msg(&mut self, id: usize) -> Result<()> {

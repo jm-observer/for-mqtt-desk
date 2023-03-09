@@ -198,7 +198,7 @@ async fn un_subscribe_ing(
     match to_unsubscribe(broke_id, topic, &mqtt_clients).await {
         Ok(pk_id) => {
             event_sink.add_idle_callback(move |data: &mut AppData| {
-                if let Err(e) = data.unscribeing(broke_id, subscribe_pk_id, pk_id) {
+                if let Err(e) = data.unsubscribe(broke_id, subscribe_pk_id, pk_id) {
                     error!("{:?}", e);
                 }
             });
