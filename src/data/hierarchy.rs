@@ -34,9 +34,19 @@ pub struct AppData {
     #[lens(ignore)]
     pub db: ArcDb,
     pub hint: AString,
+    /// #[data(ignore)] 不能加这个，不然就无法改变self_signed_file。为什么？不知道！简单的案例无法复现出来。
+    #[lens(ignore)]
+    pub self_signed_file: Option<usize>,
 }
 
 impl AppData {
+    pub fn set_self_signed_file(&mut self, index: usize) {
+        self.self_signed_file = Some(index);
+        self.self_signed_file.replace(index);
+    }
+    pub fn get_self_signed_file(&self) -> Option<usize> {
+        self.self_signed_file.clone()
+    }
     pub fn add_broker(&mut self) {
         let broker = self.db.new_broker();
         self.init_broker_tab(broker.id);

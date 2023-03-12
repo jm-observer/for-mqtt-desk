@@ -1,8 +1,8 @@
 pub mod data;
 
-use crate::data::common::SubscribeMsg;
 use crate::data::common::{Broker, Protocol};
-use crate::data::AppEvent;
+use crate::data::common::{SignedTy, SubscribeMsg};
+use crate::data::{AString, AppEvent};
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
 use crate::util::consts::QosToString;
 use anyhow::{bail, Result};
@@ -15,6 +15,7 @@ use std::time::Duration;
 
 use for_mqtt_client::protocol::packet::Publish;
 use for_mqtt_client::protocol::MqttOptions;
+use for_mqtt_client::tls::TlsConfig;
 use for_mqtt_client::MqttEvent;
 pub use for_mqtt_client::{
     protocol::packet::{PubAck, SubAck},
@@ -28,7 +29,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
         mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }
     let some = serde_json::from_str(broker.params.as_str())?;
-    update_option(&mut mqttoptions, some);
+    let mqttoptions = update_tls_option(update_option(mqttoptions, some), broker.clone());
 
     debug!("{:?}", mqttoptions);
     let client = match broker.protocol {
@@ -148,7 +149,7 @@ pub async fn mqtt_public(
         .await?)
 }
 
-fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
+fn update_option(mut option: MqttOptions, some: SomeMqttOption) -> MqttOptions {
     let SomeMqttOption {
         keep_alive,
         clean_session,
@@ -157,13 +158,12 @@ fn update_option(option: &mut MqttOptions, some: SomeMqttOption) {
         inflight,
         conn_timeout,
     } = some;
+    // .set_inflight(inflight)
+    // .set_connection_timeout(conn_timeout)
     option
-        .set_keep_alive(keep_alive)
         .set_clean_session(clean_session)
-        .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size)
-        // .set_inflight(inflight)
-        // .set_connection_timeout(conn_timeout)
-    ;
+        .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size);
+    option.set_keep_alive(keep_alive)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -188,6 +188,20 @@ impl Default for SomeMqttOption {
             inflight: 100,
             conn_timeout: 5,
         }
+    }
+}
+
+fn update_tls_option(option: MqttOptions, value: Broker) -> MqttOptions {
+    if value.tls {
+        let tls_config = match value.signed_ty {
+            SignedTy::Ca => TlsConfig::default(),
+            SignedTy::SelfSigned => {
+                TlsConfig::default().set_server_ca_pem_file(value.self_signed_ca.as_str().into())
+            }
+        };
+        option.set_tls(tls_config)
+    } else {
+        option
     }
 }
 

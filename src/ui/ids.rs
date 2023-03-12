@@ -146,3 +146,5 @@ pub const SCROLL_SUBSCRIBE_ID: WidgetId = WidgetId::reserved(2);
 /// 发布、接收订阅发布的窗口
 pub const SCROLL_MSG_ID: WidgetId = WidgetId::reserved(3);
 pub const SELECTOR_AUTO_SCROLL: Selector<()> = Selector::new("scroll.auto");
+
+pub const SELF_SIGNED_FILE: Selector<usize> = Selector::new("self-signed-file");

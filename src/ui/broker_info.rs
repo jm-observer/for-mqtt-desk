@@ -1,17 +1,20 @@
-use crate::data::common::{Broker, Protocol};
+use crate::data::common::{Broker, Protocol, SignedTy};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{BrokerIndex, PortLens};
-use crate::data::AppEvent;
+use crate::data::{AString, AppEvent};
 use crate::ui::common::{
     error_display_widget, label_static, BUTTON_PADDING, TEXTBOX_MULTI_WIDTH, TEXTBOX_WIDTH,
 };
 use crate::ui::formatter::{check_addr, check_no_empty, check_port, MustInput};
 use crate::ui::ids::{
     TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_CLIENT_ID, ID_PORT,
+    SELF_SIGNED_FILE,
 };
 use crate::util::general_id;
-use druid::widget::{Button, Container, Either, Flex, Label, Painter, RadioGroup, TextBox};
-use druid::{Color, Data, Env, LensExt, RenderContext, UnitPoint, Widget};
+use druid::widget::{Button, Container, Either, Flex, Label, Painter, RadioGroup, Switch, TextBox};
+use druid::{
+    Color, Data, Env, FileDialogOptions, FileSpec, LensExt, RenderContext, UnitPoint, Widget,
+};
 use druid::{LocalizedString, WidgetExt};
 use log::{debug, error};
 
@@ -82,6 +85,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 )
                 .align_left(),
         )
+        .with_child(display_tls(id).lens(BrokerIndex(id)))
         .with_child(Either::new(
             move |data: &AppData, _: &Env| {
                 if let Some(broker) = data.tab_statuses.get(&id) {
@@ -173,4 +177,67 @@ fn label_widget<T: Data>(widget: impl Widget<T> + 'static, label: &str) -> impl 
         )
         .with_child(Label::new(label).center().fix_height(40.0))
         .border(Color::WHITE, 1.0)
+}
+
+pub fn display_tls(id: usize) -> impl Widget<Broker> {
+    Either::new(
+        move |data: &Broker, _: &Env| data.tls,
+        Flex::column()
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("tls", UnitPoint::RIGHT))
+                    .with_child(Switch::new().lens(Broker::tls))
+                    .align_left(),
+            )
+            .with_child(display_signed_ty(id))
+            .align_left(),
+        Flex::row()
+            .with_child(label_static("tls", UnitPoint::RIGHT))
+            .with_child(Switch::new().lens(Broker::tls))
+            .align_left(),
+    )
+}
+pub fn display_signed_ty(id: usize) -> impl Widget<Broker> {
+    Either::new(
+        move |data: &Broker, _: &Env| data.signed_ty == SignedTy::Ca,
+        Flex::row()
+            .with_child(label_static("ca-type", UnitPoint::RIGHT))
+            .with_child(
+                RadioGroup::row(vec![
+                    ("ca", SignedTy::Ca),
+                    ("self-signed", SignedTy::SelfSigned),
+                ])
+                .lens(Broker::signed_ty),
+            )
+            .align_left(),
+        Flex::row()
+            .with_child(label_static("ca-type", UnitPoint::RIGHT))
+            .with_child(
+                RadioGroup::row(vec![
+                    ("ca", SignedTy::Ca),
+                    ("self-signed", SignedTy::SelfSigned),
+                ])
+                .lens(Broker::signed_ty),
+            )
+            .with_child(TextBox::new().lens(Broker::self_signed_ca))
+            .with_child(open(id))
+            .align_left(),
+    )
+}
+
+fn open(index: usize) -> impl Widget<Broker> {
+    let certifacate = FileSpec::new("Certificate file", &["crt", "pem"]);
+    // let default_save_name = String::from("MyFile.txt");
+    let open_dialog_options = FileDialogOptions::new()
+        .allowed_types(vec![certifacate])
+        .default_type(certifacate)
+        // .name_label("Target")
+        .title("Choose a certifacate")
+        .button_text("Open");
+
+    let open = Button::new("Open").on_click(move |ctx, _, _| {
+        ctx.submit_command(SELF_SIGNED_FILE.with(index));
+        ctx.submit_command(druid::commands::SHOW_OPEN_PANEL.with(open_dialog_options.clone()))
+    });
+    open
 }

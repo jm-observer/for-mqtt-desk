@@ -1,4 +1,4 @@
-use crate::data::common::{Broker, Protocol};
+use crate::data::common::{Broker, Protocol, SignedTy};
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
@@ -55,6 +55,9 @@ pub struct BrokerDB {
     pub use_credentials: bool,
     pub user_name: AString,
     pub password: AString,
+    pub tls: bool,
+    pub signed_ty: SignedTy,
+    pub self_signed_ca: AString,
 }
 
 impl BrokerDB {
@@ -70,6 +73,9 @@ impl BrokerDB {
             use_credentials,
             user_name,
             password,
+            tls,
+            signed_ty: ca,
+            self_signed_ca,
         } = self;
         Broker {
             id,
@@ -85,6 +91,9 @@ impl BrokerDB {
             stored: true,
             tx,
             selected: false,
+            tls,
+            signed_ty: ca,
+            self_signed_ca,
         }
     }
 }

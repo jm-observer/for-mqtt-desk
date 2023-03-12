@@ -164,6 +164,9 @@ pub struct Broker {
     pub tx: Sender<AppEvent>,
     #[lens(ignore)]
     pub selected: bool,
+    pub tls: bool,
+    pub signed_ty: SignedTy,
+    pub self_signed_ca: AString,
 }
 
 impl Broker {
@@ -179,6 +182,9 @@ impl Broker {
             use_credentials: self.use_credentials,
             user_name: self.user_name.clone(),
             password: self.password.clone(),
+            tls: self.tls,
+            signed_ty: self.signed_ty,
+            self_signed_ca: self.self_signed_ca.clone(),
         }
     }
 }
@@ -300,4 +306,11 @@ impl Default for PayloadTy {
 pub enum Protocol {
     V4,
     V5,
+}
+
+/// Protocol type
+#[derive(Debug, Clone, Data, Copy, PartialEq, Eq, Deserialize, Serialize)]
+pub enum SignedTy {
+    Ca,
+    SelfSigned,
 }
