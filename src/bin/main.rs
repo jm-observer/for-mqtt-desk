@@ -1,21 +1,20 @@
-#![allow(unused_imports)]
 #![windows_subsystem = "windows"]
 
-use druid::theme::WINDOW_BACKGROUND_COLOR;
+
 use druid::{
-    commands, AppDelegate, AppLauncher, Color, Command, DelegateCtx, Env, Handled, LocalizedString,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString,
     PlatformError, Target, WindowDesc,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 use for_mqtt::data::hierarchy::AppData;
 use for_mqtt::logic::deal_event;
-use for_mqtt::ui::common::WHITE;
+
 use for_mqtt::ui::ids::SELF_SIGNED_FILE;
 use for_mqtt::ui::init_layout;
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::LevelFilter::{Debug, Info};
-use log::{debug, error};
+use log::{error};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;

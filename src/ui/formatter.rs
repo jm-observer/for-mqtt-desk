@@ -7,6 +7,7 @@ use druid::text::{Selection, Validation, ValidationError};
 use druid::EventCtx;
 use log::debug;
 use std::fmt::Display;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct MustInputError;
@@ -25,24 +26,32 @@ impl Formatter<AString> for MustInput {
     }
 
     fn validate_partial_input(&self, input: &str, _sel: &Selection) -> Validation {
-        parse_to_no_empty(input).to_validation()
+        Validation::success()
+        // parse_to_no_empty(input).to_validation()
     }
     fn value(&self, input: &str) -> Result<AString, ValidationError> {
-        parse_to_no_empty(input).to_validation_error()
+        Ok(Arc::new(input.to_string()))
+        // parse_to_no_empty(input).to_validation_error()
     }
 }
 
-impl Formatter<u16> for MustInput {
-    fn format(&self, value: &u16) -> String {
-        value.to_string()
+impl Formatter<Option<u16>> for MustInput {
+    fn format(&self, value: &Option<u16>) -> String {
+        match value {
+            None => "".to_string(),
+            Some(port) => port.to_string(),
+        }
     }
 
     fn validate_partial_input(&self, input: &str, _sel: &Selection) -> Validation {
-        parse_to_port(input).to_validation()
+        match parse_to_port(input) {
+            Ok(_val) => Validation::success(),
+            Err(e) => Validation::failure(e),
+        }
     }
-    fn value(&self, input: &str) -> Result<u16, ValidationError> {
+    fn value(&self, input: &str) -> Result<Option<u16>, ValidationError> {
         debug!("Value: {}", input);
-        parse_to_port(input).to_validation_error()
+        parse_to_port(input).map_err(|x| ValidationError::new(x))
     }
 }
 impl Formatter<QoS> for MustInput {
@@ -75,11 +84,11 @@ impl<T: ToString> Portable<T> for Result<T, ForError> {
     }
 }
 
-pub fn parse_to_port(input: &str) -> Result<u16, ForError> {
+pub fn parse_to_port(input: &str) -> Result<Option<u16>, ForError> {
     if input.is_empty() {
-        return Err(ForError::NotEmpty);
+        return Ok(None);
     }
-    input.parse().map_err(|_| ForError::InvalidPort)
+    Ok(Some(input.parse().map_err(|_| ForError::InvalidPort)?))
 }
 pub fn parse_to_no_empty(input: &str) -> Result<AString, ForError> {
     // debug!("{}", input);

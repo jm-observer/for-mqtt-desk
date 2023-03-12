@@ -112,7 +112,7 @@ impl ArcDb {
             client_id: Arc::new("".to_string()),
             name: Arc::new("".to_string()),
             addr: Arc::new("broker-cn.emqx.io".to_string()),
-            port: 1883,
+            port: Some(1883),
             params: Arc::new(OPTION.to_string()),
             use_credentials: false,
             user_name: Arc::new("".to_string()),

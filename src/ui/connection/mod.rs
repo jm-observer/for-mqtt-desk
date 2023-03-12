@@ -13,14 +13,15 @@ use crate::ui::common::{
 use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
 use crate::ui::icons::removed_icon;
 use crate::ui::ids::{
-    TextBoxErrorDelegate, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
-    ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID,
+    TextBoxErrorDelegate, CLEAR_ERROR, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC,
+    ID_SUBSCRIBE_QOS, ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SHOW_ERROR,
 };
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
 use crate::ui::qos::{down_select_qos, qos_init, qos_success};
+use crate::ForError;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
-use druid::text::EditableText;
+use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
     Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split, Svg,
@@ -28,7 +29,7 @@ use druid::widget::{
 };
 use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
-use log::{debug, error};
+use log::{debug, error, warn};
 
 pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData> {
     let subscribe_list = Padding::new(
@@ -201,13 +202,13 @@ fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("topic", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
-                        .with_formatter(MustInput)
-                        .update_data_while_editing(true)
-                        .validate_while_editing(true)
-                        .delegate(
-                            TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
-                                .sends_partial_errors(true),
-                        )
+                        // .with_formatter(MustInput)
+                        // .update_data_while_editing(true)
+                        // .validate_while_editing(false)
+                        // .delegate(
+                        //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
+                        //         .sends_partial_errors(true),
+                        // )
                         .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::topic))
                         .fix_width(150.),
                 )
@@ -238,13 +239,18 @@ fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
         .with_child(
             Flex::row().with_child(
                 Button::new(LocalizedString::new("Subscribe"))
-                    .on_click(move |_ctx, data: &mut DbIndex, _env| {
-                        debug!("{:?}", data.data);
+                    .on_click(move |ctx, data: &mut DbIndex, _env| {
                         if let Some(input) = data.data.subscribe_input.get(&data.id) {
                             if input.topic.is_empty() {
-                                debug!("topic is empty");
+                                warn!("topic is empty");
+                                ctx.submit_command(
+                                    SHOW_ERROR
+                                        .with(ValidationError::new(ForError::NotEmpty))
+                                        .to(ID_SUBSCRIBE_TOPIC),
+                                );
                                 return;
                             }
+                            ctx.submit_command(CLEAR_ERROR.to(ID_SUBSCRIBE_TOPIC));
                             if let Err(e) = data
                                 .data
                                 .db
@@ -278,13 +284,13 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("topic", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
-                        .with_formatter(MustInput)
-                        .update_data_while_editing(true)
-                        .validate_while_editing(true)
-                        .delegate(
-                            TextBoxErrorDelegate::new(ID_PUBLISH_TOPIC, check_no_empty)
-                                .sends_partial_errors(true),
-                        )
+                        // .with_formatter(MustInput)
+                        // .update_data_while_editing(true)
+                        // .validate_while_editing(false)
+                        // .delegate(
+                        //     TextBoxErrorDelegate::new(ID_PUBLISH_TOPIC, check_no_empty)
+                        //         .sends_partial_errors(true),
+                        // )
                         .lens(BrokerIndexLensPublicInput(id).then(PublicInput::topic))
                         .fix_width(300.),
                 )
@@ -317,13 +323,13 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("msg", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::multiline()
-                        .with_formatter(MustInput)
-                        .update_data_while_editing(true)
-                        .validate_while_editing(true)
-                        .delegate(
-                            TextBoxErrorDelegate::new(ID_PUBLISH_MSG, check_no_empty)
-                                .sends_partial_errors(true),
-                        )
+                        // .with_formatter(MustInput)
+                        // .update_data_while_editing(true)
+                        // .validate_while_editing(true)
+                        // .delegate(
+                        //     TextBoxErrorDelegate::new(ID_PUBLISH_MSG, check_no_empty)
+                        //         .sends_partial_errors(true),
+                        // )
                         .fix_height(60.)
                         .fix_width(300.)
                         .lens(BrokerIndexLensPublicInput(id).then(PublicInput::msg)),
@@ -334,12 +340,32 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
         .with_child(
             Flex::row().with_child(
                 Button::new(LocalizedString::new("Publish"))
-                    .on_click(move |_ctx, data: &mut DbIndex, _env| {
+                    .on_click(move |ctx, data: &mut DbIndex, _env| {
                         if let Some(broker) = data.data.public_input.get(&data.id) {
                             if broker.topic.is_empty() || broker.msg.is_empty() {
-                                debug!("topic or msg is empty");
+                                warn!("topic or msg is empty");
+                                if broker.topic.is_empty() {
+                                    ctx.submit_command(
+                                        SHOW_ERROR
+                                            .with(ValidationError::new(ForError::NotEmpty))
+                                            .to(ID_PUBLISH_TOPIC),
+                                    );
+                                } else {
+                                    ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
+                                }
+                                if broker.msg.is_empty() {
+                                    ctx.submit_command(
+                                        SHOW_ERROR
+                                            .with(ValidationError::new(ForError::NotEmpty))
+                                            .to(ID_PUBLISH_MSG),
+                                    );
+                                } else {
+                                    ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
+                                }
                                 return;
                             }
+                            ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
+                            ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
                             if let Err(e) = data
                                 .data
                                 .db

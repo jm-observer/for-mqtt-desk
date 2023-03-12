@@ -50,7 +50,7 @@ pub struct BrokerDB {
     pub client_id: AString,
     pub name: AString,
     pub addr: AString,
-    pub port: u16,
+    pub port: Option<u16>,
     pub params: AString,
     pub use_credentials: bool,
     pub user_name: AString,

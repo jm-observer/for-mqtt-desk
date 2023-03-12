@@ -312,12 +312,12 @@ impl Lens<Msg, AString> for MsgTimeLens {
 
 pub struct PortLens;
 
-impl Lens<Broker, u16> for PortLens {
-    fn with<V, F: FnOnce(&u16) -> V>(&self, data: &Broker, f: F) -> V {
+impl Lens<Broker, Option<u16>> for PortLens {
+    fn with<V, F: FnOnce(&Option<u16>) -> V>(&self, data: &Broker, f: F) -> V {
         f(&data.port)
     }
 
-    fn with_mut<V, F: FnOnce(&mut u16) -> V>(&self, data: &mut Broker, f: F) -> V {
+    fn with_mut<V, F: FnOnce(&mut Option<u16>) -> V>(&self, data: &mut Broker, f: F) -> V {
         f(&mut data.port)
     }
 }

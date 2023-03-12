@@ -23,8 +23,11 @@ pub use for_mqtt_client::{
 };
 
 pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client> {
-    let mut mqttoptions =
-        MqttOptions::new(broker.client_id.clone(), broker.addr.as_str(), broker.port);
+    let Some(port) = broker.port else {
+        // error!("port is none");
+        bail!("port is none");
+    };
+    let mut mqttoptions = MqttOptions::new(broker.client_id.clone(), broker.addr.as_str(), port);
     if broker.use_credentials {
         mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }

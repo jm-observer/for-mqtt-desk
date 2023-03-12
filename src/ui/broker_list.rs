@@ -100,8 +100,14 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
         })
     };
     let name = || label_dy(|data: &Broker, _: &Env| format!("{}", data.name));
-    let addr =
-        || label_dy_expand_width(|data: &Broker, _: &Env| format!("{}:{}", data.addr, data.port));
+    let addr = || {
+        label_dy_expand_width(|data: &Broker, _: &Env| match data.port {
+            None => {
+                format!("{}", data.addr)
+            }
+            Some(port) => format!("{}:{:?}", data.addr, port),
+        })
+    };
 
     let list: List<Broker> = List::new(move || {
         Either::new(
