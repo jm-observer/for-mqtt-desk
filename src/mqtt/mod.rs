@@ -41,9 +41,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
     };
     let mut eventloop = client.init_receiver();
     let id = broker.id;
-    debug!("start");
     tokio::spawn(async move {
-        debug!("start");
         while let Ok(event) = eventloop.recv().await {
             let tx = tx.clone();
             debug!("{:?}", event);
@@ -100,7 +98,6 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                 }
             }
         }
-        debug!("end");
     });
     Ok(client)
 }

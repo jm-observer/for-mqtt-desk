@@ -52,9 +52,12 @@ impl AppData {
         self.init_broker_tab(broker.id);
         self.brokers.push_back(broker);
     }
-    fn init_broker_tab(&mut self, id: usize) {
+    fn init_broker_tab(&mut self, id: usize) -> bool {
+        let mut is_exist = false;
         if self.broker_tabs.iter().find(|x| **x == id).is_none() {
             self.broker_tabs.push_front(id);
+        } else {
+            is_exist = true;
         }
         if self.tab_statuses.get(&id).is_none() {
             self.tab_statuses.insert(
@@ -66,6 +69,7 @@ impl AppData {
                 },
             );
         }
+        is_exist
     }
     pub fn get_selected_subscribe_his(&self) -> Option<SubscribeHis> {
         if let Some(id) = self.get_selected_broker_id() {
@@ -344,13 +348,19 @@ impl AppData {
         }
     }
     pub fn db_click_broker(&mut self, id: usize) {
-        self.init_broker_tab(id);
-        if let Some(broker) = self.find_broker(id) {
-            if let Err(e) = self.db.tx.send(AppEvent::Connect(broker.clone())) {
+        // 若已存在，则跳转至该tag；重连。否则，新增tag，连接
+        if self.init_broker_tab(id) {
+            if let Err(e) = self.db.tx.send(AppEvent::ReConnect(id)) {
                 error!("{:?}", e);
             }
         } else {
-            error!("can't find broker");
+            if let Some(broker) = self.find_broker(id) {
+                if let Err(e) = self.db.tx.send(AppEvent::Connect(broker.clone())) {
+                    error!("{:?}", e);
+                }
+            } else {
+                error!("can't find broker");
+            }
         }
     }
     fn select_broker(&mut self, id: usize) {
