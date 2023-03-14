@@ -8,7 +8,8 @@ use crate::data::lens::{
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, BUTTON_PADDING, GREEN, MSG, QOS, SILVER, TOPIC, YELLOW,
+    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING, GREEN, MSG, QOS,
+    SILVER, TOPIC, YELLOW,
 };
 use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
 use crate::ui::icons::removed_icon;
@@ -91,7 +92,13 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
                 qos_init(SubscribeTopic::qos),
             ))
             .with_child(payload_ty_init(SubscribeTopicPayloadLens))
-            .with_child(TextBox::new().lens(SubscribeTopic::topic).fix_width(150.0))
+            .with_child(
+                TextBox::new()
+                    .controller(RightClickToCopy)
+                    .disabled_if(|_, _| true)
+                    .lens(SubscribeTopic::topic)
+                    .fix_width(150.0),
+            )
             .align_left()
             // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
             .expand_width()
@@ -115,7 +122,13 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Flex::row()
                 .with_child(
                     Flex::column()
-                        .with_child(TextBox::new().expand_width().lens(MsgTimeLens).padding(1.5))
+                        .with_child(
+                            TextBox::new()
+                                .expand_width()
+                                .lens(MsgTimeLens)
+                                .padding(1.5)
+                                .disabled_if(|_, _| true),
+                        )
                         .with_child(
                             Flex::row()
                                 .with_child(Either::new(
@@ -125,13 +138,19 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
                                 ))
                                 .with_child(payload_ty_init(MsgPayloadTyLens))
                                 .with_flex_child(
-                                    TextBox::<AString>::new().lens(MsgTopicLens).expand_width(),
+                                    TextBox::<AString>::new()
+                                        .controller(RightClickToCopy)
+                                        .disabled_if(|_, _| true)
+                                        .lens(MsgTopicLens)
+                                        .expand_width(),
                                     1.0,
                                 )
                                 .expand_width(),
                         )
                         .with_child(
                             TextBox::multiline()
+                                .controller(RightClickToCopy)
+                                .disabled_if(|_, _| true)
                                 // .fix_height(50.0)
                                 .expand_width()
                                 .lens(MsgMsgLens)
@@ -145,19 +164,31 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Flex::row()
                 .with_child(
                     Flex::column()
-                        .with_child(TextBox::new().expand_width().lens(MsgTimeLens).padding(1.5))
+                        .with_child(
+                            TextBox::new()
+                                .expand_width()
+                                .lens(MsgTimeLens)
+                                .padding(1.5)
+                                .disabled_if(|_, _| true),
+                        )
                         .with_child(
                             Flex::row()
                                 .with_child(qos_success(MsgQosLens))
                                 .with_child(payload_ty_init(MsgPayloadTyLens))
                                 .with_flex_child(
-                                    TextBox::<AString>::new().lens(MsgTopicLens).expand_width(),
+                                    TextBox::<AString>::new()
+                                        .controller(RightClickToCopy)
+                                        .disabled_if(|_, _| true)
+                                        .lens(MsgTopicLens)
+                                        .expand_width(),
                                     1.0,
                                 )
                                 .expand_width(),
                         )
                         .with_child(
                             TextBox::multiline()
+                                .controller(RightClickToCopy)
+                                .disabled_if(|_, _| true)
                                 .expand_width()
                                 .lens(MsgMsgLens)
                                 .padding(1.5),

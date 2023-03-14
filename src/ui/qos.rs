@@ -10,6 +10,7 @@ pub fn qos_init<T: Data>(data: impl Lens<T, Arc<String>>) -> impl Widget<T> {
     TextBox::<Arc<String>>::new()
         .fix_width(15.0)
         .padding(1.0)
+        .disabled_if(|_, _| true)
         .lens(data)
 }
 pub fn qos_success<T: Data>(data: impl Lens<T, Arc<String>>) -> impl Widget<T> {
@@ -17,6 +18,7 @@ pub fn qos_success<T: Data>(data: impl Lens<T, Arc<String>>) -> impl Widget<T> {
         .background(GREEN)
         .fix_width(15.0)
         .padding(1.0)
+        .disabled_if(|_, _| true)
         .lens(data)
 }
 

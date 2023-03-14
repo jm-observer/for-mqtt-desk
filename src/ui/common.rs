@@ -1,12 +1,15 @@
 use crate::data::common::QoS;
-use crate::data::AString;
+use crate::data::{AString, AppEvent};
 use crate::ui::ids::{ErrorController, ERROR_TEXT_COLOR};
+use crossbeam_channel::Sender;
 use druid::text::ValidationError;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{Either, Label, LabelText, SizedBox, Svg, SvgData};
-use druid::{Color, Data, Env, UnitPoint, Widget, WidgetExt, WidgetId};
+use druid::widget::{Controller, Either, Label, LabelText, SizedBox, Svg, SvgData, TextBox};
+use druid::{
+    Application, Color, Data, Env, Event, EventCtx, UnitPoint, Widget, WidgetExt, WidgetId,
+};
 use druid_widget_nursery::DropdownSelect;
-use log::debug;
+use log::{debug, error, info, warn};
 use std::sync::Arc;
 
 pub const LABLE_WIDTH: f64 = 80.;
@@ -79,8 +82,11 @@ pub const QOS: fn() -> SizedBox<Arc<String>> = || {
         .fix_width(20f64)
 };
 
-pub const TOPIC: fn() -> SizedBox<AString> =
-    || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(150.);
+pub const TOPIC: fn() -> SizedBox<AString> = || {
+    Label::dynamic(|data: &AString, _: &Env| format!("{}", data))
+        .controller(RightClickToCopy)
+        .fix_width(150.)
+};
 
 pub const MSG: fn() -> SizedBox<AString> =
     || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(170.);
@@ -101,4 +107,70 @@ pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
         )
         .with_id(id),
     )
+}
+
+pub struct RightClickToCopy;
+
+impl<T: druid::Data + druid::text::TextStorage + druid::text::EditableText + ToString>
+    Controller<T, TextBox<T>> for RightClickToCopy
+{
+    fn event(
+        &mut self,
+        child: &mut TextBox<T>,
+        _ctx: &mut EventCtx,
+        event: &Event,
+        data: &mut T,
+        _env: &Env,
+    ) {
+        match event {
+            Event::MouseUp(cmd) => {
+                if cmd.button.is_right() {
+                    if let Some(text) = child.text().borrow().layout.text() {
+                        let text = text.to_string();
+                        if !text.is_empty() {
+                            Application::global()
+                                .clipboard()
+                                .put_string(text.to_string());
+                            info!("copy success!");
+                            _ctx.set_handled();
+                            return;
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        child.event(_ctx, event, data, _env)
+    }
+}
+
+impl<T: druid::Data + druid::text::TextStorage + druid::text::EditableText + ToString>
+    Controller<T, Label<T>> for RightClickToCopy
+{
+    fn event(
+        &mut self,
+        child: &mut Label<T>,
+        _ctx: &mut EventCtx,
+        event: &Event,
+        data: &mut T,
+        _env: &Env,
+    ) {
+        match event {
+            Event::MouseUp(cmd) => {
+                if cmd.button.is_right() {
+                    let text = child.text().to_string();
+                    if !text.is_empty() {
+                        Application::global()
+                            .clipboard()
+                            .put_string(text.to_string());
+                        info!("copy success!");
+                        _ctx.set_handled();
+                        return;
+                    }
+                }
+            }
+            _ => {}
+        }
+        child.event(_ctx, event, data, _env)
+    }
 }

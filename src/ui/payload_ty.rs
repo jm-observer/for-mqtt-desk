@@ -16,5 +16,6 @@ pub fn payload_ty_init<T: Data>(data: impl Lens<T, Arc<String>>) -> impl Widget<
     TextBox::<Arc<String>>::new()
         .fix_width(15.0)
         .padding(1.0)
+        .disabled_if(|_, _| true)
         .lens(data)
 }

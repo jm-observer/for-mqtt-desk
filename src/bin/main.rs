@@ -1,6 +1,5 @@
 #![windows_subsystem = "windows"]
 
-
 use druid::{
     commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString,
     PlatformError, Target, WindowDesc,
@@ -13,12 +12,12 @@ use for_mqtt::ui::ids::SELF_SIGNED_FILE;
 use for_mqtt::ui::init_layout;
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
+use log::error;
 use log::LevelFilter::{Debug, Info};
-use log::{error};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::thread;
+use std::{panic, thread};
 
 fn main() -> Result<(), PlatformError> {
     let (tx, rx) = crossbeam_channel::bounded(1024);
@@ -39,6 +38,23 @@ fn main() -> Result<(), PlatformError> {
         .config(fs, criterion, naming, cleanup, append)
         .log_to_write(Box::new(CustomWriter(tx.clone())))
         .build();
+
+    panic::set_hook(Box::new(|panic_info| {
+        if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            error!("panic occurred: {s:?}");
+        } else {
+            error!("panic occurred");
+        }
+        if let Some(location) = panic_info.location() {
+            error!(
+                "panic occurred in file '{}' at line {}",
+                location.file(),
+                location.line(),
+            );
+        } else {
+            error!("panic occurred but can't get location information...");
+        }
+    }));
 
     let win = WindowDesc::new(init_layout(tx.clone()))
         .title(LocalizedString::new("app-names"))

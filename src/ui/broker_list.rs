@@ -6,8 +6,8 @@ use crate::data::lens::{
 use crate::data::AppEvent;
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title, QOS,
-    SILVER, TOPIC,
+    label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title,
+    RightClickToCopy, QOS, SILVER, TOPIC,
 };
 use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
 use crate::ui::ids::SCROLL_SUBSCRIBE_ID;
