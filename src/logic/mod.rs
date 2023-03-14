@@ -269,7 +269,7 @@ async fn subscribe_from_his(
     match mqtt_subscribe(input.broker_id, input.clone().into(), &mqtt_clients).await {
         Ok(id) => {
             event_sink.add_idle_callback(move |data: &mut AppData| {
-                if let Err(e) = data.subscribe(input.broker_id, input, id) {
+                if let Err(e) = data.subscribe_by_his(input.broker_id, input, id) {
                     error!("{:?}", e);
                 }
             });
@@ -392,7 +392,7 @@ async fn click_subscribe_his(
                     .to_subscribe(his.topic.as_str().clone(), his.qos.into())
                     .await?;
                 event_sink.add_idle_callback(move |data: &mut AppData| {
-                    if let Err(e) = data.subscribe(index, _previous, packet_id) {
+                    if let Err(e) = data.subscribe_by_his(index, _previous, packet_id) {
                         error!("{:?}", e);
                     }
                 });

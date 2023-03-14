@@ -35,6 +35,9 @@ impl SubscribeTopic {
             false
         }
     }
+    pub fn is_equal(&self, other: &Self) -> bool {
+        self.topic == other.topic
+    }
 }
 
 impl PublicMsg {

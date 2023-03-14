@@ -232,10 +232,45 @@ impl AppData {
         warn!("can't find the subscribe to unsubscibe");
         Ok(())
     }
-    pub fn subscribe(&mut self, id: usize, input: SubscribeHis, trace_id: u32) -> Result<()> {
+
+    fn subscribe(&mut self, id: usize, sub: SubscribeTopic) -> Result<()> {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
-            let sub = SubscribeTopic::from_his(input, trace_id);
-            subscribe_topics.push_back(sub.into());
+            if subscribe_topics.iter().find(|x| x.is_equal(&sub)).is_none() {
+                subscribe_topics.push_back(sub.into());
+            } else if let Some((index, _)) = subscribe_topics
+                .iter()
+                .enumerate()
+                .find(|(index, x)| x.topic == sub.topic)
+            {
+                subscribe_topics.remove(index);
+                subscribe_topics.push_back(sub.into());
+            }
+        }
+        Ok(())
+    }
+    pub fn subscribe_by_his(
+        &mut self,
+        id: usize,
+        input: SubscribeHis,
+        trace_id: u32,
+    ) -> Result<()> {
+        self.subscribe(id, SubscribeTopic::from_his(input, trace_id))?;
+        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
+    }
+
+    pub fn subscribe_by_input(
+        &mut self,
+        id: usize,
+        input: SubscribeInput,
+        packet_id: u32,
+    ) -> Result<()> {
+        self.subscribe(id, SubscribeTopic::from(input.clone(), packet_id))?;
+        if let Some(subscribe_hises) = self.subscribe_hises.get_mut(&id) {
+            let his: SubscribeHis = input.into();
+            if subscribe_hises.iter().find(|x| *x == &his).is_none() {
+                subscribe_hises.push_back(his.into());
+                self.db.update_subscribe_his(id, &subscribe_hises)?;
+            }
         }
         Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
     }
@@ -256,27 +291,6 @@ impl AppData {
             }
         }
         bail!(DELETE_SUBSCRIBE_NO_SELECTED);
-    }
-    pub fn subscribe_by_input(
-        &mut self,
-        id: usize,
-        input: SubscribeInput,
-        packet_id: u32,
-    ) -> Result<()> {
-        if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
-            let sub = SubscribeTopic::from(input.clone(), packet_id);
-            subscribe_topics.push_back(sub.into());
-        }
-        if let Some(subscribe_hises) = self.subscribe_hises.get_mut(&id) {
-            let his: SubscribeHis = input.into();
-            debug!("{:?}", subscribe_hises);
-            debug!("{:?}", his);
-            if subscribe_hises.iter().find(|x| *x == &his).is_none() {
-                subscribe_hises.push_back(his.into());
-                self.db.update_subscribe_his(id, &subscribe_hises)?;
-            }
-        }
-        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
     }
     pub fn suback(&mut self, id: usize, input: SubscribeAck) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {

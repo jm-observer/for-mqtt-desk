@@ -191,7 +191,10 @@ impl Broker {
 
 impl PartialEq for SubscribeHis {
     fn eq(&self, other: &Self) -> bool {
-        self.broker_id == other.broker_id && self.topic == other.topic && self.qos == other.qos
+        self.broker_id == other.broker_id
+            && self.topic == other.topic
+            && self.qos == other.qos
+            && self.payload_ty == other.payload_ty
     }
 }
 
