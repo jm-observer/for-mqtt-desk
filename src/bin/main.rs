@@ -7,7 +7,6 @@ use druid::{
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 use for_mqtt::data::hierarchy::AppData;
 use for_mqtt::logic::deal_event;
-
 use for_mqtt::ui::ids::SELF_SIGNED_FILE;
 use for_mqtt::ui::init_layout;
 use for_mqtt::util::custom_logger::CustomWriter;
@@ -60,7 +59,7 @@ fn main() -> Result<(), PlatformError> {
         .title(LocalizedString::new("app-names"))
         .window_size((1200.0, 700.0)); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
-    let data = db.read_app_data()?;
+    let mut data = db.read_app_data()?;
 
     let launcher = AppLauncher::with_window(win)
         .configure_env(|_env: &mut Env, _data: &AppData| {
@@ -76,6 +75,11 @@ fn main() -> Result<(), PlatformError> {
             }
         })
         .unwrap();
+
+    // open a tag
+    if data.brokers.len() == 0 {
+        data.add_broker();
+    }
     launcher.launch(data)?;
     Ok(())
 }

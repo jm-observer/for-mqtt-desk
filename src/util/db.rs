@@ -36,7 +36,6 @@ impl ArcDb {
             let mut brokers = Vector::new();
             let mut subscribe_hises = HashMap::new();
             self.index = db_brokers_ids.len();
-            debug!("{:?}", db_brokers_ids);
             for (index, id) in db_brokers_ids.into_iter().enumerate() {
                 if let Some(val) = self.db.remove(DbKey::broker_key(id).as_bytes()?)? {
                     let mut broker: BrokerDB = serde_json::from_slice(&val)?;
