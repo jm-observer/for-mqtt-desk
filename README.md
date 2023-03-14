@@ -1,2 +1,2 @@
 # for-mqtt
-a mqtt v5 client desktop application
+a mqtt v3/v5 client desktop application
