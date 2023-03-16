@@ -36,8 +36,13 @@ pretty-hex = "0.3.0"
 
 chrono = "0.4.23"
 
+piet = "0.6.2"
+
 [patch."https://github.com/jm-observer/for-mqtt-client.git"]
 for-mqtt-client = { path = "../for-mqtt-client"}
+[patch.crates-io]
+#piet = { path = "../piet/piet"}
+piet = { git = "https://github.com/jm-observer/piet.git"}
 
 #[patch.crates-io]
 #custom-utils = { path = "../custom-utils"}
