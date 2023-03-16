@@ -1,8 +1,10 @@
+pub mod click_ty;
 pub mod common;
 pub mod db;
 pub mod hierarchy;
 pub mod lens;
 
+use crate::data::click_ty::ClickTy;
 use crate::data::common::{Id, PublicInput, QoS, SubscribeHis, SubscribeInput, SubscribeMsg};
 use bytes::Bytes;
 use common::Broker;
@@ -27,7 +29,7 @@ pub enum AppEvent {
     SubscribeFromHis(SubscribeHis),
     ToUnSubscribe {
         broker_id: usize,
-        pk_id: u32,
+        trace_id: u32,
     },
     UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),
@@ -37,11 +39,8 @@ pub enum AppEvent {
     PubAck(usize, u32),
     SubAck(usize, SubscribeAck),
     UnSubAck(usize, UnsubscribeAck),
-    ClickBroker(usize),
-    DbClickCheck(usize),
-    // ClickSubscribeHis(usize, SubscribeHis),
-    ClickSubscribeHis(SubscribeHis),
-    DbClickCheckSubscribeHis(SubscribeHis),
+    Click(ClickTy),
+    ClickLifeDead(ClickTy),
     CloseBrokerTab(usize),
     CloseConnectionTab(usize),
     DeleteBroker,

@@ -1,3 +1,4 @@
+use crate::data::click_ty::ClickTy;
 use crate::data::common::{Msg, PublicInput, QoS, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
@@ -75,12 +76,13 @@ pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData>
 fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let list: List<SubscribeTopic> = List::new(move || {
         let tx = tx.clone();
+        let tx1 = tx.clone();
         Flex::row()
             .with_child(svg(removed_icon()).on_click(
                 move |_ctx, data: &mut SubscribeTopic, _env| {
                     if let Err(_) = tx.send(AppEvent::ToUnSubscribe {
                         broker_id: id,
-                        pk_id: data.trace_id,
+                        trace_id: data.trace_id,
                     }) {
                         error!("fail to send event")
                     }
@@ -102,6 +104,13 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
             .align_left()
             // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
             .expand_width()
+            .on_click(move |_ctx, data: &mut SubscribeTopic, _env| {
+                if let Err(_) =
+                    tx1.send(AppEvent::Click(ClickTy::SubscribeTopic(id, data.trace_id)))
+                {
+                    error!("fail to send event")
+                }
+            })
     });
 
     let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list)

@@ -1,3 +1,4 @@
+use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Protocol, SubscribeHis};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
@@ -42,7 +43,8 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             .with_child(TOPIC().lens(SubscribeHis::topic))
             .expand_width()
             .on_click(move |_ctx, data: &mut SubscribeHis, _env| {
-                if let Err(_) = tx_click.send(AppEvent::ClickSubscribeHis(data.clone())) {
+                if let Err(_) = tx_click.send(AppEvent::Click(ClickTy::SubscribeHis(data.clone())))
+                {
                     error!("fail to send event")
                 }
             })
@@ -117,7 +119,7 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
-                    if let Err(_e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
+                    if let Err(_e) = data.tx.send(AppEvent::Click(ClickTy::Broker(data.id))) {
                         error!("fail to send");
                     }
                 })
@@ -127,7 +129,7 @@ pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
-                    if let Err(_e) = data.tx.send(AppEvent::ClickBroker(data.id)) {
+                    if let Err(_e) = data.tx.send(AppEvent::Click(ClickTy::Broker(data.id))) {
                         error!("fail to send");
                     }
                 }),

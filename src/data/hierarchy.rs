@@ -262,9 +262,9 @@ impl AppData {
         &mut self,
         id: usize,
         input: SubscribeInput,
-        packet_id: u32,
+        trace_id: u32,
     ) -> Result<()> {
-        self.subscribe(id, SubscribeTopic::from(input.clone(), packet_id))?;
+        self.subscribe(id, SubscribeTopic::from(input.clone(), trace_id))?;
         if let Some(subscribe_hises) = self.subscribe_hises.get_mut(&id) {
             let his: SubscribeHis = input.into();
             if subscribe_hises.iter().find(|x| *x == &his).is_none() {
@@ -292,7 +292,7 @@ impl AppData {
         }
         bail!(DELETE_SUBSCRIBE_NO_SELECTED);
     }
-    pub fn suback(&mut self, id: usize, input: SubscribeAck) {
+    pub fn sub_ack(&mut self, id: usize, input: SubscribeAck) {
         if let Some(subscribe_topics) = self.subscribe_topics.get_mut(&id) {
             let SubscribeAck { id, mut acks } = input;
             if let Some(ack) = acks.pop() {
@@ -317,11 +317,11 @@ impl AppData {
                         }
                     }
                 } else {
-                    warn!("todo");
+                    warn!("could not find subscribe");
                 }
             }
         } else {
-            warn!("todo");
+            warn!("could not find subscribe");
         }
     }
     pub fn publish(&mut self, id: usize, input: PublicMsg, trace_id: u32) -> Result<()> {

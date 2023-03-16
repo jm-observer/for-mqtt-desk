@@ -2,6 +2,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::{AppEvent, EventUnSubscribe};
 use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
+use crate::data::click_ty::ClickTy;
 use crate::data::common::{
     Broker, Id, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput,
     SubscribeMsg,
@@ -37,8 +38,7 @@ pub async fn deal_event(
     tx: Sender<AppEvent>,
 ) -> Result<()> {
     let mut mqtt_clients: HashMap<usize, Client> = HashMap::new();
-    let mut clicks: HashMap<usize, usize> = HashMap::new();
-    let mut click_his: Option<SubscribeHis> = None;
+    let mut click_his: Option<ClickTy> = None;
     loop {
         // let event = ;
         // debug!("{:?}", event);
@@ -48,9 +48,10 @@ pub async fn deal_event(
             AppEvent::ConnectBroker => connect_broker(&event_sink),
             AppEvent::SaveBroker(index) => save_broker(&event_sink, index),
             AppEvent::RemoveSubscribeHis => delete_subscribe_his(&event_sink),
-            AppEvent::ToUnSubscribe { broker_id, pk_id } => {
-                to_un_subscribe(&event_sink, broker_id, pk_id)
-            }
+            AppEvent::ToUnSubscribe {
+                broker_id,
+                trace_id,
+            } => to_un_subscribe(&event_sink, broker_id, trace_id),
             AppEvent::UnSubscribeIng(event) => {
                 un_subscribe_ing(&event_sink, event, &mqtt_clients).await
             }
@@ -79,19 +80,6 @@ pub async fn deal_event(
             AppEvent::PubAck(id, ack) => pub_ack(&event_sink, id, ack),
             AppEvent::SubAck(id, ack) => sub_ack(&event_sink, id, ack),
             AppEvent::SelectTabs(id) => select_tabs(&event_sink, id),
-            AppEvent::ClickBroker(id) => click_broker(&event_sink, tx.clone(), &mut clicks, id),
-            AppEvent::DbClickCheck(id) => db_click_check(&mut clicks, id),
-            AppEvent::ClickSubscribeHis(his) => {
-                if let Err(e) =
-                    click_subscribe_his(&event_sink, tx.clone(), &mqtt_clients, &mut click_his, his)
-                        .await
-                {
-                    error!("{:?}", e);
-                }
-            }
-            AppEvent::DbClickCheckSubscribeHis(his) => {
-                db_click_check_subscribe_his(&mut click_his, his).await
-            }
             AppEvent::ReConnect(id) => {
                 if let Err(e) = re_connect(&event_sink, &mut mqtt_clients, id).await {
                     error!("{}", e.to_string());
@@ -120,8 +108,77 @@ pub async fn deal_event(
 
             AppEvent::ScrollSubscribeWin => scroll_subscribe_win(&event_sink).await,
             AppEvent::ScrollMsgWin => scroll_msg_win(&event_sink).await,
+            AppEvent::Click(ty) => {
+                if let Some(old_ty) = click_his.take() {
+                    if old_ty != ty {
+                        click_his = Some(ty)
+                    } else {
+                        // double click
+                        if let Err(e) = double_click(&event_sink, ty, &mqtt_clients).await {
+                            error!("{:?}", e);
+                        }
+                    }
+                } else {
+                    click_his = Some(ty.clone());
+                    first_click(&event_sink, ty.clone()).await;
+                    let tx = tx.clone();
+                    tokio::spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(280)).await;
+                        if let Err(e) = tx.send(AppEvent::ClickLifeDead(ty)) {
+                            error!("{:?}", e);
+                        }
+                    });
+                }
+            }
+            AppEvent::ClickLifeDead(ty) => {
+                if let Some(old_ty) = click_his.take() {
+                    if old_ty != ty {
+                        click_his = Some(old_ty)
+                    }
+                }
+            }
         }
     }
+}
+
+async fn first_click(event_sink: &druid::ExtEventSink, ty: ClickTy) {
+    match ty {
+        ClickTy::Broker(id) => {
+            click_broker(event_sink, id);
+        }
+        ClickTy::SubscribeTopic(_, _) => {}
+        ClickTy::SubscribeHis(his) => click_subscribe_his(event_sink, his.clone()),
+    }
+}
+async fn double_click(
+    event_sink: &druid::ExtEventSink,
+    ty: ClickTy,
+    mqtt_clients: &HashMap<usize, Client>,
+) -> Result<()> {
+    match ty {
+        ClickTy::Broker(id) => {
+            event_sink.add_idle_callback(move |data: &mut AppData| {
+                data.db_click_broker(id);
+            });
+        }
+        ClickTy::SubscribeTopic(broker_id, trace_id) => {
+            to_un_subscribe(&event_sink, broker_id, trace_id);
+        }
+        ClickTy::SubscribeHis(his) => {
+            let index = his.broker_id;
+            if let Some(client) = mqtt_clients.get(&index) {
+                let packet_id = client
+                    .to_subscribe(his.topic.as_str().clone(), his.qos.clone().into())
+                    .await?;
+                event_sink.add_idle_callback(move |data: &mut AppData| {
+                    if let Err(e) = data.subscribe_by_his(index, his, packet_id) {
+                        error!("{:?}", e);
+                    }
+                });
+            }
+        }
+    }
+    Ok(())
 }
 async fn scroll_subscribe_win(event_sink: &druid::ExtEventSink) {
     sleep(Duration::from_millis(50)).await;
@@ -177,9 +234,9 @@ fn delete_subscribe_his(event_sink: &druid::ExtEventSink) {
     });
 }
 
-fn to_un_subscribe(event_sink: &druid::ExtEventSink, broker_id: usize, pk_id: u32) {
+fn to_un_subscribe(event_sink: &druid::ExtEventSink, broker_id: usize, trace_id: u32) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.to_unscribe(broker_id, pk_id) {
+        if let Err(e) = data.to_unscribe(broker_id, trace_id) {
             error!("{:?}", e);
         }
     });
@@ -336,7 +393,7 @@ fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, trace_id: u32) {
 
 fn sub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: SubscribeAck) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.suback(id, ack);
+        data.sub_ack(id, ack);
         info!("{}", SUBSCRIBE_SUCCESS);
     });
 }
@@ -345,76 +402,45 @@ fn select_tabs(event_sink: &druid::ExtEventSink, id: usize) {
         error!("{:?}", e);
     }
 }
-fn click_broker(
-    event_sink: &druid::ExtEventSink,
-    tx: Sender<AppEvent>,
-    clicks: &mut HashMap<usize, usize>,
-    id: usize,
-) {
-    if let Some(_previous) = clicks.remove(&id) {
-        event_sink.add_idle_callback(move |data: &mut AppData| {
-            data.db_click_broker(id);
-        });
-    } else {
-        clicks.insert(id, id);
-        let async_tx = tx.clone();
-        event_sink.add_idle_callback(move |data: &mut AppData| {
-            if let Err(e) = data.click_broker(id) {
-                error!("{:?}", e);
-            }
-        });
-        tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_millis(280)).await;
-            if let Err(e) = async_tx.send(AppEvent::DbClickCheck(id)) {
-                error!("{:?}", e);
-            }
-        });
-    }
+
+fn click_broker(event_sink: &druid::ExtEventSink, id: usize) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.click_broker(id) {
+            error!("{:?}", e);
+        }
+    });
 }
 
 fn db_click_check(clicks: &mut HashMap<usize, usize>, id: usize) {
     if let Some(_previous) = clicks.remove(&id) {}
 }
 
-async fn click_subscribe_his(
+fn click_subscribe_his(event_sink: &druid::ExtEventSink, his: SubscribeHis) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.click_subscribe_his(his) {
+            error!("{:?}", e);
+        }
+    });
+}
+
+async fn double_click_subscribe_his(
     event_sink: &druid::ExtEventSink,
     tx: Sender<AppEvent>,
     mqtt_clients: &HashMap<usize, Client>,
-    click_his: &mut Option<SubscribeHis>,
     his: SubscribeHis,
 ) -> Result<()> {
     let index = his.broker_id;
-    if let Some(_previous) = click_his.take() {
-        if _previous == his {
-            // double
-            if let Some(client) = mqtt_clients.get(&index) {
-                let packet_id = client
-                    .to_subscribe(his.topic.as_str().clone(), his.qos.into())
-                    .await?;
-                event_sink.add_idle_callback(move |data: &mut AppData| {
-                    if let Err(e) = data.subscribe_by_his(index, _previous, packet_id) {
-                        error!("{:?}", e);
-                    }
-                });
+    if let Some(client) = mqtt_clients.get(&index) {
+        let packet_id = client
+            .to_subscribe(his.topic.as_str().clone(), his.qos.clone().into())
+            .await?;
+        event_sink.add_idle_callback(move |data: &mut AppData| {
+            if let Err(e) = data.subscribe_by_his(index, his, packet_id) {
+                error!("{:?}", e);
             }
-            return Ok(());
-        }
+        });
     }
-    *click_his = Some(his.clone());
-    let data_his = his.clone();
-    event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.click_subscribe_his(data_his) {
-            error!("{:?}", e);
-        }
-    });
-    let async_tx = tx.clone();
-    tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_millis(280)).await;
-        if let Err(e) = async_tx.send(AppEvent::DbClickCheckSubscribeHis(his)) {
-            error!("{:?}", e);
-        }
-    });
-    Ok(())
+    return Ok(());
 }
 
 async fn db_click_check_subscribe_his(click_his: &mut Option<SubscribeHis>, his: SubscribeHis) {
