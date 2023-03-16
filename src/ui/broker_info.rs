@@ -45,13 +45,6 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(label_static("addr", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
-                        // .with_formatter(MustInput)
-                        // .update_data_while_editing(true)
-                        // .validate_while_editing(true)
-                        // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_ADDR, check_no_empty)
-                        //         .sends_partial_errors(true),
-                        // )
                         .fix_width(TEXTBOX_WIDTH)
                         .lens(BrokerIndex(id).then(Broker::addr)),
                 )
@@ -76,6 +69,7 @@ pub fn display_broker(id: usize) -> Container<AppData> {
                 .with_child(error_display_widget(ID_PORT))
                 .align_left(),
         )
+        .with_child(display_credential(id).lens(BrokerIndex(id)))
         .with_child(
             Flex::row()
                 .with_child(label_static("version", UnitPoint::RIGHT))
@@ -197,6 +191,45 @@ pub fn display_tls(id: usize) -> impl Widget<Broker> {
             .align_left(),
     )
 }
+
+pub fn display_credential(id: usize) -> impl Widget<Broker> {
+    Either::new(
+        move |data: &Broker, _: &Env| data.use_credentials,
+        Flex::column()
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("credential", UnitPoint::RIGHT))
+                    .with_child(Switch::new().lens(Broker::use_credentials))
+                    .align_left(),
+            )
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("user name", UnitPoint::RIGHT))
+                    .with_child(
+                        TextBox::new()
+                            .fix_width(TEXTBOX_WIDTH)
+                            .lens(Broker::user_name),
+                    )
+                    .align_left(),
+            )
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("password", UnitPoint::RIGHT))
+                    .with_child(
+                        TextBox::new()
+                            .fix_width(TEXTBOX_WIDTH)
+                            .lens(Broker::password),
+                    )
+                    .align_left(),
+            )
+            .align_left(),
+        Flex::row()
+            .with_child(label_static("credential", UnitPoint::RIGHT))
+            .with_child(Switch::new().lens(Broker::use_credentials))
+            .align_left(),
+    )
+}
+
 pub fn display_signed_ty(id: usize) -> impl Widget<Broker> {
     Either::new(
         move |data: &Broker, _: &Env| data.signed_ty == SignedTy::Ca,
