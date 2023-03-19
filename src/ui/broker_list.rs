@@ -28,12 +28,16 @@ use log::error;
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     Container::new(
         Split::rows(
-            Container::new(init_connect(tx.clone())).rounded(15.0),
-            init_subscribe_his_list(tx),
+            Container::new(init_connect(tx.clone()))
+                .rounded(8.0)
+                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+            Container::new(init_subscribe_his_list(tx))
+                .rounded(8.0)
+                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )
         .split_point(0.55)
         .draggable(true)
-        .bar_size(3.0)
+        // .bar_size(3.0)
         // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
         .padding(5.0),
     )

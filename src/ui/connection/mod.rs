@@ -21,6 +21,7 @@ use crate::ui::ids::{
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
 use crate::ui::qos::{down_select_qos, qos_init, qos_success};
 use crate::ForError;
+use chrono::SubsecRound;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
@@ -34,36 +35,34 @@ use druid::{UnitPoint, Widget, WidgetExt};
 use log::{debug, error, warn};
 
 pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData> {
-    let subscribe_list = Padding::new(
-        0.5,
-        Container::new(
-            init_subscribe_list(id, tx.clone()), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
-                                                 //     .split_point(0.75)
-                                                 //     .bar_size(1.0),
-        ), // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-    );
-    let subscribe = Padding::new(
-        1.0,
-        Container::new(
-            Split::rows(subscribe_list, init_subscribe_input(id))
-                .split_point(0.65)
-                .bar_size(1.0),
-        )
-        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-    );
-
-    let msg = Padding::new(
-        0.5,
-        Container::new(
-            Split::rows(
-                Align::centered(init_msgs_list(id, tx.clone())),
-                Align::centered(init_public_input(id)),
-            )
+    let subscribe_list = Container::new(
+        init_subscribe_list(id, tx.clone()), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
+                                             //     .split_point(0.75)
+                                             //     .bar_size(1.0),
+    )
+    .rounded(8.0)
+    .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    .padding(0.5);
+    let subscribe = Container::new(
+        Split::rows(subscribe_list, init_subscribe_input(id))
             .split_point(0.65)
             .bar_size(1.0),
+    )
+    .rounded(8.0)
+    .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    .padding(1.0);
+
+    let msg = Container::new(
+        Split::rows(
+            Align::centered(init_msgs_list(id, tx.clone())),
+            Align::centered(init_public_input(id)),
         )
-        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-    );
+        .split_point(0.65)
+        .bar_size(1.0),
+    )
+    .rounded(8.0)
+    .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    .padding(1.0);
     Container::new(
         Split::columns(subscribe, msg)
             .split_point(0.3)
@@ -130,80 +129,86 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
             |data: &Msg, _env| data.is_public(),
             Flex::row()
                 .with_child(
-                    Flex::column()
-                        .with_child(
-                            TextBox::new()
-                                .expand_width()
-                                .lens(MsgTimeLens)
-                                .padding(1.5)
-                                .disabled_if(|_, _| true),
-                        )
-                        .with_child(
-                            Flex::row()
-                                .with_child(Either::new(
-                                    |data: &Msg, _env| data.is_sucess(),
-                                    qos_success(MsgQosLens),
-                                    qos_init(MsgQosLens),
-                                ))
-                                .with_child(payload_ty_init(MsgPayloadTyLens))
-                                .with_flex_child(
-                                    TextBox::<AString>::new()
-                                        .controller(RightClickToCopy)
-                                        .disabled_if(|_, _| true)
-                                        .lens(MsgTopicLens)
-                                        .expand_width(),
-                                    1.0,
-                                )
-                                .expand_width(),
-                        )
-                        .with_child(
-                            TextBox::multiline()
-                                .controller(RightClickToCopy)
-                                .disabled_if(|_, _| true)
-                                // .fix_height(50.0)
-                                .expand_width()
-                                .lens(MsgMsgLens)
-                                .padding(1.5),
-                        )
-                        .border(BORDER_LIGHT, 1.0)
-                        .fix_width(250.),
+                    Container::new(
+                        Flex::column()
+                            .with_child(
+                                TextBox::new()
+                                    .expand_width()
+                                    .lens(MsgTimeLens)
+                                    .padding(1.5)
+                                    .disabled_if(|_, _| true),
+                            )
+                            .with_child(
+                                Flex::row()
+                                    .with_child(Either::new(
+                                        |data: &Msg, _env| data.is_sucess(),
+                                        qos_success(MsgQosLens),
+                                        qos_init(MsgQosLens),
+                                    ))
+                                    .with_child(payload_ty_init(MsgPayloadTyLens))
+                                    .with_flex_child(
+                                        TextBox::<AString>::new()
+                                            .controller(RightClickToCopy)
+                                            .disabled_if(|_, _| true)
+                                            .lens(MsgTopicLens)
+                                            .expand_width(),
+                                        1.0,
+                                    )
+                                    .expand_width(),
+                            )
+                            .with_child(
+                                TextBox::multiline()
+                                    .controller(RightClickToCopy)
+                                    .disabled_if(|_, _| true)
+                                    // .fix_height(50.0)
+                                    .expand_width()
+                                    .lens(MsgMsgLens)
+                                    .padding(1.5),
+                            )
+                            .fix_width(250.),
+                    )
+                    .rounded(8.0)
+                    .border(BORDER_LIGHT, 1.0),
                 )
                 .align_horizontal(UnitPoint::TOP_RIGHT)
                 .expand_width(),
             Flex::row()
                 .with_child(
-                    Flex::column()
-                        .with_child(
-                            TextBox::new()
-                                .expand_width()
-                                .lens(MsgTimeLens)
-                                .padding(1.5)
-                                .disabled_if(|_, _| true),
-                        )
-                        .with_child(
-                            Flex::row()
-                                .with_child(qos_success(MsgQosLens))
-                                .with_child(payload_ty_init(MsgPayloadTyLens))
-                                .with_flex_child(
-                                    TextBox::<AString>::new()
-                                        .controller(RightClickToCopy)
-                                        .disabled_if(|_, _| true)
-                                        .lens(MsgTopicLens)
-                                        .expand_width(),
-                                    1.0,
-                                )
-                                .expand_width(),
-                        )
-                        .with_child(
-                            TextBox::multiline()
-                                .controller(RightClickToCopy)
-                                .disabled_if(|_, _| true)
-                                .expand_width()
-                                .lens(MsgMsgLens)
-                                .padding(1.5),
-                        )
-                        .border(BORDER_LIGHT, 1.0)
-                        .fix_width(250.),
+                    Container::new(
+                        Flex::column()
+                            .with_child(
+                                TextBox::new()
+                                    .expand_width()
+                                    .lens(MsgTimeLens)
+                                    .padding(1.5)
+                                    .disabled_if(|_, _| true),
+                            )
+                            .with_child(
+                                Flex::row()
+                                    .with_child(qos_success(MsgQosLens))
+                                    .with_child(payload_ty_init(MsgPayloadTyLens))
+                                    .with_flex_child(
+                                        TextBox::<AString>::new()
+                                            .controller(RightClickToCopy)
+                                            .disabled_if(|_, _| true)
+                                            .lens(MsgTopicLens)
+                                            .expand_width(),
+                                        1.0,
+                                    )
+                                    .expand_width(),
+                            )
+                            .with_child(
+                                TextBox::multiline()
+                                    .controller(RightClickToCopy)
+                                    .disabled_if(|_, _| true)
+                                    .expand_width()
+                                    .lens(MsgMsgLens)
+                                    .padding(1.5),
+                            ),
+                    )
+                    .rounded(8.0)
+                    .border(BORDER_LIGHT, 1.0)
+                    .fix_width(250.),
                 )
                 .align_horizontal(UnitPoint::TOP_LEFT)
                 .expand_width(),

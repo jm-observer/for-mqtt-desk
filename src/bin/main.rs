@@ -1,11 +1,8 @@
 #![windows_subsystem = "windows"]
 
-
-
 use druid::{
-    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled,
-    LocalizedString, Menu, MenuItem, PlatformError, Target, WindowDesc,
-    WindowId,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString, Menu,
+    MenuItem, PlatformError, Target, WindowDesc, WindowId,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 
@@ -18,8 +15,8 @@ use for_mqtt::ui::{init_layout, tips};
 
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
+use log::error;
 use log::LevelFilter::{Debug, Info};
-use log::{error};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -65,7 +62,7 @@ fn main() -> Result<(), PlatformError> {
     let win = WindowDesc::new(init_layout(tx.clone()))
         .title(LocalizedString::new("app-names"))
         .menu(make_menu)
-        .window_size((1200.0, 700.0)); //.menu(menu);
+        .window_size((1200.0, 710.0)); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
     let mut data = db.read_app_data()?;
 

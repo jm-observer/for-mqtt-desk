@@ -4,21 +4,24 @@ use crate::ui::ids::{SELECTOR_TABS_CLOSE, SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::ui::tabs::brokers_tab::BrokersTabs;
 use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{Axis, Controller, Tabs, TabsEdge, TabsTransition};
+use druid::widget::{Axis, Container, Controller, Tabs, TabsEdge, TabsTransition};
 use druid::{Env, Event, EventCtx, Selector, Widget, WidgetExt, WidgetId};
 
 mod broker_tab;
 mod brokers_tab;
 
 pub fn init_brokers_tabs(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    let tabs = Tabs::for_policy(BrokersTabs(tx))
-        .with_axis(Axis::Horizontal)
-        .with_edge(TabsEdge::Leading)
-        .with_transition(TabsTransition::Instant)
-        .controller(TabsControler)
-        .with_id(TABS_ID)
-        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-        .padding(5.0);
+    let tabs = Container::new(
+        Tabs::for_policy(BrokersTabs(tx))
+            .with_axis(Axis::Horizontal)
+            .with_edge(TabsEdge::Leading)
+            .with_transition(TabsTransition::Instant)
+            .controller(TabsControler)
+            .with_id(TABS_ID)
+            .padding(5.0),
+    )
+    .rounded(8.0)
+    .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
     tabs
 }
 
