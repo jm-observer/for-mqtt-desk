@@ -1,4 +1,5 @@
 use crate::data::hierarchy::AppData;
+use crate::data::lens::BrokerIndex;
 use crate::data::AppEvent;
 use crate::ui::broker_info::display_broker;
 use crate::ui::broker_list::init_broker_list;
@@ -106,7 +107,7 @@ fn display_broker_info(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Container::new(init_brokers_tabs(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-            Container::new(display_broker(0))
+            Container::new(display_broker(0).lens(BrokerIndex(0)))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )

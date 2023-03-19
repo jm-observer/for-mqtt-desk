@@ -12,6 +12,7 @@ use std::sync::Arc;
 impl SubscribeTopic {
     pub fn from(val: SubscribeInput, packet_id: u32) -> Self {
         Self {
+            broker_id: val.broker_id,
             trace_id: packet_id,
             topic: val.topic.clone(),
             qos: val.qos.qos_to_string(),
@@ -21,6 +22,7 @@ impl SubscribeTopic {
     }
     pub fn from_his(val: SubscribeHis, trace_id: u32) -> Self {
         Self {
+            broker_id: val.broker_id,
             trace_id,
             topic: val.topic.clone(),
             qos: val.qos.qos_to_string(),

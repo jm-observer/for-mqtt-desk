@@ -2,7 +2,7 @@ use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Protocol, SubscribeHis};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
-    BrokerStoredList, LensSelectedSubscribeHis, LensSubscribeHisQoS, SubscribeHisPayloadLens,
+    BrokerIndex, BrokerSelected, BrokerStoredList, LensSubscribeHisQoS, SubscribeHisPayloadLens,
 };
 use crate::data::AppEvent;
 use crate::ui::auto_scroll::AutoScrollController;
@@ -23,31 +23,47 @@ use druid::widget::{
 };
 use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
-use log::error;
+use log::{debug, error};
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    Container::new(
+    Either::<AppData>::new(
+        |x, env| x.get_selected_broker().is_ok(),
         Split::rows(
             Container::new(init_connect(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-            Container::new(init_subscribe_his_list(tx))
+            Container::new(init_subscribe_his_list(tx.clone()).lens(BrokerSelected))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )
         .split_point(0.55)
         .draggable(true)
-        // .bar_size(3.0)
-        // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
         .padding(5.0),
+        init_connect(tx),
     )
-    .rounded(8.0)
-    .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    // Container::new(
+    //     Split::rows(
+    //         Container::new(init_connect(tx.clone()))
+    //             .rounded(8.0)
+    //             .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+    //         Container::new(init_subscribe_his_list(tx))
+    //             .rounded(8.0)
+    //             .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+    //     )
+    //     .split_point(0.55)
+    //     .draggable(true)
+    //     // .bar_size(3.0)
+    //     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    //     .padding(5.0),
+    // )
+    // .rounded(8.0)
+    // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
 
-fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
+fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
+    let tx_click = tx.clone();
     let his_fn = move || {
-        let tx_click = tx.clone();
+        let tx_click = tx_click.clone();
         Flex::row()
             .with_child(qos_init(LensSubscribeHisQoS))
             .with_child(payload_ty_init(SubscribeHisPayloadLens))
@@ -70,24 +86,27 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     });
     let scroll = Scroll::<Vector<SubscribeHis>, List<SubscribeHis>>::new(list)
         .vertical()
-        .lens(LensSelectedSubscribeHis);
-    let buttons = Flex::row()
+        .lens(Broker::subscribe_hises);
+
+    let tx_removed_icon = tx.clone();
+    let tx_connect_icon = tx.clone();
+    let buttons = Flex::<Broker>::row()
         // .cross_axis_alignment(CrossAxisAlignment::Center)
         .with_flex_child(
             title("Subscribe History", UnitPoint::LEFT).expand_width(),
             1.0,
         )
         .with_child(
-            svg(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Err(_) = data.db.tx.send(AppEvent::RemoveSubscribeHis) {
+            svg(removed_icon()).on_click(move |_ctx, data: &mut Broker, _env| {
+                if let Err(_) = tx_removed_icon.send(AppEvent::RemoveSubscribeHis) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
-            svg(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Some(his) = data.get_selected_subscribe_his() {
-                    if let Err(_) = data.db.tx.send(AppEvent::SubscribeFromHis(his)) {
+            svg(connect_icon()).on_click(move |_ctx, data: &mut Broker, _env| {
+                if let Some(his) = data.subscribe_hises.iter().find(|x| x.selected) {
+                    if let Err(_) = tx_connect_icon.send(AppEvent::SubscribeFromHis(his.clone())) {
                         error!("fail to send event");
                     }
                 }

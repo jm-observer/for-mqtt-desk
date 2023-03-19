@@ -31,6 +31,7 @@ impl Default for Id {
 
 #[derive(Data, Clone, Debug, Lens)]
 pub struct SubscribeTopic {
+    pub broker_id: usize,
     pub trace_id: u32,
     #[data(ignore)]
     pub topic: AString,
@@ -188,6 +189,7 @@ pub struct Broker {
     pub subscribe_input: SubscribeInput,
     pub public_input: PublicInput,
     pub unsubscribe_ing: Vector<UnsubcribeTracing>,
+    pub tab_status: TabStatus,
 }
 
 impl Broker {

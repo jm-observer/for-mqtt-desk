@@ -45,8 +45,6 @@ use std::sync::Arc;
 pub struct AppData {
     pub brokers: Vector<Broker>,
     pub broker_tabs: Vector<usize>,
-    pub tab_statuses: HashMap<usize, TabStatus>,
-
     #[data(ignore)]
     #[lens(ignore)]
     pub db: ArcDb,
@@ -90,14 +88,12 @@ impl AppData {
         }
         is_exist
     }
-    pub fn get_selected_subscribe_his(&self) -> Option<SubscribeHis> {
-        if let Some(broker) = self.get_selected_broker() {
-            if let Some(his) = broker.subscribe_hises.iter().find(|x| x.selected) {
-                return Some(his.clone());
-            }
+    pub fn get_selected_subscribe_his(&self) -> Result<SubscribeHis> {
+        let broker = self.get_selected_broker()?;
+        if let Some(his) = broker.subscribe_hises.iter().find(|x| x.selected) {
+            return Ok(his.clone());
         }
-        warn!("could not find  subscribe his selected");
-        None
+        bail!("could not find  subscribe his selected");
     }
     pub fn get_selected_broker_id(&self) -> Option<usize> {
         self.brokers
@@ -105,11 +101,42 @@ impl AppData {
             .find(|x| x.selected)
             .map(|x| x.id.clone())
     }
-    pub fn get_selected_broker(&self) -> Option<&Broker> {
-        self.brokers.iter().find(|x| x.selected)
+    pub fn get_selected_broker_index(&self) -> Option<usize> {
+        self.brokers
+            .iter()
+            .enumerate()
+            .find(|x| x.1.selected)
+            .map(|x| x.0)
     }
-    pub fn get_selected_mut_broker(&mut self) -> Option<&mut Broker> {
-        self.brokers.iter_mut().find(|x| x.selected)
+    pub fn get_selected_broker(&self) -> Result<&Broker> {
+        self.brokers
+            .iter()
+            .find(|x| x.selected)
+            .ok_or(anyhow!("could not find broker selected"))
+    }
+    pub fn get_selected_broker_or_zero(&self) -> Result<&Broker> {
+        if let Some(broker) = self.brokers.iter().find(|x| x.selected) {
+            return Ok(broker);
+        } else if let Some(broker) = self.brokers.get(0) {
+            return Ok(broker);
+        } else {
+            bail!("could not find broker selected or default")
+        }
+    }
+    pub fn get_selected_mut_broker(&mut self) -> Result<&mut Broker> {
+        self.brokers
+            .iter_mut()
+            .find(|x| x.selected)
+            .ok_or(anyhow!("could not find broker  selected"))
+    }
+    pub fn get_mut_selected_broker_or_zero(&mut self) -> Result<&mut Broker> {
+        let index = match self.get_selected_broker_index() {
+            None => 0,
+            Some(index) => index,
+        };
+        self.brokers
+            .get_mut(0)
+            .ok_or(anyhow!("could not find broker  selected"))
     }
     pub fn find_broker(&self, id: usize) -> Result<&Broker> {
         self.brokers
@@ -355,7 +382,7 @@ impl AppData {
         Ok(())
     }
     pub fn edit_broker(&mut self) {
-        if let Some(broker) = self.get_selected_broker() {
+        if let Ok(broker) = self.get_selected_broker() {
             self.init_broker_tab(broker.id);
         } else {
             // todo
@@ -363,7 +390,7 @@ impl AppData {
         }
     }
     pub fn connect_broker(&mut self) {
-        if let Some(broker) = self.get_selected_broker() {
+        if let Ok(broker) = self.get_selected_broker() {
             if let Err(e) = self.db.tx.send(AppEvent::Connect(broker.clone())) {
                 error!("{:?}", e);
             }
@@ -417,6 +444,9 @@ impl AppData {
             // self.db.tx.send(AppEvent::CloseBrokerTab(index))?;
         } else {
             bail!("not selected broker to delete");
+        }
+        if self.brokers.len() == 0 {
+            self.add_broker();
         }
         Ok(())
     }

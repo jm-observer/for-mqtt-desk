@@ -43,7 +43,7 @@ for-mqtt-client = { path = "../for-mqtt-client"}
 [patch.crates-io]
 #piet = { path = "../piet/piet"}
 piet = { git = "https://github.com/jm-observer/piet.git"}
-
+#druid = { path = "../druid-fork/druid"}
 #[patch.crates-io]
 #custom-utils = { path = "../custom-utils"}
 

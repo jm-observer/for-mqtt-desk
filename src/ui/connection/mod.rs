@@ -1,5 +1,5 @@
 use crate::data::click_ty::ClickTy;
-use crate::data::common::{Msg, PublicInput, QoS, SubscribeInput, SubscribeTopic};
+use crate::data::common::{Broker, Msg, PublicInput, QoS, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
@@ -34,17 +34,17 @@ use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{debug, error, warn};
 
-pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData> {
+pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     let subscribe_list = Container::new(
-        init_subscribe_list(id, tx.clone()), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
-                                             //     .split_point(0.75)
-                                             //     .bar_size(1.0),
+        init_subscribe_list(tx.clone()), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
+                                         //     .split_point(0.75)
+                                         //     .bar_size(1.0),
     )
     .rounded(8.0)
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
     .padding(0.5);
     let subscribe = Container::new(
-        Split::rows(subscribe_list, init_subscribe_input(id))
+        Split::rows(subscribe_list, init_subscribe_input())
             .split_point(0.65)
             .bar_size(1.0),
     )
@@ -54,8 +54,8 @@ pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData>
 
     let msg = Container::new(
         Split::rows(
-            Align::centered(init_msgs_list(id, tx.clone())),
-            Align::centered(init_public_input(id)),
+            Align::centered(init_msgs_list(tx.clone())),
+            Align::centered(init_public_input()),
         )
         .split_point(0.65)
         .bar_size(1.0),
@@ -72,7 +72,7 @@ pub fn display_connection(id: usize, tx: Sender<AppEvent>) -> Container<AppData>
     // .debug_paint_layout()
 }
 
-fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
+fn init_subscribe_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let list: List<SubscribeTopic> = List::new(move || {
         let tx = tx.clone();
         let tx1 = tx.clone();
@@ -80,7 +80,7 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
             .with_child(svg(removed_icon()).on_click(
                 move |_ctx, data: &mut SubscribeTopic, _env| {
                     if let Err(_) = tx.send(AppEvent::ToUnSubscribe {
-                        broker_id: id,
+                        broker_id: data.broker_id,
                         trace_id: data.trace_id,
                     }) {
                         error!("fail to send event")
@@ -104,9 +104,10 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
             // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
             .expand_width()
             .on_click(move |_ctx, data: &mut SubscribeTopic, _env| {
-                if let Err(_) =
-                    tx1.send(AppEvent::Click(ClickTy::SubscribeTopic(id, data.trace_id)))
-                {
+                if let Err(_) = tx1.send(AppEvent::Click(ClickTy::SubscribeTopic(
+                    data.broker_id,
+                    data.trace_id,
+                ))) {
                     error!("fail to send event")
                 }
             })
@@ -116,14 +117,14 @@ fn init_subscribe_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> 
         .vertical()
         .controller(AutoScrollController)
         .with_id(SCROLL_SUBSCRIBE_ID)
-        .lens(BrokerIndexLensVecSubscribeTopic(id))
+        .lens(Broker::subscribe_topics)
         .align_vertical(UnitPoint::TOP)
         .expand_width()
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
     scroll
 }
 
-fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
+fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let list: List<Msg> = List::new(move || {
         Either::new(
             |data: &Msg, _env| data.is_public(),
@@ -221,18 +222,20 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .vertical()
         .controller(AutoScrollController)
         .with_id(SCROLL_MSG_ID)
-        .lens(BrokerIndexLensVecMsg(id))
+        .lens(Broker::msgs)
         .align_vertical(UnitPoint::TOP)
         .expand_width()
         .expand_height()
         .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
     let clear_tx = tx.clone();
     let tools = Flex::row()
-        .with_child(Button::new("Clear").on_click(move |_, _, _| {
-            if clear_tx.send(AppEvent::ClearMsg(id)).is_err() {
-                error!("could not to send clear command");
-            }
-        }))
+        .with_child(
+            Button::new("Clear").on_click(move |_, data: &mut Broker, _| {
+                if clear_tx.send(AppEvent::ClearMsg(data.id)).is_err() {
+                    error!("could not to send clear command");
+                }
+            }),
+        )
         .align_left();
     Flex::column()
         .with_child(tools)
@@ -240,89 +243,88 @@ fn init_msgs_list(id: usize, tx: Sender<AppEvent>) -> impl Widget<AppData> {
 }
 
 //
-fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
-    let connection = Flex::column()
-        .with_child(
-            Flex::row()
-                .with_child(label_static("topic", UnitPoint::RIGHT))
-                .with_child(
-                    TextBox::new()
-                        // .with_formatter(MustInput)
-                        // .update_data_while_editing(true)
-                        // .validate_while_editing(false)
-                        // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
-                        //         .sends_partial_errors(true),
-                        // )
-                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::topic))
-                        .fix_width(150.),
-                )
-                .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
-                .align_left(),
-        )
-        .with_child(
-            Flex::row()
-                .with_child(label_static("QoS", UnitPoint::RIGHT))
-                .with_child(
-                    down_select_qos()
-                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::qos))
-                        .fix_width(150.),
-                )
-                .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
-                .align_left(),
-        )
-        .with_child(
-            Flex::row()
-                .with_child(label_static("Byte Type", UnitPoint::RIGHT))
-                .with_child(
-                    down_select_payload_ty()
-                        .lens(BrokerIndexLensSubscribeInput(id).then(SubscribeInput::payload_ty)),
-                )
-                // .with_child(error_display_widget(ID_PUBLISH_QOS))
-                .align_left(),
-        )
-        .with_child(
-            Flex::row().with_child(
-                Button::new(LocalizedString::new("Subscribe"))
-                    .on_click(move |ctx, data: &mut DbIndex, _env| {
-                        if let Some(input) = data.data.brokers.get(data.id) {
-                            if input.subscribe_input.topic.is_empty() {
-                                warn!("topic is empty");
-                                ctx.submit_command(
-                                    SHOW_ERROR
-                                        .with(ValidationError::new(ForError::NotEmpty))
-                                        .to(ID_SUBSCRIBE_TOPIC),
-                                );
-                                return;
+fn init_subscribe_input() -> impl Widget<Broker> {
+    let connection =
+        Flex::column()
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("topic", UnitPoint::RIGHT))
+                    .with_child(
+                        TextBox::new()
+                            // .with_formatter(MustInput)
+                            // .update_data_while_editing(true)
+                            // .validate_while_editing(false)
+                            // .delegate(
+                            //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
+                            //         .sends_partial_errors(true),
+                            // )
+                            .lens(Broker::subscribe_input.then(SubscribeInput::topic))
+                            .fix_width(150.),
+                    )
+                    .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
+                    .align_left(),
+            )
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("QoS", UnitPoint::RIGHT))
+                    .with_child(
+                        down_select_qos()
+                            .lens(Broker::subscribe_input.then(SubscribeInput::qos))
+                            .fix_width(150.),
+                    )
+                    .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
+                    .align_left(),
+            )
+            .with_child(
+                Flex::row()
+                    .with_child(label_static("Byte Type", UnitPoint::RIGHT))
+                    .with_child(
+                        down_select_payload_ty()
+                            .lens(Broker::subscribe_input.then(SubscribeInput::payload_ty)),
+                    )
+                    // .with_child(error_display_widget(ID_PUBLISH_QOS))
+                    .align_left(),
+            )
+            .with_child(
+                Flex::row().with_child(
+                    Button::new(LocalizedString::new("Subscribe"))
+                        .on_click(move |ctx, data: &mut DbIndex, _env| {
+                            if let Some(input) = data.data.brokers.get(data.id) {
+                                if input.subscribe_input.topic.is_empty() {
+                                    warn!("topic is empty");
+                                    ctx.submit_command(
+                                        SHOW_ERROR
+                                            .with(ValidationError::new(ForError::NotEmpty))
+                                            .to(ID_SUBSCRIBE_TOPIC),
+                                    );
+                                    return;
+                                }
+                                ctx.submit_command(CLEAR_ERROR.to(ID_SUBSCRIBE_TOPIC));
+                                if let Err(e) = data.data.db.tx.send(AppEvent::Subscribe(
+                                    input.subscribe_input.clone(),
+                                    data.id,
+                                )) {
+                                    error!("{:?}", e);
+                                }
+                            } else {
+                                error!("can't get the broker");
                             }
-                            ctx.submit_command(CLEAR_ERROR.to(ID_SUBSCRIBE_TOPIC));
-                            if let Err(e) = data
-                                .data
-                                .db
-                                .tx
-                                .send(AppEvent::Subscribe(input.subscribe_input.clone(), data.id))
-                            {
-                                error!("{:?}", e);
+                        })
+                        .disabled_if(|data: &DbIndex, _env| {
+                            if let Some(broker) = data.tab_statuses.get(&data.id) {
+                                !broker.connected
+                            } else {
+                                true
                             }
-                        } else {
-                            error!("can't get the broker");
-                        }
-                    })
-                    .disabled_if(|data: &DbIndex, _env| {
-                        if let Some(broker) = data.data.tab_statuses.get(&data.id) {
-                            !broker.connected
-                        } else {
-                            true
-                        }
-                    })
-                    .padding(BUTTON_PADDING)
-                    .lens(Index(id)),
-            ),
-        );
+                        })
+                        .padding(BUTTON_PADDING)
+                        .lens(Index(id)),
+                ),
+            );
     connection
 }
 
-fn init_public_input(id: usize) -> impl Widget<AppData> {
+fn init_public_input() -> impl Widget<Broker> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
@@ -336,7 +338,7 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                         //     TextBoxErrorDelegate::new(ID_PUBLISH_TOPIC, check_no_empty)
                         //         .sends_partial_errors(true),
                         // )
-                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::topic))
+                        .lens(Broker::public_input.then(PublicInput::topic))
                         .fix_width(300.),
                 )
                 .with_child(error_display_widget(ID_PUBLISH_TOPIC))
@@ -347,7 +349,7 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("QoS", UnitPoint::RIGHT))
                 .with_child(
                     down_select_qos()
-                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::qos))
+                        .lens(Broker::public_input.then(PublicInput::qos))
                         .fix_width(300.),
                 )
                 .with_child(error_display_widget(ID_PUBLISH_QOS))
@@ -358,7 +360,7 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                 .with_child(label_static("Byte Type", UnitPoint::RIGHT))
                 .with_child(
                     down_select_payload_ty()
-                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::payload_ty)),
+                        .lens(Broker::public_input.then(PublicInput::payload_ty)),
                 )
                 // .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
@@ -377,7 +379,7 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                         // )
                         .fix_height(60.)
                         .fix_width(300.)
-                        .lens(BrokerIndexLensPublicInput(id).then(PublicInput::msg)),
+                        .lens(Broker::public_input.then(PublicInput::msg)),
                 )
                 .with_child(error_display_widget(ID_PUBLISH_MSG))
                 .align_left(),

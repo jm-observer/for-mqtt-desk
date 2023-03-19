@@ -3,7 +3,7 @@ use crossbeam_channel::Sender;
 use sled::{Config, Db};
 use std::sync::Arc;
 
-use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis, SubscribeInput};
+use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis, SubscribeInput, TabStatus};
 use crate::data::db::{BrokerDB, DbKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
@@ -88,7 +88,6 @@ impl ArcDb {
         Ok(AppData {
             brokers,
             broker_tabs: Default::default(),
-            tab_statuses: Default::default(),
             db: self.clone(),
             hint: "".to_string().into(),
             self_signed_file: None,
@@ -123,6 +122,11 @@ impl ArcDb {
             subscribe_input: SubscribeInput::init(id),
             public_input: Default::default(),
             unsubscribe_ing: Default::default(),
+            tab_status: TabStatus {
+                id,
+                try_connect: false,
+                connected: false,
+            },
         }
     }
 

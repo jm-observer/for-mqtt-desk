@@ -32,6 +32,23 @@ impl druid::Lens<AppData, Broker> for BrokerIndex {
         })
     }
 }
+
+pub struct BrokerSelected;
+
+impl druid::Lens<AppData, Broker> for BrokerSelected {
+    fn with<V, F: FnOnce(&Broker) -> V>(&self, data: &AppData, f: F) -> V {
+        f(match data.get_selected_broker_or_zero() {
+            Ok(broker) => broker,
+            Err(_) => unreachable!(),
+        })
+    }
+    fn with_mut<V, F: FnOnce(&mut Broker) -> V>(&self, data: &mut AppData, f: F) -> V {
+        f(match data.get_mut_selected_broker_or_zero() {
+            Ok(broker) => broker,
+            Err(e) => unreachable!(),
+        })
+    }
+}
 // pub struct BrokerIndexLensVecSubscribeHis(pub usize);
 //
 // impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndexLensVecSubscribeHis {
@@ -53,31 +70,31 @@ impl druid::Lens<AppData, Broker> for BrokerIndex {
 //     }
 // }
 //
-pub struct LensSelectedSubscribeHis;
-
-impl druid::Lens<AppData, Vector<SubscribeHis>> for LensSelectedSubscribeHis {
-    fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
-        if let Some(broker) = data.get_selected_broker() {
-            f(&broker.subscribe_hises)
-        } else {
-            let datas = Vector::new();
-            f(&datas)
-        }
-    }
-    fn with_mut<V, F: FnOnce(&mut Vector<SubscribeHis>) -> V>(
-        &self,
-        data: &mut AppData,
-        f: F,
-    ) -> V {
-        if let Some(broker) = data.get_selected_mut_broker() {
-            f(&mut broker.subscribe_hises)
-        } else {
-            error!("unreached");
-            let mut datas = Vector::new();
-            f(&mut datas)
-        }
-    }
-}
+// pub struct LensSelectedSubscribeHis;
+//
+// impl druid::Lens<AppData, Vector<SubscribeHis>> for LensSelectedSubscribeHis {
+//     fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
+//         if let Some(broker) = data.get_selected_broker() {
+//             f(&broker.subscribe_hises)
+//         } else {
+//             let datas = Vector::new();
+//             f(&datas)
+//         }
+//     }
+//     fn with_mut<V, F: FnOnce(&mut Vector<SubscribeHis>) -> V>(
+//         &self,
+//         data: &mut AppData,
+//         f: F,
+//     ) -> V {
+//         if let Some(broker) = data.get_selected_mut_broker() {
+//             f(&mut broker.subscribe_hises)
+//         } else {
+//             error!("unreached");
+//             let mut datas = Vector::new();
+//             f(&mut datas)
+//         }
+//     }
+// }
 pub struct BrokerIndexLensVecSubscribeTopic(pub usize);
 
 impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndexLensVecSubscribeTopic {
@@ -148,60 +165,60 @@ impl druid::Lens<AppData, PublicInput> for BrokerIndexLensPublicInput {
     }
 }
 
-pub struct BrokerIndexLensTabStatus(pub usize);
+// pub struct BrokerIndexLensTabStatus(pub usize);
+//
+// impl druid::Lens<AppData, TabStatus> for BrokerIndexLensTabStatus {
+//     fn with<V, F: FnOnce(&TabStatus) -> V>(&self, data: &AppData, f: F) -> V {
+//         f(match data.tab_statuses.get(&self.0) {
+//             Some(broker) => broker,
+//             None => unreachable!(""),
+//         })
+//     }
+//     fn with_mut<V, F: FnOnce(&mut TabStatus) -> V>(&self, data: &mut AppData, f: F) -> V {
+//         f(match data.tab_statuses.get_mut(&self.0) {
+//             Some(broker) => broker,
+//             None => unreachable!(""),
+//         })
+//     }
+// }
 
-impl druid::Lens<AppData, TabStatus> for BrokerIndexLensTabStatus {
-    fn with<V, F: FnOnce(&TabStatus) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.tab_statuses.get(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
-    }
-    fn with_mut<V, F: FnOnce(&mut TabStatus) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.tab_statuses.get_mut(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
-    }
-}
-
-#[derive(Clone)]
-pub struct DbIndex {
-    pub data: AppData,
-    pub id: usize,
-}
-impl druid::Data for DbIndex {
-    fn same(&self, _other: &Self) -> bool {
-        let self_status = match self.data.tab_statuses.get(&self.id) {
-            Some(status) => status,
-            None => return false,
-        };
-        let other_status = match _other.data.tab_statuses.get(&self.id) {
-            Some(status) => status,
-            None => return false,
-        };
-        Data::same(self_status, other_status)
-    }
-}
+// #[derive(Clone)]
+// pub struct DbIndex {
+//     pub data: AppData,
+//     pub id: usize,
+// }
+// impl druid::Data for DbIndex {
+//     fn same(&self, _other: &Self) -> bool {
+//         let self_status = match self.data.tab_statuses.get(&self.id) {
+//             Some(status) => status,
+//             None => return false,
+//         };
+//         let other_status = match _other.data.tab_statuses.get(&self.id) {
+//             Some(status) => status,
+//             None => return false,
+//         };
+//         Data::same(self_status, other_status)
+//     }
+// }
 
 pub struct Index(pub usize);
 
-impl druid::Lens<AppData, DbIndex> for Index {
-    fn with<V, F: FnOnce(&DbIndex) -> V>(&self, data: &AppData, f: F) -> V {
-        let db_index = DbIndex {
-            data: data.clone(),
-            id: self.0,
-        };
-        f(&db_index)
-    }
-    fn with_mut<V, F: FnOnce(&mut DbIndex) -> V>(&self, data: &mut AppData, f: F) -> V {
-        let mut db_index = DbIndex {
-            data: data.clone(),
-            id: self.0,
-        };
-        f(&mut db_index)
-    }
-}
+// impl druid::Lens<AppData, DbIndex> for Index {
+//     fn with<V, F: FnOnce(&DbIndex) -> V>(&self, data: &AppData, f: F) -> V {
+//         let db_index = DbIndex {
+//             data: data.clone(),
+//             id: self.0,
+//         };
+//         f(&db_index)
+//     }
+//     fn with_mut<V, F: FnOnce(&mut DbIndex) -> V>(&self, data: &mut AppData, f: F) -> V {
+//         let mut db_index = DbIndex {
+//             data: data.clone(),
+//             id: self.0,
+//         };
+//         f(&mut db_index)
+//     }
+// }
 
 pub struct BrokerStoredList;
 
