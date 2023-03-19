@@ -1,7 +1,8 @@
-use crate::data::common::{Broker, Protocol, SignedTy};
+use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis, SubscribeInput};
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
+use druid::im::{HashMap, Vector};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,6 +59,7 @@ pub struct BrokerDB {
     pub tls: bool,
     pub signed_ty: SignedTy,
     pub self_signed_ca: AString,
+    pub subscribe_hises: Vector<SubscribeHis>,
 }
 
 impl BrokerDB {
@@ -76,6 +78,7 @@ impl BrokerDB {
             tls,
             signed_ty: ca,
             self_signed_ca,
+            subscribe_hises,
         } = self;
         Broker {
             id,
@@ -94,6 +97,12 @@ impl BrokerDB {
             tls,
             signed_ty: ca,
             self_signed_ca,
+            subscribe_hises,
+            subscribe_topics: Default::default(),
+            msgs: Default::default(),
+            subscribe_input: SubscribeInput::init(id),
+            public_input: Default::default(),
+            unsubscribe_ing: Default::default(),
         }
     }
 }

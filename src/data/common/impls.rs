@@ -78,12 +78,22 @@ impl From<SubscribeMsg> for Msg {
     }
 }
 
-impl SubscribeInput {
-    pub fn init(broker_id: usize) -> Self {
+// impl Default for SubscribeInput {
+//     fn default() -> Self {
+//         Self {
+//             topic: Arc::new("".to_string()),
+//             qos: QoS::AtMostOnce,
+//             payload_ty: Default::default(),
+//         }
+//     }
+// }
+impl Default for PublicInput {
+    fn default() -> Self {
         Self {
-            broker_id,
             topic: Arc::new("".to_string()),
+            msg: Arc::new("".to_string()),
             qos: QoS::AtMostOnce,
+            retain: false,
             payload_ty: Default::default(),
         }
     }

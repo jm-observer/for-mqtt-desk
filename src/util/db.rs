@@ -3,7 +3,7 @@ use crossbeam_channel::Sender;
 use sled::{Config, Db};
 use std::sync::Arc;
 
-use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis};
+use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis, SubscribeInput};
 use crate::data::db::{BrokerDB, DbKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
@@ -31,52 +31,51 @@ impl ArcDb {
     }
 
     pub fn read_app_data(&mut self) -> Result<AppData> {
-        let (db_brokers, subscribe_hises) = if let Some(val) = self.db.remove(BROKERS)? {
+        let db_brokers = if let Some(val) = self.db.remove(BROKERS)? {
             let db_brokers_ids: Vector<usize> = serde_json::from_slice(&val)?;
             let mut brokers = Vector::new();
-            let mut subscribe_hises = HashMap::new();
             self.index = db_brokers_ids.len();
             for (index, id) in db_brokers_ids.into_iter().enumerate() {
                 if let Some(val) = self.db.remove(DbKey::broker_key(id).as_bytes()?)? {
-                    let mut broker: BrokerDB = serde_json::from_slice(&val)?;
-                    broker.id = index;
-                    let hises = if let Some(val) =
-                        self.db.remove(DbKey::subscribe_his_key(id).as_bytes()?)?
-                    {
-                        let mut hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
-                        hises = {
-                            let mut tmp = Vector::new();
-                            for mut his in hises {
-                                his.broker_id = index;
-                                tmp.push_back(his);
-                            }
-                            tmp
-                        };
-                        hises
-                    } else {
-                        Vector::new()
-                    };
-                    debug!("{:?} {:?}", broker, hises);
+                    let broker: BrokerDB = serde_json::from_slice(&val)?;
+                    // broker.id = index;
+                    // let hises = if let Some(val) =
+                    //     self.db.remove(DbKey::subscribe_his_key(id).as_bytes()?)?
+                    // {
+                    //     let mut hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
+                    //     hises = {
+                    //         let mut tmp = Vector::new();
+                    //         for mut his in hises {
+                    //             his.broker_id = index;
+                    //             tmp.push_back(his);
+                    //         }
+                    //         tmp
+                    //     };
+                    //     hises
+                    // } else {
+                    //     Vector::new()
+                    // };
+                    // debug!("{:?} {:?}", broker, hises);
                     brokers.push_back(broker);
-                    subscribe_hises.insert(index, hises);
+                    // subscribe_hises.insert(index, hises);
                     self.ids.push_back(index);
                 } else {
                     warn!("can't find id: {}", id);
                 };
             }
-            (brokers, subscribe_hises)
+            brokers
         } else {
-            (Vector::new(), HashMap::new())
+            Vector::new()
         };
         let mut brokers = Vector::new();
         {
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
-            for (index, his_tmp) in subscribe_hises.iter() {
-                self.db.insert(
-                    DbKey::subscribe_his_key(*index).as_bytes()?,
-                    serde_json::to_vec(&his_tmp)?,
-                )?;
-            }
+            // for (index, his_tmp) in subscribe_hises.iter() {
+            //     self.db.insert(
+            //         DbKey::subscribe_his_key(*index).as_bytes()?,
+            //         serde_json::to_vec(&his_tmp)?,
+            //     )?;
+            // }
 
             for tmp_broker in db_brokers.into_iter() {
                 self.db.insert(
@@ -90,15 +89,11 @@ impl ArcDb {
             brokers,
             broker_tabs: Default::default(),
             tab_statuses: Default::default(),
-            subscribe_hises,
-            subscribe_topics: Default::default(),
-            msgs: Default::default(),
-            subscribe_input: Default::default(),
-            public_input: Default::default(),
-            unsubscribe_ing: Default::default(),
             db: self.clone(),
             hint: "".to_string().into(),
             self_signed_file: None,
+            display_history: false,
+            display_broker_info: false,
         })
     }
 
@@ -122,6 +117,12 @@ impl ArcDb {
             tls: false,
             signed_ty: SignedTy::Ca,
             self_signed_ca: Arc::new("".to_string()),
+            subscribe_hises: Default::default(),
+            subscribe_topics: Default::default(),
+            msgs: Default::default(),
+            subscribe_input: SubscribeInput::init(id),
+            public_input: Default::default(),
+            unsubscribe_ing: Default::default(),
         }
     }
 
@@ -159,12 +160,12 @@ impl ArcDb {
         self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
         Ok(())
     }
-    pub fn update_subscribe_his(&self, id: usize, hises: &Vector<SubscribeHis>) -> Result<()> {
-        let key = DbKey::subscribe_his_key(id);
-        self.db
-            .insert(key.as_bytes()?, serde_json::to_vec(hises)?)?;
-        Ok(())
-    }
+    // pub fn update_subscribe_his(&self, id: usize, hises: &Vector<SubscribeHis>) -> Result<()> {
+    //     let key = DbKey::subscribe_his_key(id);
+    //     self.db
+    //         .insert(key.as_bytes()?, serde_json::to_vec(hises)?)?;
+    //     Ok(())
+    // }
 }
 
 const OPTION: &str = r#"{

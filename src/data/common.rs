@@ -1,16 +1,19 @@
 mod impls;
 
 use crate::data::db::BrokerDB;
+use crate::data::hierarchy::UnsubcribeTracing;
 use crate::data::{AString, AppEvent};
 use crate::util::consts::{TY_HEX, TY_JSON, TY_TEXT};
 use anyhow::bail;
 use bytes::{BufMut, Bytes, BytesMut};
 use crossbeam_channel::Sender;
+use druid::im::{HashMap, Vector};
 use druid::{Data, Lens};
 use log::{debug, error, warn};
 use pretty_hex::simple_hex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::ops::Sub;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -91,7 +94,7 @@ pub enum PublicStatus {
     Success,
 }
 
-#[derive(Debug, Data, Clone, Eq, PartialEq, Lens, Default)]
+#[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
 pub struct PublicInput {
     pub topic: AString,
     pub msg: AString,
@@ -111,10 +114,21 @@ pub struct SubscribeMsg {
 
 #[derive(Data, Debug, Clone, Eq, PartialEq, Lens)]
 pub struct SubscribeInput {
-    pub broker_id: usize,
+    pub(crate) broker_id: usize,
     pub(crate) topic: AString,
     pub(crate) qos: QoS,
     pub(crate) payload_ty: PayloadTy,
+}
+
+impl SubscribeInput {
+    pub fn init(broker_id: usize) -> Self {
+        Self {
+            broker_id,
+            topic: Arc::new("".to_string()),
+            qos: Default::default(),
+            payload_ty: Default::default(),
+        }
+    }
 }
 #[derive(Data, Debug, Clone, Eq, PartialEq)]
 pub enum SubscribeStatus {
@@ -167,6 +181,13 @@ pub struct Broker {
     pub tls: bool,
     pub signed_ty: SignedTy,
     pub self_signed_ca: AString,
+
+    pub subscribe_hises: Vector<SubscribeHis>,
+    pub subscribe_topics: Vector<SubscribeTopic>,
+    pub msgs: Vector<Msg>,
+    pub subscribe_input: SubscribeInput,
+    pub public_input: PublicInput,
+    pub unsubscribe_ing: Vector<UnsubcribeTracing>,
 }
 
 impl Broker {
@@ -185,6 +206,7 @@ impl Broker {
             tls: self.tls,
             signed_ty: self.signed_ty,
             self_signed_ca: self.self_signed_ca.clone(),
+            subscribe_hises: self.subscribe_hises.clone(),
         }
     }
 }

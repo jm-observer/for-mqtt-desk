@@ -12,7 +12,7 @@ use crate::mqtt::Client;
 use crate::ui::ids::{
     SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID,
 };
-use crate::util::consts::{GITHUB_ADDR, QosToString};
+use crate::util::consts::{QosToString, GITHUB_ADDR};
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
@@ -23,13 +23,13 @@ use bytes::Bytes;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
 use druid::piet::TextStorage;
+use druid::Application;
 use for_mqtt_client::SubscribeAck;
 use log::{debug, error, info, warn};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
 use std::time::Duration;
-use druid::Application;
 use tokio::time::sleep;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
@@ -159,7 +159,9 @@ async fn double_click(
     match ty {
         ClickTy::Broker(id) => {
             event_sink.add_idle_callback(move |data: &mut AppData| {
-                data.db_click_broker(id);
+                if let Err(e) = data.db_click_broker(id) {
+                    error!("{}", e.to_string());
+                }
             });
         }
         ClickTy::SubscribeTopic(broker_id, trace_id) => {
@@ -387,15 +389,21 @@ async fn receive_public(
 
 fn pub_ack(event_sink: &druid::ExtEventSink, id: usize, trace_id: u32) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.pub_ack(id, trace_id);
-        info!("{}", PUBLISH_SUCCESS);
+        if let Err(e) = data.pub_ack(id, trace_id) {
+            error!("{}", e.to_string());
+        } else {
+            info!("{}", PUBLISH_SUCCESS);
+        }
     });
 }
 
 fn sub_ack(event_sink: &druid::ExtEventSink, id: usize, ack: SubscribeAck) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.sub_ack(id, ack);
-        info!("{}", SUBSCRIBE_SUCCESS);
+        if let Err(e) = data.sub_ack(id, ack) {
+            error!("{}", e.to_string());
+        } else {
+            info!("{}", SUBSCRIBE_SUCCESS);
+        }
     });
 }
 fn select_tabs(event_sink: &druid::ExtEventSink, id: usize) {

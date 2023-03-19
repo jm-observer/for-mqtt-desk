@@ -39,7 +39,8 @@ impl Controller<AppData, Tabs<BrokersTabs>> for TabsControler {
         match event {
             Event::Command(cmd) => {
                 if let Some(index) = cmd.get(SELECTOR_TABS_SELECTED) {
-                    child.set_tab_index(*index);
+                    // child.set_tab_index(*index);
+                    child.set_tab_index(100);
                 } else if let Some(index) = cmd.get(SELECTOR_TABS_CLOSE) {
                     child.set_tab_index(*index);
                 }

@@ -7,7 +7,7 @@ use crate::data::AString;
 use crate::util::consts::QosToString;
 use druid::im::Vector;
 use druid::{Data, Lens};
-use log::debug;
+use log::{debug, error, warn};
 use std::sync::Arc;
 
 pub struct BrokerIndex(pub usize);
@@ -15,50 +15,50 @@ pub struct BrokerIndex(pub usize);
 impl druid::Lens<AppData, Broker> for BrokerIndex {
     fn with<V, F: FnOnce(&Broker) -> V>(&self, data: &AppData, f: F) -> V {
         f(match data.find_broker(self.0) {
-            Some(broker) => broker,
-            None => {
-                debug!("{}", self.0);
+            Ok(broker) => broker,
+            Err(e) => {
+                error!("{:?}", e);
                 unreachable!("{}", self.0)
             }
         })
     }
     fn with_mut<V, F: FnOnce(&mut Broker) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.brokers.iter_mut().find(|x| x.id == self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_mut_broker(self.0) {
+            Ok(broker) => broker,
+            Err(e) => {
+                error!("{:?}", e);
+                unreachable!("{}", self.0)
+            }
         })
     }
 }
-pub struct BrokerIndexLensVecSubscribeHis(pub usize);
-
-impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndexLensVecSubscribeHis {
-    fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.subscribe_hises.get(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
-    }
-    fn with_mut<V, F: FnOnce(&mut Vector<SubscribeHis>) -> V>(
-        &self,
-        data: &mut AppData,
-        f: F,
-    ) -> V {
-        f(match data.subscribe_hises.get_mut(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
-    }
-}
-
+// pub struct BrokerIndexLensVecSubscribeHis(pub usize);
+//
+// impl druid::Lens<AppData, Vector<SubscribeHis>> for BrokerIndexLensVecSubscribeHis {
+//     fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
+//         f(match data.subscribe_hises.get(&self.0) {
+//             Some(broker) => broker,
+//             None => unreachable!(""),
+//         })
+//     }
+//     fn with_mut<V, F: FnOnce(&mut Vector<SubscribeHis>) -> V>(
+//         &self,
+//         data: &mut AppData,
+//         f: F,
+//     ) -> V {
+//         f(match data.subscribe_hises.get_mut(&self.0) {
+//             Some(broker) => broker,
+//             None => unreachable!(""),
+//         })
+//     }
+// }
+//
 pub struct LensSelectedSubscribeHis;
 
 impl druid::Lens<AppData, Vector<SubscribeHis>> for LensSelectedSubscribeHis {
     fn with<V, F: FnOnce(&Vector<SubscribeHis>) -> V>(&self, data: &AppData, f: F) -> V {
         if let Some(broker) = data.get_selected_broker() {
-            f(match data.subscribe_hises.get(&broker.id) {
-                Some(broker) => broker,
-                None => unreachable!(""),
-            })
+            f(&broker.subscribe_hises)
         } else {
             let datas = Vector::new();
             f(&datas)
@@ -69,26 +69,22 @@ impl druid::Lens<AppData, Vector<SubscribeHis>> for LensSelectedSubscribeHis {
         data: &mut AppData,
         f: F,
     ) -> V {
-        let id = match data.get_selected_broker() {
-            Some(broker) => broker.id,
-            None => {
-                let mut datas = Vector::new();
-                return f(&mut datas);
-            }
-        };
-        f(match data.subscribe_hises.get_mut(&id) {
-            Some(broker) => broker,
-            None => unreachable!(""),
-        })
+        if let Some(broker) = data.get_selected_mut_broker() {
+            f(&mut broker.subscribe_hises)
+        } else {
+            error!("unreached");
+            let mut datas = Vector::new();
+            f(&mut datas)
+        }
     }
 }
 pub struct BrokerIndexLensVecSubscribeTopic(pub usize);
 
 impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndexLensVecSubscribeTopic {
     fn with<V, F: FnOnce(&Vector<SubscribeTopic>) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.subscribe_topics.get(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_broker(self.0) {
+            Ok(broker) => &broker.subscribe_topics,
+            Err(e) => unreachable!(""),
         })
     }
     fn with_mut<V, F: FnOnce(&mut Vector<SubscribeTopic>) -> V>(
@@ -96,9 +92,9 @@ impl druid::Lens<AppData, Vector<SubscribeTopic>> for BrokerIndexLensVecSubscrib
         data: &mut AppData,
         f: F,
     ) -> V {
-        f(match data.subscribe_topics.get_mut(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_mut_broker(self.0) {
+            Ok(broker) => &mut broker.subscribe_topics,
+            Err(e) => unreachable!(""),
         })
     }
 }
@@ -106,25 +102,31 @@ pub struct BrokerIndexLensVecMsg(pub usize);
 
 impl druid::Lens<AppData, Vector<Msg>> for BrokerIndexLensVecMsg {
     fn with<V, F: FnOnce(&Vector<Msg>) -> V>(&self, data: &AppData, f: F) -> V {
-        f(data.msgs_ref(self.0))
+        f(match data.find_broker(self.0) {
+            Ok(broker) => &broker.msgs,
+            Err(e) => unreachable!(""),
+        })
     }
     fn with_mut<V, F: FnOnce(&mut Vector<Msg>) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(data.msgs_ref_mut(self.0))
+        f(match data.find_mut_broker(self.0) {
+            Ok(broker) => &mut broker.msgs,
+            Err(e) => unreachable!(""),
+        })
     }
 }
 pub struct BrokerIndexLensSubscribeInput(pub usize);
 
 impl druid::Lens<AppData, SubscribeInput> for BrokerIndexLensSubscribeInput {
     fn with<V, F: FnOnce(&SubscribeInput) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.subscribe_input.get(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_broker(self.0) {
+            Ok(broker) => &broker.subscribe_input,
+            Err(e) => unreachable!(""),
         })
     }
     fn with_mut<V, F: FnOnce(&mut SubscribeInput) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.subscribe_input.get_mut(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_mut_broker(self.0) {
+            Ok(broker) => &mut broker.subscribe_input,
+            Err(e) => unreachable!(""),
         })
     }
 }
@@ -133,15 +135,15 @@ pub struct BrokerIndexLensPublicInput(pub usize);
 
 impl druid::Lens<AppData, PublicInput> for BrokerIndexLensPublicInput {
     fn with<V, F: FnOnce(&PublicInput) -> V>(&self, data: &AppData, f: F) -> V {
-        f(match data.public_input.get(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_broker(self.0) {
+            Ok(broker) => &broker.public_input,
+            Err(e) => unreachable!(""),
         })
     }
     fn with_mut<V, F: FnOnce(&mut PublicInput) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(match data.public_input.get_mut(&self.0) {
-            Some(broker) => broker,
-            None => unreachable!(""),
+        f(match data.find_mut_broker(self.0) {
+            Ok(broker) => &mut broker.public_input,
+            Err(e) => unreachable!(""),
         })
     }
 }

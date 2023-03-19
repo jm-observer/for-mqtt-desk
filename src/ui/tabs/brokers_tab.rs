@@ -1,5 +1,6 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
+use crate::ui::connection::display_connection;
 use crate::ui::tabs::broker_tab::BrokerTabPolicy;
 use crossbeam_channel::Sender;
 use druid::widget::{Axis, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
@@ -45,10 +46,12 @@ impl TabsPolicy for BrokersTabs {
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
         debug!("tab_body");
-        Tabs::for_policy(BrokerTabPolicy(_key, self.0.clone()))
-            .with_axis(Axis::Horizontal)
-            .with_edge(TabsEdge::Leading)
-            .with_transition(TabsTransition::Instant)
+        display_connection(_key, self.0.clone())
+        //
+        // Tabs::for_policy(BrokerTabPolicy(_key, self.0.clone()))
+        //     .with_axis(Axis::Horizontal)
+        //     .with_edge(TabsEdge::Leading)
+        //     .with_transition(TabsTransition::Instant)
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {

@@ -285,8 +285,8 @@ fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
             Flex::row().with_child(
                 Button::new(LocalizedString::new("Subscribe"))
                     .on_click(move |ctx, data: &mut DbIndex, _env| {
-                        if let Some(input) = data.data.subscribe_input.get(&data.id) {
-                            if input.topic.is_empty() {
+                        if let Some(input) = data.data.brokers.get(data.id) {
+                            if input.subscribe_input.topic.is_empty() {
                                 warn!("topic is empty");
                                 ctx.submit_command(
                                     SHOW_ERROR
@@ -300,7 +300,7 @@ fn init_subscribe_input(id: usize) -> impl Widget<AppData> {
                                 .data
                                 .db
                                 .tx
-                                .send(AppEvent::Subscribe(input.clone(), data.id))
+                                .send(AppEvent::Subscribe(input.subscribe_input.clone(), data.id))
                             {
                                 error!("{:?}", e);
                             }
@@ -386,10 +386,12 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
             Flex::row().with_child(
                 Button::new(LocalizedString::new("Publish"))
                     .on_click(move |ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.public_input.get(&data.id) {
-                            if broker.topic.is_empty() || broker.msg.is_empty() {
+                        if let Some(broker) = data.data.brokers.get(data.id) {
+                            if broker.public_input.topic.is_empty()
+                                || broker.public_input.msg.is_empty()
+                            {
                                 warn!("topic or msg is empty");
-                                if broker.topic.is_empty() {
+                                if broker.public_input.topic.is_empty() {
                                     ctx.submit_command(
                                         SHOW_ERROR
                                             .with(ValidationError::new(ForError::NotEmpty))
@@ -398,7 +400,7 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                                 } else {
                                     ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
                                 }
-                                if broker.msg.is_empty() {
+                                if broker.public_input.msg.is_empty() {
                                     ctx.submit_command(
                                         SHOW_ERROR
                                             .with(ValidationError::new(ForError::NotEmpty))
@@ -415,7 +417,7 @@ fn init_public_input(id: usize) -> impl Widget<AppData> {
                                 .data
                                 .db
                                 .tx
-                                .send(AppEvent::Public(broker.clone(), data.id))
+                                .send(AppEvent::Public(broker.public_input.clone(), data.id))
                             {
                                 error!("{:?}", e);
                             }
