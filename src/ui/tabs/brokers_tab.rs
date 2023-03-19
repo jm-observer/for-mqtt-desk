@@ -1,4 +1,6 @@
+use crate::data::common::Broker;
 use crate::data::hierarchy::AppData;
+use crate::data::lens::BrokerId;
 use crate::data::AppEvent;
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
@@ -45,7 +47,7 @@ impl TabsPolicy for BrokersTabs {
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
         debug!("tab_body");
-        display_connection(self.0.clone())
+        display_connection(self.0.clone()).lens(BrokerId(_key))
         //
         // Tabs::for_policy(BrokerTabPolicy(_key, self.0.clone()))
         //     .with_axis(Axis::Horizontal)

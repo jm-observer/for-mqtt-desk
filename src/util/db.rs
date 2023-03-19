@@ -3,7 +3,9 @@ use crossbeam_channel::Sender;
 use sled::{Config, Db};
 use std::sync::Arc;
 
-use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis, SubscribeInput, TabStatus};
+use crate::data::common::{
+    Broker, Protocol, PublicInput, SignedTy, SubscribeHis, SubscribeInput, TabStatus,
+};
 use crate::data::db::{BrokerDB, DbKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
@@ -120,7 +122,7 @@ impl ArcDb {
             subscribe_topics: Default::default(),
             msgs: Default::default(),
             subscribe_input: SubscribeInput::init(id),
-            public_input: Default::default(),
+            public_input: PublicInput::default(id),
             unsubscribe_ing: Default::default(),
             tab_status: TabStatus {
                 id,
@@ -130,15 +132,16 @@ impl ArcDb {
         }
     }
 
-    pub fn save_broker(&mut self, id: usize, broker: &Broker) -> Result<()> {
+    pub fn save_broker(&mut self, broker: BrokerDB) -> Result<()> {
         debug!("save broker: {:?}", broker);
+        let id = broker.id;
         if self.ids.iter().find(|x| **x == id).is_none() {
             self.ids.push_back(id);
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
         }
         self.db.insert(
             DbKey::broker_key(id).as_bytes()?,
-            serde_json::to_vec(&broker.clone_to_db())?,
+            serde_json::to_vec(&broker)?,
         )?;
         Ok(())
     }

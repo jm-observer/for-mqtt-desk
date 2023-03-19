@@ -2,7 +2,7 @@ use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Protocol, SubscribeHis};
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
-    BrokerIndex, BrokerSelected, BrokerStoredList, LensSubscribeHisQoS, SubscribeHisPayloadLens,
+    BrokerSelectedOrZero, BrokerStoredList, LensSubscribeHisQoS, SubscribeHisPayloadLens,
 };
 use crate::data::AppEvent;
 use crate::ui::auto_scroll::AutoScrollController;
@@ -32,7 +32,7 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Container::new(init_connect(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-            Container::new(init_subscribe_his_list(tx.clone()).lens(BrokerSelected))
+            Container::new(init_subscribe_his_list(tx.clone()).lens(BrokerSelectedOrZero))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )

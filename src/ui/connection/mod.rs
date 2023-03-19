@@ -3,8 +3,8 @@ use crate::data::common::{Broker, Msg, PublicInput, QoS, SubscribeInput, Subscri
 use crate::data::hierarchy::AppData;
 use crate::data::lens::{
     BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
-    BrokerIndexLensVecSubscribeTopic, DbIndex, Index, MsgMsgLens, MsgPayloadTyLens, MsgQosLens,
-    MsgTimeLens, MsgTopicLens, SubscribeTopicPayloadLens,
+    BrokerIndexLensVecSubscribeTopic, Index, MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens,
+    MsgTopicLens, SubscribeTopicPayloadLens,
 };
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
@@ -44,7 +44,7 @@ pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
     .padding(0.5);
     let subscribe = Container::new(
-        Split::rows(subscribe_list, init_subscribe_input())
+        Split::rows(subscribe_list, init_subscribe_input(tx.clone()))
             .split_point(0.65)
             .bar_size(1.0),
     )
@@ -55,7 +55,7 @@ pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     let msg = Container::new(
         Split::rows(
             Align::centered(init_msgs_list(tx.clone())),
-            Align::centered(init_public_input()),
+            Align::centered(init_public_input(tx.clone())),
         )
         .split_point(0.65)
         .bar_size(1.0),
@@ -243,88 +243,8 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
 }
 
 //
-fn init_subscribe_input() -> impl Widget<Broker> {
-    let connection =
-        Flex::column()
-            .with_child(
-                Flex::row()
-                    .with_child(label_static("topic", UnitPoint::RIGHT))
-                    .with_child(
-                        TextBox::new()
-                            // .with_formatter(MustInput)
-                            // .update_data_while_editing(true)
-                            // .validate_while_editing(false)
-                            // .delegate(
-                            //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
-                            //         .sends_partial_errors(true),
-                            // )
-                            .lens(Broker::subscribe_input.then(SubscribeInput::topic))
-                            .fix_width(150.),
-                    )
-                    .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
-                    .align_left(),
-            )
-            .with_child(
-                Flex::row()
-                    .with_child(label_static("QoS", UnitPoint::RIGHT))
-                    .with_child(
-                        down_select_qos()
-                            .lens(Broker::subscribe_input.then(SubscribeInput::qos))
-                            .fix_width(150.),
-                    )
-                    .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
-                    .align_left(),
-            )
-            .with_child(
-                Flex::row()
-                    .with_child(label_static("Byte Type", UnitPoint::RIGHT))
-                    .with_child(
-                        down_select_payload_ty()
-                            .lens(Broker::subscribe_input.then(SubscribeInput::payload_ty)),
-                    )
-                    // .with_child(error_display_widget(ID_PUBLISH_QOS))
-                    .align_left(),
-            )
-            .with_child(
-                Flex::row().with_child(
-                    Button::new(LocalizedString::new("Subscribe"))
-                        .on_click(move |ctx, data: &mut DbIndex, _env| {
-                            if let Some(input) = data.data.brokers.get(data.id) {
-                                if input.subscribe_input.topic.is_empty() {
-                                    warn!("topic is empty");
-                                    ctx.submit_command(
-                                        SHOW_ERROR
-                                            .with(ValidationError::new(ForError::NotEmpty))
-                                            .to(ID_SUBSCRIBE_TOPIC),
-                                    );
-                                    return;
-                                }
-                                ctx.submit_command(CLEAR_ERROR.to(ID_SUBSCRIBE_TOPIC));
-                                if let Err(e) = data.data.db.tx.send(AppEvent::Subscribe(
-                                    input.subscribe_input.clone(),
-                                    data.id,
-                                )) {
-                                    error!("{:?}", e);
-                                }
-                            } else {
-                                error!("can't get the broker");
-                            }
-                        })
-                        .disabled_if(|data: &DbIndex, _env| {
-                            if let Some(broker) = data.tab_statuses.get(&data.id) {
-                                !broker.connected
-                            } else {
-                                true
-                            }
-                        })
-                        .padding(BUTTON_PADDING)
-                        .lens(Index(id)),
-                ),
-            );
-    connection
-}
-
-fn init_public_input() -> impl Widget<Broker> {
+fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
+    let subscribe_tx = tx.clone();
     let connection = Flex::column()
         .with_child(
             Flex::row()
@@ -335,9 +255,71 @@ fn init_public_input() -> impl Widget<Broker> {
                         // .update_data_while_editing(true)
                         // .validate_while_editing(false)
                         // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_PUBLISH_TOPIC, check_no_empty)
+                        //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
                         //         .sends_partial_errors(true),
                         // )
+                        .lens(Broker::subscribe_input.then(SubscribeInput::topic))
+                        .fix_width(150.),
+                )
+                .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("QoS", UnitPoint::RIGHT))
+                .with_child(
+                    down_select_qos()
+                        .lens(Broker::subscribe_input.then(SubscribeInput::qos))
+                        .fix_width(150.),
+                )
+                .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("Byte Type", UnitPoint::RIGHT))
+                .with_child(
+                    down_select_payload_ty()
+                        .lens(Broker::subscribe_input.then(SubscribeInput::payload_ty)),
+                )
+                // .with_child(error_display_widget(ID_PUBLISH_QOS))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row().with_child(
+                Button::new(LocalizedString::new("Subscribe"))
+                    .on_click(move |ctx, data: &mut Broker, _env| {
+                        if data.subscribe_input.topic.is_empty() {
+                            warn!("topic is empty");
+                            ctx.submit_command(
+                                SHOW_ERROR
+                                    .with(ValidationError::new(ForError::NotEmpty))
+                                    .to(ID_SUBSCRIBE_TOPIC),
+                            );
+                            return;
+                        }
+                        ctx.submit_command(CLEAR_ERROR.to(ID_SUBSCRIBE_TOPIC));
+                        if let Err(e) = subscribe_tx
+                            .send(AppEvent::Subscribe(data.subscribe_input.clone(), data.id))
+                        {
+                            error!("{:?}", e);
+                        }
+                    })
+                    .disabled_if(|data: &Broker, _env| !data.tab_status.connected)
+                    .padding(BUTTON_PADDING),
+            ),
+        );
+    connection
+}
+
+fn init_public_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
+    let public_tx = tx.clone();
+    let connection = Flex::column()
+        .with_child(
+            Flex::row()
+                .with_child(label_static("topic", UnitPoint::RIGHT))
+                .with_child(
+                    TextBox::new()
                         .lens(Broker::public_input.then(PublicInput::topic))
                         .fix_width(300.),
                 )
@@ -370,13 +352,6 @@ fn init_public_input() -> impl Widget<Broker> {
                 .with_child(label_static("msg", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::multiline()
-                        // .with_formatter(MustInput)
-                        // .update_data_while_editing(true)
-                        // .validate_while_editing(true)
-                        // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_PUBLISH_MSG, check_no_empty)
-                        //         .sends_partial_errors(true),
-                        // )
                         .fix_height(60.)
                         .fix_width(300.)
                         .lens(Broker::public_input.then(PublicInput::msg)),
@@ -387,55 +362,41 @@ fn init_public_input() -> impl Widget<Broker> {
         .with_child(
             Flex::row().with_child(
                 Button::new(LocalizedString::new("Publish"))
-                    .on_click(move |ctx, data: &mut DbIndex, _env| {
-                        if let Some(broker) = data.data.brokers.get(data.id) {
-                            if broker.public_input.topic.is_empty()
-                                || broker.public_input.msg.is_empty()
-                            {
-                                warn!("topic or msg is empty");
-                                if broker.public_input.topic.is_empty() {
-                                    ctx.submit_command(
-                                        SHOW_ERROR
-                                            .with(ValidationError::new(ForError::NotEmpty))
-                                            .to(ID_PUBLISH_TOPIC),
-                                    );
-                                } else {
-                                    ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
-                                }
-                                if broker.public_input.msg.is_empty() {
-                                    ctx.submit_command(
-                                        SHOW_ERROR
-                                            .with(ValidationError::new(ForError::NotEmpty))
-                                            .to(ID_PUBLISH_MSG),
-                                    );
-                                } else {
-                                    ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
-                                }
-                                return;
+                    .on_click(move |ctx, broker: &mut Broker, _env| {
+                        if broker.public_input.topic.is_empty()
+                            || broker.public_input.msg.is_empty()
+                        {
+                            warn!("topic or msg is empty");
+                            if broker.public_input.topic.is_empty() {
+                                ctx.submit_command(
+                                    SHOW_ERROR
+                                        .with(ValidationError::new(ForError::NotEmpty))
+                                        .to(ID_PUBLISH_TOPIC),
+                                );
+                            } else {
+                                ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
                             }
-                            ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
-                            ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
-                            if let Err(e) = data
-                                .data
-                                .db
-                                .tx
-                                .send(AppEvent::Public(broker.public_input.clone(), data.id))
-                            {
-                                error!("{:?}", e);
+                            if broker.public_input.msg.is_empty() {
+                                ctx.submit_command(
+                                    SHOW_ERROR
+                                        .with(ValidationError::new(ForError::NotEmpty))
+                                        .to(ID_PUBLISH_MSG),
+                                );
+                            } else {
+                                ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
                             }
-                        } else {
-                            error!("can't get the broker");
+                            return;
+                        }
+                        ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
+                        ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
+                        if let Err(e) =
+                            public_tx.send(AppEvent::Public(broker.public_input.clone()))
+                        {
+                            error!("{:?}", e);
                         }
                     })
-                    .disabled_if(|data: &DbIndex, _env| {
-                        if let Some(broker) = data.data.tab_statuses.get(&data.id) {
-                            !broker.connected
-                        } else {
-                            true
-                        }
-                    })
-                    .padding(BUTTON_PADDING)
-                    .lens(Index(id)),
+                    .disabled_if(|broker: &Broker, _env| !broker.tab_status.connected)
+                    .padding(BUTTON_PADDING),
             ),
         );
     connection

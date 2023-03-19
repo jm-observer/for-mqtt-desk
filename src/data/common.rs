@@ -97,6 +97,7 @@ pub enum PublicStatus {
 
 #[derive(Debug, Data, Clone, Eq, PartialEq, Lens)]
 pub struct PublicInput {
+    pub broker_id: usize,
     pub topic: AString,
     pub msg: AString,
     pub qos: QoS,

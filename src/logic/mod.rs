@@ -68,8 +68,8 @@ pub async fn deal_event(
             AppEvent::SubscribeFromHis(his) => {
                 subscribe_from_his(&event_sink, &mqtt_clients, his).await
             }
-            AppEvent::Public(input, index) => {
-                if let Err(e) = publish(&event_sink, &mqtt_clients, index, input).await {
+            AppEvent::Public(input) => {
+                if let Err(e) = publish(&event_sink, &mqtt_clients, input.broker_id, input).await {
                     error!("{:?}", e);
                 }
             }
@@ -510,7 +510,9 @@ async fn close_connection_tab(
         error!("can't find client");
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.close_connection(id);
+        if let Err(e) = data.close_connection(id) {
+            error!("{}", e.to_string());
+        }
     });
     Ok(())
 }

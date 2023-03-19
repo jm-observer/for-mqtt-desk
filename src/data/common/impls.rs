@@ -89,9 +89,10 @@ impl From<SubscribeMsg> for Msg {
 //         }
 //     }
 // }
-impl Default for PublicInput {
-    fn default() -> Self {
+impl PublicInput {
+    pub(crate) fn default(broker_id: usize) -> Self {
         Self {
+            broker_id,
             topic: Arc::new("".to_string()),
             msg: Arc::new("".to_string()),
             qos: QoS::AtMostOnce,

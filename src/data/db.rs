@@ -1,4 +1,6 @@
-use crate::data::common::{Broker, Protocol, SignedTy, SubscribeHis, SubscribeInput, TabStatus};
+use crate::data::common::{
+    Broker, Protocol, PublicInput, SignedTy, SubscribeHis, SubscribeInput, TabStatus,
+};
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
@@ -101,7 +103,7 @@ impl BrokerDB {
             subscribe_topics: Default::default(),
             msgs: Default::default(),
             subscribe_input: SubscribeInput::init(id),
-            public_input: Default::default(),
+            public_input: PublicInput::default(id),
             unsubscribe_ing: Default::default(),
             tab_status: TabStatus {
                 id,

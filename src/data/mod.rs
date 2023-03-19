@@ -34,7 +34,7 @@ pub enum AppEvent {
     UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
-    Public(PublicInput, usize),
+    Public(PublicInput),
     ReceivePublic(usize, Arc<String>, Arc<Bytes>, QoS),
     PubAck(usize, u32),
     SubAck(usize, SubscribeAck),

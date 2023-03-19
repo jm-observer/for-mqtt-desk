@@ -70,23 +70,24 @@ impl AppData {
         self.brokers.push_back(broker);
     }
     fn init_broker_tab(&mut self, id: usize) -> bool {
-        let mut is_exist = false;
-        if self.broker_tabs.iter().find(|x| **x == id).is_none() {
-            self.broker_tabs.push_front(id);
-        } else {
-            is_exist = true;
-        }
-        if self.tab_statuses.get(&id).is_none() {
-            self.tab_statuses.insert(
-                id,
-                TabStatus {
-                    id: id,
-                    try_connect: false,
-                    connected: false,
-                },
-            );
-        }
-        is_exist
+        todo!()
+        // let mut is_exist = false;
+        // if self.broker_tabs.iter().find(|x| **x == id).is_none() {
+        //     self.broker_tabs.push_front(id);
+        // } else {
+        //     is_exist = true;
+        // }
+        // if self.tab_statuses.get(&id).is_none() {
+        //     self.tab_statuses.insert(
+        //         id,
+        //         TabStatus {
+        //             id: id,
+        //             try_connect: false,
+        //             connected: false,
+        //         },
+        //     );
+        // }
+        // is_exist
     }
     pub fn get_selected_subscribe_his(&self) -> Result<SubscribeHis> {
         let broker = self.get_selected_broker()?;
@@ -114,46 +115,54 @@ impl AppData {
             .find(|x| x.selected)
             .ok_or(anyhow!("could not find broker selected"))
     }
-    pub fn get_selected_broker_or_zero(&self) -> Result<&Broker> {
-        if let Some(broker) = self.brokers.iter().find(|x| x.selected) {
-            return Ok(broker);
-        } else if let Some(broker) = self.brokers.get(0) {
-            return Ok(broker);
-        } else {
-            bail!("could not find broker selected or default")
-        }
-    }
+
     pub fn get_selected_mut_broker(&mut self) -> Result<&mut Broker> {
         self.brokers
             .iter_mut()
             .find(|x| x.selected)
-            .ok_or(anyhow!("could not find broker  selected"))
+            .ok_or(anyhow!("could not find broker selected"))
     }
-    pub fn get_mut_selected_broker_or_zero(&mut self) -> Result<&mut Broker> {
+    pub fn get_mut_selected_broker_or_zero(&mut self) -> &mut Broker {
         let index = match self.get_selected_broker_index() {
             None => 0,
             Some(index) => index,
         };
-        self.brokers
-            .get_mut(0)
-            .ok_or(anyhow!("could not find broker  selected"))
+        self.brokers.get_mut(0).unwrap()
     }
-    pub fn find_broker(&self, id: usize) -> Result<&Broker> {
+    pub fn get_selected_broker_or_zero(&self) -> &Broker {
+        if let Some(broker) = self.brokers.iter().find(|x| x.selected) {
+            broker
+        } else {
+            self.brokers.get(0).unwrap()
+        }
+    }
+
+    pub fn find_broker_by_id(&self, id: usize) -> Result<&Broker> {
         self.brokers
             .iter()
             .find(|x| (*x).id == id)
             .ok_or(anyhow!("could not find broker:{}", id))
     }
-    pub fn find_mut_broker(&mut self, id: usize) -> Result<&mut Broker> {
+    pub fn find_mut_broker_by_id(&mut self, id: usize) -> Result<&mut Broker> {
         self.brokers
             .iter_mut()
             .find(|x| (*x).id == id)
             .ok_or(anyhow!("could not find broker:{}", id))
     }
+    pub fn find_broker_by_index(&self, id: usize) -> Result<&Broker> {
+        self.brokers
+            .get(id)
+            .ok_or(anyhow!("could not find broker:{}", id))
+    }
+    pub fn find_mut_broker_by_index(&mut self, id: usize) -> Result<&mut Broker> {
+        self.brokers
+            .get_mut(id)
+            .ok_or(anyhow!("could not find broker:{}", id))
+    }
     pub fn save_broker(&mut self, id: usize) -> Result<()> {
         if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
             broker.stored = true;
-            self.db.save_broker(id, broker)?;
+            self.db.save_broker(broker.clone_to_db())?;
         }
         Ok(())
     }
@@ -167,13 +176,18 @@ impl AppData {
         Ok(())
     }
     pub fn init_connection(&mut self, id: usize) -> Result<()> {
-        if let Some(status) = self.tab_statuses.get_mut(&id) {
-            status.try_connect = true;
-        }
-        if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
-            broker.stored = true;
-            self.db.save_broker(id, broker)?;
-        }
+        let broker = self.find_mut_broker_by_id(id)?;
+        broker.tab_status.try_connect = true;
+        broker.stored = true;
+        let broker = broker.clone_to_db();
+        self.db.save_broker(broker)?;
+        // if let Some(status) = self.tab_statuses.get_mut(&id) {
+        //     status.try_connect = true;
+        // }
+        // if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
+        //     broker.stored = true;
+        //     self.db.save_broker(id, broker)?;
+        // }
         // if self.subscribe_hises.get_mut(&id).is_none() {
         //     self.subscribe_hises.insert(id, Vector::new());
         // }
@@ -184,28 +198,22 @@ impl AppData {
         Ok(())
     }
     pub fn connected(&mut self, id: usize) -> Result<()> {
-        if let Some(status) = self.tab_statuses.get_mut(&id) {
-            status.try_connect = false;
-            status.connected = true;
-        }
+        let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
+        status.try_connect = false;
+        status.connected = true;
         Ok(())
     }
     pub fn disconnect(&mut self, id: usize) -> Result<()> {
-        if let Some(status) = self.tab_statuses.get_mut(&id) {
-            status.try_connect = false;
-            status.connected = false;
-        } else {
-            debug!("not find the connection")
-        }
+        let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
+        status.try_connect = false;
+        status.connected = false;
         Ok(())
     }
-    pub fn close_connection(&mut self, id: usize) {
-        if let Some(status) = self.tab_statuses.get_mut(&id) {
-            status.try_connect = false;
-            status.connected = false;
-        } else {
-            error!("can't find the connection");
-        }
+    pub fn close_connection(&mut self, id: usize) -> Result<()> {
+        let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
+        status.try_connect = false;
+        status.connected = false;
+        Ok(())
     }
     pub fn unsubscribe(
         &mut self,
@@ -213,7 +221,7 @@ impl AppData {
         subscribe_pkid: u32,
         unsubscribe_pkid: u32,
     ) -> Result<()> {
-        let _broker = self.find_mut_broker(broker_id)?;
+        let _broker = self.find_mut_broker_by_id(broker_id)?;
         _broker.unsubscribe_ing.push_back(UnsubcribeTracing {
             subscribe_pk_id: subscribe_pkid,
             unsubscribe_pk_id: unsubscribe_pkid,
@@ -222,7 +230,7 @@ impl AppData {
     }
 
     pub fn unsubscribe_ack(&mut self, broker_id: usize, unsubscribe_trace_id: u32) -> Result<()> {
-        let _broker = self.find_mut_broker(broker_id)?;
+        let _broker = self.find_mut_broker_by_id(broker_id)?;
         if let Some(index) = _broker
             .unsubscribe_ing
             .iter()
@@ -248,7 +256,7 @@ impl AppData {
         }
     }
     pub fn to_unscribe(&mut self, broker_id: usize, trace_id: u32) -> Result<()> {
-        let _broker = self.find_mut_broker(broker_id)?;
+        let _broker = self.find_mut_broker_by_id(broker_id)?;
         if let Some(index) = _broker
             .subscribe_topics
             .iter_mut()
@@ -268,7 +276,7 @@ impl AppData {
     }
 
     fn subscribe(&mut self, id: usize, sub: SubscribeTopic) -> Result<()> {
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         if broker
             .subscribe_topics
             .iter()
@@ -304,7 +312,7 @@ impl AppData {
         trace_id: u32,
     ) -> Result<()> {
         self.subscribe(id, SubscribeTopic::from(input.clone(), trace_id))?;
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         let his: SubscribeHis = input.into();
         if broker.subscribe_hises.iter().find(|x| *x == &his).is_none() {
             broker.subscribe_hises.push_back(his.into());
@@ -315,7 +323,7 @@ impl AppData {
         let Some(id) = self.get_selected_broker_id() else {
             bail!(DELETE_SUBSCRIBE_NO_SELECTED);
         };
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         if let Some(index) = broker
             .subscribe_hises
             .iter()
@@ -329,7 +337,7 @@ impl AppData {
         bail!(DELETE_SUBSCRIBE_NO_SELECTED);
     }
     pub fn sub_ack(&mut self, id: usize, input: SubscribeAck) -> Result<()> {
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         let SubscribeAck { id, mut acks } = input;
         if let Some(ack) = acks.pop() {
             if let Some(subscribe_topic) = broker
@@ -365,7 +373,7 @@ impl AppData {
     }
     pub fn publish(&mut self, id: usize, input: PublicMsg, trace_id: u32) -> Result<()> {
         debug!("publish: tarce_id {}", trace_id);
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         broker.msgs.push_back(input.into());
         if broker.msgs.len() > 50 {
             broker.msgs.pop_front();
@@ -405,7 +413,7 @@ impl AppData {
         if self.init_broker_tab(id) {
             self.db.tx.send(AppEvent::ReConnect(id))?;
         } else {
-            let broker = self.find_broker(id)?;
+            let broker = self.find_broker_by_id(id)?;
             self.db.tx.send(AppEvent::Connect(broker.clone()))?;
         }
         Ok(())
@@ -438,7 +446,6 @@ impl AppData {
                 self.broker_tabs.remove(index);
                 debug!("close_tab：{} {}", index, self.broker_tabs.len());
             }
-            self.tab_statuses.remove(&broker.id);
             self.db.delete_broker(broker.id)?;
             self.db.tx.send(AppEvent::Disconnect(index))?;
             // self.db.tx.send(AppEvent::CloseBrokerTab(index))?;
@@ -456,7 +463,7 @@ impl AppData {
             warn!("could not get selected broker");
             return Ok(())
         };
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         broker.subscribe_hises.iter_mut().for_each(|x| {
             if x == &his {
                 x.selected = true;
@@ -477,7 +484,6 @@ impl AppData {
                 broker.id == id && broker.stored == false
             }) {
                 self.brokers.remove(index);
-                self.tab_statuses.remove(&id);
             }
             if self.db.tx.send(AppEvent::Disconnect(id)).is_err() {
                 error!("fail to send event");
@@ -487,7 +493,7 @@ impl AppData {
     }
     pub fn pub_ack(&mut self, id: usize, trace_id: u32) -> Result<()> {
         debug!("pub_ack: tarce_id {}", trace_id);
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         let mut is_ack = false;
         for msg in broker.msgs.iter_mut() {
             if let Msg::Public(msg) = msg {
@@ -509,7 +515,7 @@ impl AppData {
         payload: Arc<Bytes>,
         qos: QoS,
     ) -> Result<()> {
-        let broker = self.find_mut_broker(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
         let payload_ty =
             if let Some(subscribe) = broker.subscribe_topics.iter().find(|x| x.topic == topic) {
                 subscribe.payload_ty.clone()
@@ -532,7 +538,7 @@ impl AppData {
         Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
     pub fn clear_msg(&mut self, id: usize) -> Result<()> {
-        let broker = self.find_mut_broker(id)?.msgs.clear();
+        let broker = self.find_mut_broker_by_id(id)?.msgs.clear();
         Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
 
