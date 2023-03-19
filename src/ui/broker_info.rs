@@ -10,6 +10,7 @@ use crate::ui::ids::{
     SELF_SIGNED_FILE,
 };
 use crate::util::general_id;
+use crossbeam_channel::Sender;
 use druid::widget::{Button, Container, Either, Flex, Label, Painter, RadioGroup, Switch, TextBox};
 use druid::{
     Color, Data, Env, FileDialogOptions, FileSpec, LensExt, RenderContext, UnitPoint, Widget,
@@ -17,7 +18,14 @@ use druid::{
 use druid::{LocalizedString, WidgetExt};
 use log::{debug, error};
 
-pub fn display_broker(id: usize) -> Container<Broker> {
+pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
+    let save_tx_0 = tx.clone();
+    let save_tx_1 = tx.clone();
+    let connect_tx_1 = tx.clone();
+    let disconnect_tx_1 = tx.clone();
+    let save_tx_1 = tx.clone();
+    let reconnect_tx_1 = tx.clone();
+
     let connection = Flex::column()
         .with_child(
             Flex::row()
@@ -77,57 +85,48 @@ pub fn display_broker(id: usize) -> Container<Broker> {
                 .with_child(
                     Button::new(LocalizedString::new("Save"))
                         .on_click(move |_ctx, data: &mut Broker, _env| {
-                            todo!()
-                            // if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
-                            //     error!("{:?}", e);
-                            // }
+                            if let Err(e) = save_tx_0.send(AppEvent::SaveBroker(id)) {
+                                error!("{:?}", e);
+                            }
                         })
                         .padding(BUTTON_PADDING),
                 )
                 .with_child(
                     Button::new(LocalizedString::new("Reconnect"))
                         .on_click(move |_ctx, data: &mut Broker, _env| {
-                            todo!()
-                            // _ctx.set_focus(ID_BUTTON_RECONNECT);
-                            // if let Err(e) = data.db.tx.send(AppEvent::ReConnect(id)) {
-                            //     error!("{:?}", e);
-                            // }
+                            _ctx.set_focus(ID_BUTTON_RECONNECT);
+                            if let Err(e) = reconnect_tx_1.send(AppEvent::ReConnect(id)) {
+                                error!("{:?}", e);
+                            }
                         })
                         .padding(BUTTON_PADDING),
                 )
                 .with_child(Button::new(LocalizedString::new("Disconnect")).on_click(
                     move |_ctx, data: &mut Broker, _env| {
-                        todo!()
-                        // if let Err(e) = data.db.tx.send(AppEvent::Disconnect(id)) {
-                        //     error!("{:?}", e);
-                        // }
+                        if let Err(e) = disconnect_tx_1.send(AppEvent::Disconnect(id)) {
+                            error!("{:?}", e);
+                        }
                     },
                 ))
                 .align_left(),
             Flex::row()
                 .with_child(Button::new(LocalizedString::new("Save")).on_click(
                     move |_ctx, data: &mut Broker, _env| {
-                        todo!()
-                        // if let Err(e) = data.db.tx.send(AppEvent::SaveBroker(id)) {
-                        //     error!("{:?}", e);
-                        // }
+                        if let Err(e) = save_tx_1.send(AppEvent::SaveBroker(id)) {
+                            error!("{:?}", e);
+                        }
                     },
                 ))
                 .with_child(Button::new(LocalizedString::new("Connect")).on_click(
-                    move |_ctx, data: &mut Broker, _env| {
-                        todo!()
-                        // if let Some(broker) = data.brokers.iter_mut().find(|x| x.id == id) {
-                        //     debug!("{:?}", broker);
-                        //     _ctx.set_focus(ID_BUTTON_CONNECT);
-                        //     if broker.client_id.as_str().is_empty() {
-                        //         broker.client_id = general_id().into();
-                        //     }
-                        //     if let Err(e) = data.db.tx.send(AppEvent::Connect(broker.clone())) {
-                        //         error!("{:?}", e);
-                        //     }
-                        // } else {
-                        //     error!("can't get the broker");
-                        // }
+                    move |_ctx, broker: &mut Broker, _env| {
+                        debug!("{:?}", broker);
+                        _ctx.set_focus(ID_BUTTON_CONNECT);
+                        if broker.client_id.as_str().is_empty() {
+                            broker.client_id = general_id().into();
+                        }
+                        if let Err(e) = connect_tx_1.send(AppEvent::Connect(broker.clone())) {
+                            error!("{:?}", e);
+                        }
                     },
                 ))
                 .align_left(),

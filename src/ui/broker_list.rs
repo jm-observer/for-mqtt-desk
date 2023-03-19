@@ -29,7 +29,7 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     Either::<AppData>::new(
         |x, env| x.get_selected_broker().is_ok(),
         Split::rows(
-            Container::new(init_connect(tx.clone()))
+            Container::new(init_broker_list_1(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
             Container::new(init_subscribe_his_list(tx.clone()).lens(BrokerSelectedOrZero))
@@ -39,7 +39,7 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .split_point(0.55)
         .draggable(true)
         .padding(5.0),
-        init_connect(tx),
+        init_broker_list_1(tx),
     )
     // Container::new(
     //     Split::rows(
@@ -124,7 +124,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     flex
 }
 
-pub fn init_connect(_tx: Sender<AppEvent>) -> Flex<AppData> {
+pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
     let version = || {
         label_dy(|data: &Broker, _: &Env| match data.protocol {
             Protocol::V4 => "v3".to_string(),

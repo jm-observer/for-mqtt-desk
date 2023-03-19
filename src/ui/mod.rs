@@ -107,7 +107,7 @@ fn display_broker_info(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Container::new(init_brokers_tabs(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-            Container::new(display_broker(0).lens(BrokerSelectedOrZero))
+            Container::new(display_broker(0, tx.clone()).lens(BrokerSelectedOrZero))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )

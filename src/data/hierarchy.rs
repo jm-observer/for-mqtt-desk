@@ -65,29 +65,23 @@ impl AppData {
         self.self_signed_file.clone()
     }
     pub fn add_broker(&mut self) {
-        let broker = self.db.new_broker();
-        // self.init_broker_tab(broker.id);
+        let mut broker = self.db.new_broker();
+        broker.selected = true;
+        self.unselect_broker();
         self.brokers.push_back(broker);
     }
+    /// 取消所有选中
+    pub fn unselect_broker(&mut self) {
+        self.brokers.iter_mut().for_each(|x| x.selected = false);
+    }
     fn init_broker_tab(&mut self, id: usize) -> bool {
-        todo!()
-        // let mut is_exist = false;
-        // if self.broker_tabs.iter().find(|x| **x == id).is_none() {
-        //     self.broker_tabs.push_front(id);
-        // } else {
-        //     is_exist = true;
-        // }
-        // if self.tab_statuses.get(&id).is_none() {
-        //     self.tab_statuses.insert(
-        //         id,
-        //         TabStatus {
-        //             id: id,
-        //             try_connect: false,
-        //             connected: false,
-        //         },
-        //     );
-        // }
-        // is_exist
+        let mut is_exist = false;
+        if self.broker_tabs.iter().find(|x| **x == id).is_none() {
+            self.broker_tabs.push_front(id);
+        } else {
+            is_exist = true;
+        }
+        is_exist
     }
     pub fn get_selected_subscribe_his(&self) -> Result<SubscribeHis> {
         let broker = self.get_selected_broker()?;
