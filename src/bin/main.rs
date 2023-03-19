@@ -1,18 +1,25 @@
 #![windows_subsystem = "windows"]
 
+
+
 use druid::{
-    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString,
-    PlatformError, Target, WindowDesc,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled,
+    LocalizedString, Menu, MenuItem, PlatformError, Target, WindowDesc,
+    WindowId,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
+
 use for_mqtt::data::hierarchy::AppData;
+
 use for_mqtt::logic::deal_event;
-use for_mqtt::ui::ids::SELF_SIGNED_FILE;
-use for_mqtt::ui::init_layout;
+
+use for_mqtt::ui::ids::{SELF_SIGNED_FILE, TIPS};
+use for_mqtt::ui::{init_layout, tips};
+
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
-use log::error;
 use log::LevelFilter::{Debug, Info};
+use log::{error};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -57,6 +64,7 @@ fn main() -> Result<(), PlatformError> {
 
     let win = WindowDesc::new(init_layout(tx.clone()))
         .title(LocalizedString::new("app-names"))
+        .menu(make_menu)
         .window_size((1200.0, 700.0)); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
     let mut data = db.read_app_data()?;
@@ -98,8 +106,7 @@ impl AppDelegate<AppData> for Delegate {
         if let Some(index) = cmd.get(SELF_SIGNED_FILE) {
             data.set_self_signed_file(*index);
             return Handled::Yes;
-        }
-        if let Some(file_info) = cmd.get(commands::OPEN_FILE) {
+        } else if let Some(file_info) = cmd.get(commands::OPEN_FILE) {
             // debug!("{} {:?}", data.brokers.len(), file_info,);
             if let Some(index) = data.get_self_signed_file() {
                 if let Some(broker) = data.brokers.get_mut(index) {
@@ -107,7 +114,22 @@ impl AppDelegate<AppData> for Delegate {
                     return Handled::Yes;
                 }
             }
+        } else if let Some(_) = cmd.get(TIPS) {
+            let new_win = WindowDesc::new(tips::tips_ui_builder())
+                .window_size((500.0, 210.0))
+                .resizable(false)
+                .set_always_on_top(true);
+            _ctx.new_window(new_win);
+            return Handled::Yes;
         }
         Handled::No
     }
+}
+
+fn make_menu(_: Option<WindowId>, _state: &AppData, _: &Env) -> Menu<AppData> {
+    let custom = Menu::empty().entry(
+        MenuItem::new(LocalizedString::new("Tips"))
+            .on_activate(|ctx, _data, _env| ctx.submit_command(TIPS)),
+    );
+    custom
 }

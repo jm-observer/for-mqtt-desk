@@ -12,7 +12,7 @@ use crate::mqtt::Client;
 use crate::ui::ids::{
     SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID,
 };
-use crate::util::consts::QosToString;
+use crate::util::consts::{GITHUB_ADDR, QosToString};
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
@@ -29,6 +29,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Arc;
 use std::time::Duration;
+use druid::Application;
 use tokio::time::sleep;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]

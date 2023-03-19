@@ -20,6 +20,7 @@ pub mod ids;
 mod payload_ty;
 pub mod qos;
 pub mod tabs;
+pub mod tips;
 
 pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let hint = Label::dynamic(|data: &AppData, _: &Env| format!("{}", data.hint))

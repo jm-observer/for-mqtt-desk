@@ -32,8 +32,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
         mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }
     let some = serde_json::from_str(broker.params.as_str())?;
-    let mqttoptions = update_tls_option(update_option(mqttoptions, some), broker.clone());
-
+    let mqttoptions = update_tls_option(update_option(mqttoptions, some), broker.clone()).auto_reconnect();
     debug!("{:?}", mqttoptions);
     let client = match broker.protocol {
         Protocol::V4 => mqttoptions.connect_to_v4().await,

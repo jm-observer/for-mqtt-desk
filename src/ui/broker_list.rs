@@ -26,12 +26,19 @@ use druid::{Widget, WidgetExt};
 use log::error;
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    Split::rows(init_connect(tx.clone()), init_subscribe_his_list(tx))
+    Container::new(
+        Split::rows(
+            Container::new(init_connect(tx.clone())).rounded(15.0),
+            init_subscribe_his_list(tx),
+        )
         .split_point(0.55)
         .draggable(true)
         .bar_size(3.0)
-        .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-        .padding(5.0)
+        // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+        .padding(5.0),
+    )
+    .rounded(8.0)
+    .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {

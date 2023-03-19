@@ -148,3 +148,5 @@ pub const SCROLL_MSG_ID: WidgetId = WidgetId::reserved(3);
 pub const SELECTOR_AUTO_SCROLL: Selector<()> = Selector::new("scroll.auto");
 
 pub const SELF_SIGNED_FILE: Selector<usize> = Selector::new("self-signed-file");
+
+pub const TIPS: Selector<()> = Selector::new("tips");
