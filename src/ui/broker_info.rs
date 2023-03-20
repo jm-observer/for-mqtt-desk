@@ -82,53 +82,13 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
         .with_child(Either::new(
             move |data: &Broker, _: &Env| data.tab_status.connected,
             Flex::row()
-                .with_child(
-                    Button::new(LocalizedString::new("Save"))
-                        .on_click(move |_ctx, data: &mut Broker, _env| {
-                            if let Err(e) = save_tx_0.send(AppEvent::SaveBroker(id)) {
-                                error!("{:?}", e);
-                            }
-                        })
-                        .padding(BUTTON_PADDING),
-                )
-                .with_child(
-                    Button::new(LocalizedString::new("Reconnect"))
-                        .on_click(move |_ctx, data: &mut Broker, _env| {
-                            _ctx.set_focus(ID_BUTTON_RECONNECT);
-                            if let Err(e) = reconnect_tx_1.send(AppEvent::ReConnect(id)) {
-                                error!("{:?}", e);
-                            }
-                        })
-                        .padding(BUTTON_PADDING),
-                )
-                .with_child(Button::new(LocalizedString::new("Disconnect")).on_click(
-                    move |_ctx, data: &mut Broker, _env| {
-                        if let Err(e) = disconnect_tx_1.send(AppEvent::Disconnect(id)) {
-                            error!("{:?}", e);
-                        }
-                    },
-                ))
+                .with_child(save_button(save_tx_0))
+                .with_child(reconnect_button(reconnect_tx_1))
+                .with_child(disconnect_button(disconnect_tx_1))
                 .align_left(),
             Flex::row()
-                .with_child(Button::new(LocalizedString::new("Save")).on_click(
-                    move |_ctx, data: &mut Broker, _env| {
-                        if let Err(e) = save_tx_1.send(AppEvent::SaveBroker(id)) {
-                            error!("{:?}", e);
-                        }
-                    },
-                ))
-                .with_child(Button::new(LocalizedString::new("Connect")).on_click(
-                    move |_ctx, broker: &mut Broker, _env| {
-                        debug!("{:?}", broker);
-                        _ctx.set_focus(ID_BUTTON_CONNECT);
-                        if broker.client_id.as_str().is_empty() {
-                            broker.client_id = general_id().into();
-                        }
-                        if let Err(e) = connect_tx_1.send(AppEvent::Connect(broker.clone())) {
-                            error!("{:?}", e);
-                        }
-                    },
-                ))
+                .with_child(save_button(save_tx_1))
+                .with_child(connect_button(connect_tx_1))
                 .align_left(),
         ))
         .with_child(
@@ -262,4 +222,46 @@ fn open(index: usize) -> impl Widget<Broker> {
         ctx.submit_command(druid::commands::SHOW_OPEN_PANEL.with(open_dialog_options.clone()))
     });
     open
+}
+
+fn save_button(save_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
+    Button::new(LocalizedString::new("Save")).on_click(move |_ctx, data: &mut Broker, _env| {
+        if let Err(e) = save_tx_1.send(AppEvent::SaveBroker(data.id)) {
+            error!("{:?}", e);
+        }
+    })
+}
+
+fn disconnect_button(reconnect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
+    Button::new(LocalizedString::new("Disconnect")).on_click(
+        move |_ctx, data: &mut Broker, _env| {
+            if let Err(e) = reconnect_tx_1.send(AppEvent::Disconnect(data.id)) {
+                error!("{:?}", e);
+            }
+        },
+    )
+}
+
+fn reconnect_button(reconnect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
+    Button::new(LocalizedString::new("Reconnect"))
+        .on_click(move |_ctx, data: &mut Broker, _env| {
+            _ctx.set_focus(ID_BUTTON_RECONNECT);
+            if let Err(e) = reconnect_tx_1.send(AppEvent::ReConnect(data.id)) {
+                error!("{:?}", e);
+            }
+        })
+        .padding(BUTTON_PADDING)
+}
+
+fn connect_button(connect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
+    Button::new(LocalizedString::new("Connect")).on_click(move |_ctx, broker: &mut Broker, _env| {
+        debug!("{:?}", broker);
+        _ctx.set_focus(ID_BUTTON_CONNECT);
+        if broker.client_id.as_str().is_empty() {
+            broker.client_id = general_id().into();
+        }
+        if let Err(e) = connect_tx_1.send(AppEvent::ConnectByButton(broker.id)) {
+            error!("{:?}", e);
+        }
+    })
 }

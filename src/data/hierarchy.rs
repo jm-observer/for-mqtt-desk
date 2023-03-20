@@ -11,6 +11,7 @@ use crate::util::now_time;
 use anyhow::Result;
 use anyhow::{anyhow, bail};
 use bytes::Bytes;
+use crossbeam_channel::Sender;
 use custom_utils::{tx, tx_async};
 use druid::im::Vector;
 use druid::{im::HashMap, Data, Lens};
@@ -54,9 +55,17 @@ pub struct AppData {
     pub self_signed_file: Option<usize>,
     pub display_history: bool,
     pub display_broker_info: bool,
+    #[data(ignore)]
+    #[lens(ignore)]
+    pub tx: Sender<AppEvent>,
 }
 
 impl AppData {
+    fn send_event(&self, event: AppEvent) {
+        if let Err(e) = self.tx.send(event) {
+            error!("fail to send event: {:?}", e.0)
+        }
+    }
     pub fn set_self_signed_file(&mut self, index: usize) {
         self.self_signed_file = Some(index);
         self.self_signed_file.replace(index);
@@ -162,45 +171,39 @@ impl AppData {
     }
     pub fn reconnect(&mut self, id: usize) -> Result<()> {
         self.disconnect(id)?;
-        if let Some(broker) = self.brokers.iter().find(|x| (*x).id == id) {
-            tx!(self.db.tx, AppEvent::Connect(broker.clone()))
-        } else {
-            error!("not find the broker");
-        }
+        self.init_connection(id)?;
+        // if let Some(broker) = self.brokers.iter().find(|x| (*x).id == id) {
+        //     tx!(self.db.tx, AppEvent::Connect(broker.clone()))
+        // } else {
+        //     error!("not find the broker");
+        // }
         Ok(())
     }
     pub fn init_connection(&mut self, id: usize) -> Result<()> {
+        self.init_broker_tab(id);
         let broker = self.find_mut_broker_by_id(id)?;
         broker.tab_status.try_connect = true;
         broker.stored = true;
-        let broker = broker.clone_to_db();
-        self.db.save_broker(broker)?;
-        // if let Some(status) = self.tab_statuses.get_mut(&id) {
-        //     status.try_connect = true;
-        // }
-        // if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
-        //     broker.stored = true;
-        //     self.db.save_broker(id, broker)?;
-        // }
-        // if self.subscribe_hises.get_mut(&id).is_none() {
-        //     self.subscribe_hises.insert(id, Vector::new());
-        // }
-        // self.subscribe_topics.insert(id, Vector::new());
-        // self.msgs.insert(id, Vector::new());
-        // self.subscribe_input.insert(id, SubscribeInput::init(id));
-        // self.public_input.insert(id, PublicInput::default().into());
+        let broker_db = broker.clone_to_db();
+        let broker = broker.clone();
+        self.db.save_broker(broker_db)?;
+        self.send_event(AppEvent::ToConnect(broker));
         Ok(())
     }
-    pub fn connected(&mut self, id: usize) -> Result<()> {
+    pub fn update_to_connected(&mut self, id: usize) -> Result<()> {
         let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
         status.try_connect = false;
         status.connected = true;
         Ok(())
     }
     pub fn disconnect(&mut self, id: usize) -> Result<()> {
-        let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
-        status.try_connect = false;
-        status.connected = false;
+        let broker = self.find_mut_broker_by_id(id)?;
+        broker.tab_status.try_connect = false;
+        broker.tab_status.connected = false;
+        broker.subscribe_topics.clear();
+        broker.msgs.clear();
+        broker.unsubscribe_ing.clear();
+        self.send_event(AppEvent::ToDisconnect(id));
         Ok(())
     }
     pub fn close_connection(&mut self, id: usize) -> Result<()> {
@@ -391,25 +394,23 @@ impl AppData {
             warn!("edit_broker: not selected broker");
         }
     }
-    pub fn connect_broker(&mut self) {
-        if let Ok(broker) = self.get_selected_broker() {
-            if let Err(e) = self.db.tx.send(AppEvent::Connect(broker.clone())) {
-                error!("{:?}", e);
-            }
-            self.init_broker_tab(broker.id);
-        } else {
-            // todo
-            warn!("connect_broker: not selected broker");
-        }
+    pub fn connect_broker_selected(&mut self) -> Result<()> {
+        let broker = self.get_selected_broker()?;
+        self.init_connection(broker.id)?;
+        Ok(())
     }
     pub fn db_click_broker(&mut self, id: usize) -> Result<()> {
         // 若已存在，则跳转至该tag；重连。否则，新增tag，连接
-        if self.init_broker_tab(id) {
-            self.db.tx.send(AppEvent::ReConnect(id))?;
-        } else {
-            let broker = self.find_broker_by_id(id)?;
-            self.db.tx.send(AppEvent::Connect(broker.clone()))?;
+        if self.broker_tabs.iter().find(|x| **x == id).is_some() {
+            self.disconnect(id)?;
         }
+        self.init_connection(id)?;
+        // if self.init_broker_tab(id) {
+        //     self.db.tx.send(AppEvent::ReConnect(id))?;
+        // } else {
+        //     let broker = self.find_broker_by_id(id)?;
+        //     self.db.tx.send(AppEvent::ToDisconnect(id))?;
+        // }
         Ok(())
     }
     fn select_broker(&mut self, id: usize) {

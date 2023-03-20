@@ -19,12 +19,21 @@ pub enum AppEvent {
     RemoveSubscribeHis,
     AddBroker,
     EditBroker,
-    ConnectBroker,
+    /// broker列表的连接图标。连接选择的broker
+    ConnectBrokerSelected,
     SaveBroker(usize),
     ReConnect(usize),
+    /// broker信息界面中连接按钮。
+    ConnectByButton(usize),
+    /// 调用第三方库连接broker
+    ToConnect(Broker),
+    /// 调用第三方库断开连接
+    ToDisconnect(usize),
+    DeleteBroker,
+    // e.g: delete broker; close tab; click button "disconnect"
+    Disconnect(usize),
     // select brokers tab
     SelectTabs(usize),
-    Connect(Broker),
     Subscribe(SubscribeInput, usize),
     SubscribeFromHis(SubscribeHis),
     ToUnSubscribe {
@@ -43,11 +52,9 @@ pub enum AppEvent {
     ClickLifeDead(ClickTy),
     CloseBrokerTab(usize),
     CloseConnectionTab(usize),
-    DeleteBroker,
-    // e.g: delete broker; close tab; click button "disconnect"
-    Disconnect(usize),
+
     UpdateStatusBar(String),
-    //
+    /// 清空消息
     ClearMsg(usize),
     /// 滚动消息窗口
     ScrollMsgWin,

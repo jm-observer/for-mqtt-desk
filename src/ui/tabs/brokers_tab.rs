@@ -48,11 +48,6 @@ impl TabsPolicy for BrokersTabs {
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
         debug!("tab_body");
         display_connection(self.0.clone()).lens(BrokerId(_key))
-        //
-        // Tabs::for_policy(BrokerTabPolicy(_key, self.0.clone()))
-        //     .with_axis(Axis::Horizontal)
-        //     .with_edge(TabsEdge::Leading)
-        //     .with_transition(TabsTransition::Instant)
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {

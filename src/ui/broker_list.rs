@@ -41,23 +41,6 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .padding(5.0),
         init_broker_list_1(tx),
     )
-    // Container::new(
-    //     Split::rows(
-    //         Container::new(init_connect(tx.clone()))
-    //             .rounded(8.0)
-    //             .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-    //         Container::new(init_subscribe_his_list(tx))
-    //             .rounded(8.0)
-    //             .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-    //     )
-    //     .split_point(0.55)
-    //     .draggable(true)
-    //     // .bar_size(3.0)
-    //     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-    //     .padding(5.0),
-    // )
-    // .rounded(8.0)
-    // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
@@ -193,7 +176,7 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
         )
         .with_child(
             svg(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Err(_) = data.db.tx.send(AppEvent::ConnectBroker) {
+                if let Err(_) = data.db.tx.send(AppEvent::ConnectBrokerSelected) {
                     error!("fail to send event")
                 }
             }),

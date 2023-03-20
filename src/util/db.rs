@@ -95,6 +95,7 @@ impl ArcDb {
             self_signed_file: None,
             display_history: false,
             display_broker_info: false,
+            tx: self.tx.clone(),
         })
     }
 

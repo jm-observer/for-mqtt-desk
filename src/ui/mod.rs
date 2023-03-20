@@ -36,19 +36,6 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .align_vertical(UnitPoint::LEFT)
         .fix_height(40.0)
         .padding(LABLE_PADDING);
-    // let flex = Flex::column()
-    //     .cross_axis_alignment(CrossAxisAlignment::Center)
-    //     .with_flex_child(
-    //         Container::new(
-    //             Split::columns(init_broker_list(tx.clone()), init_brokers_tabs(tx))
-    //                 .split_point(0.25)
-    //                 .draggable(true)
-    //                 .bar_size(0.5),
-    //         ),
-    //         1.0,
-    //     )
-    //     .with_child(hint)
-    //     .expand_height();
 
     let history = Button::new("History")
         .on_click(|ctx, data: &mut bool, env| {
@@ -83,18 +70,16 @@ fn display_history(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     Either::new(
         |data: &AppData, _env| data.display_history,
         Split::columns(
-            Container::new(init_broker_list(tx.clone()).fix_width(150.0))
+            Container::new(init_broker_list(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
             Container::new(display_broker_info(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )
-        .split_point(0.55)
+        .split_point(0.25)
         .draggable(true)
         .bar_size(0.0)
-        // .bar_size(3.0)
-        // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
         .padding(5.0),
         display_broker_info(tx.clone()),
     )
@@ -107,9 +92,13 @@ fn display_broker_info(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             Container::new(init_brokers_tabs(tx.clone()))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-            Container::new(display_broker(0, tx.clone()).lens(BrokerSelectedOrZero))
-                .rounded(8.0)
-                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+            Container::new(
+                display_broker(0, tx.clone())
+                    .lens(BrokerSelectedOrZero)
+                    .expand_height(),
+            )
+            .rounded(8.0)
+            .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         )
         .split_point(0.55)
         .bar_size(0.0)
