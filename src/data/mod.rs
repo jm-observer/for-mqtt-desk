@@ -16,11 +16,14 @@ pub type AString = Arc<String>;
 
 #[derive(Debug)]
 pub enum AppEvent {
-    RemoveSubscribeHis,
-    AddBroker,
-    EditBroker,
+    /// broker列表的新增图标。新增broker
+    TouchAddBroker,
+    /// broker列表的编辑图标。编辑选择的broker
+    TouchEditBrokerSelected,
     /// broker列表的连接图标。连接选择的broker
-    ConnectBrokerSelected,
+    TouchConnectBrokerSelected,
+    /// broker列表的删除图标。删除选择的broker
+    TouchDeleteBrokerSelected,
     SaveBroker(usize),
     ReConnect(usize),
     /// broker信息界面中连接按钮。
@@ -29,11 +32,11 @@ pub enum AppEvent {
     ToConnect(Broker),
     /// 调用第三方库断开连接
     ToDisconnect(usize),
-    DeleteBroker,
     // e.g: delete broker; close tab; click button "disconnect"
     Disconnect(usize),
     // select brokers tab
     SelectTabs(usize),
+    RemoveSubscribeHis,
     Subscribe(SubscribeInput, usize),
     SubscribeFromHis(SubscribeHis),
     ToUnSubscribe {

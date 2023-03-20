@@ -83,7 +83,7 @@ fn main() -> Result<(), PlatformError> {
 
     // open a tag
     if data.brokers.len() == 0 {
-        data.add_broker();
+        data.touch_add_broker();
     }
     launcher.launch(data)?;
     Ok(())

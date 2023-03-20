@@ -44,9 +44,9 @@ pub async fn deal_event(
         // let event = ;
         // debug!("{:?}", event);
         match rx!(rx) {
-            AppEvent::AddBroker => add_broker(&event_sink),
-            AppEvent::EditBroker => edit_broker(&event_sink),
-            AppEvent::ConnectBrokerSelected => connect_broker_selected(&event_sink),
+            AppEvent::TouchAddBroker => touch_add_broker(&event_sink),
+            AppEvent::TouchEditBrokerSelected => edit_broker(&event_sink),
+            AppEvent::TouchConnectBrokerSelected => connect_broker_selected(&event_sink),
             AppEvent::SaveBroker(index) => save_broker(&event_sink, index),
             AppEvent::RemoveSubscribeHis => delete_subscribe_his(&event_sink),
             AppEvent::ToUnSubscribe {
@@ -102,7 +102,7 @@ pub async fn deal_event(
                     error!("{}", e.to_string());
                 }
             }
-            AppEvent::DeleteBroker => delete_broker(&event_sink),
+            AppEvent::TouchDeleteBrokerSelected => touch_delete_broker_selected(&event_sink),
             AppEvent::ConnectAckSuccess(id) => update_to_connected(&event_sink, id), // _ => {}
             AppEvent::ConnectAckFail(_id, _msg) => error!("{}", _msg.to_string()),
             AppEvent::UpdateStatusBar(msg) => {
@@ -208,9 +208,9 @@ fn update_status_bar(event_sink: &druid::ExtEventSink, msg: String) {
         data.hint = msg.into();
     });
 }
-fn add_broker(event_sink: &druid::ExtEventSink) {
+fn touch_add_broker(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        data.add_broker();
+        data.touch_add_broker();
     });
 }
 fn edit_broker(event_sink: &druid::ExtEventSink) {
@@ -548,9 +548,9 @@ async fn close_connection_tab(
     Ok(())
 }
 
-fn delete_broker(event_sink: &druid::ExtEventSink) {
+fn touch_delete_broker_selected(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.delete_broker() {
+        if let Err(e) = data.touch_delete_broker_selected() {
             error!("{:?}", e);
         } else {
             info!("{}", DELETE_BROKER_SUCCESS)

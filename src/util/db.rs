@@ -93,7 +93,7 @@ impl ArcDb {
             db: self.clone(),
             hint: "".to_string().into(),
             self_signed_file: None,
-            display_history: false,
+            display_history: true,
             display_broker_info: false,
             tx: self.tx.clone(),
         })

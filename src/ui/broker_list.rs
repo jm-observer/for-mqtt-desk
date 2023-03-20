@@ -155,28 +155,28 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
         .with_flex_child(title("Broker List", UnitPoint::LEFT).expand_width(), 1.0)
         .with_child(
             svg(added_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Err(_) = data.db.tx.send(AppEvent::AddBroker) {
+                if let Err(_) = data.db.tx.send(AppEvent::TouchAddBroker) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
             svg(modified_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Err(_) = data.db.tx.send(AppEvent::EditBroker) {
+                if let Err(_) = data.db.tx.send(AppEvent::TouchEditBrokerSelected) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
             svg(removed_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Err(_) = data.db.tx.send(AppEvent::DeleteBroker) {
+                if let Err(_) = data.db.tx.send(AppEvent::TouchDeleteBrokerSelected) {
                     error!("fail to send event")
                 }
             }),
         )
         .with_child(
             svg(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
-                if let Err(_) = data.db.tx.send(AppEvent::ConnectBrokerSelected) {
+                if let Err(_) = data.db.tx.send(AppEvent::TouchConnectBrokerSelected) {
                     error!("fail to send event")
                 }
             }),

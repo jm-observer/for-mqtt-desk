@@ -73,11 +73,19 @@ impl AppData {
     pub fn get_self_signed_file(&self) -> Option<usize> {
         self.self_signed_file.clone()
     }
-    pub fn add_broker(&mut self) {
-        let mut broker = self.db.new_broker();
-        broker.selected = true;
+    pub fn touch_add_broker(&mut self) {
         self.unselect_broker();
-        self.brokers.push_back(broker);
+        if let Some(broker) = self.brokers.iter_mut().find(|x| x.stored == false) {
+            debug!("had a new broker");
+            broker.selected = true;
+            self.display_broker_info = true;
+        } else {
+            debug!("new_broker");
+            let mut broker = self.db.new_broker();
+            broker.selected = true;
+            self.brokers.push_front(broker);
+            self.display_broker_info = true;
+        }
     }
     /// 取消所有选中
     pub fn unselect_broker(&mut self) {
@@ -422,33 +430,23 @@ impl AppData {
             }
         }
     }
-    pub fn delete_broker(&mut self) -> Result<()> {
-        let mut selected_index = None;
-        for (index, broker) in self.brokers.iter().enumerate() {
-            if broker.selected {
-                selected_index = Some(index);
-                break;
-            }
+    pub fn touch_delete_broker_selected(&mut self) -> Result<()> {
+        let broker = self.brokers.remove(
+            self.get_selected_broker_index()
+                .ok_or(anyhow!("could not find broker selected"))?,
+        );
+        if let Some((index, _)) = self
+            .broker_tabs
+            .iter()
+            .enumerate()
+            .find(|x| *(*x).1 == broker.id)
+        {
+            self.broker_tabs.remove(index);
+            self.disconnect(broker.id)?;
         }
-        if let Some(index) = selected_index {
-            let broker = self.brokers.remove(index);
-            if let Some((index, _)) = self
-                .broker_tabs
-                .iter()
-                .enumerate()
-                .find(|x| *(*x).1 == broker.id)
-            {
-                self.broker_tabs.remove(index);
-                debug!("close_tab：{} {}", index, self.broker_tabs.len());
-            }
-            self.db.delete_broker(broker.id)?;
-            self.db.tx.send(AppEvent::Disconnect(index))?;
-            // self.db.tx.send(AppEvent::CloseBrokerTab(index))?;
-        } else {
-            bail!("not selected broker to delete");
-        }
+        self.db.delete_broker(broker.id)?;
         if self.brokers.len() == 0 {
-            self.add_broker();
+            self.touch_add_broker();
         }
         Ok(())
     }
