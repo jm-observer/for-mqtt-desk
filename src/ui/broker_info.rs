@@ -1,26 +1,24 @@
 use crate::data::common::{Broker, Protocol, SignedTy};
 use crate::data::lens::PortLens;
-use crate::data::{AString, AppEvent};
+use crate::data::AppEvent;
 use crate::ui::common::{
     error_display_widget, label_static, BUTTON_PADDING, TEXTBOX_MULTI_WIDTH, TEXTBOX_WIDTH,
 };
-use crate::ui::formatter::{check_addr, check_no_empty, check_port, MustInput};
+use crate::ui::formatter::{check_port, MustInput};
 use crate::ui::ids::{
-    TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_CLIENT_ID, ID_PORT,
+    TextBoxErrorDelegate, ID_ADDR, ID_BUTTON_CONNECT, ID_BUTTON_RECONNECT, ID_PORT,
     SELF_SIGNED_FILE,
 };
-use crate::util::general_id;
+
 use crossbeam_channel::Sender;
-use druid::widget::{Button, Container, Either, Flex, Label, Painter, RadioGroup, Switch, TextBox};
-use druid::{
-    Color, Data, Env, FileDialogOptions, FileSpec, LensExt, RenderContext, UnitPoint, Widget,
-};
+use druid::widget::{Button, Container, Either, Flex, RadioGroup, Switch, TextBox};
+use druid::{Env, FileDialogOptions, FileSpec, UnitPoint, Widget};
 use druid::{LocalizedString, WidgetExt};
 use log::{debug, error};
 
 pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
     let save_tx_0 = tx.clone();
-    let save_tx_1 = tx.clone();
+    let _save_tx_1 = tx.clone();
     let connect_tx_1 = tx.clone();
     let disconnect_tx_1 = tx.clone();
     let save_tx_1 = tx.clone();
@@ -107,21 +105,6 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
     Container::new(connection)
 }
 
-fn label_widget<T: Data>(widget: impl Widget<T> + 'static, label: &str) -> impl Widget<T> {
-    Flex::column()
-        .must_fill_main_axis(true)
-        .with_flex_child(widget.center(), 1.0)
-        .with_child(
-            Painter::new(|ctx, _: &_, _: &_| {
-                let size = ctx.size().to_rect();
-                ctx.fill(size, &Color::WHITE)
-            })
-            .fix_height(1.0),
-        )
-        .with_child(Label::new(label).center().fix_height(40.0))
-        .border(Color::WHITE, 1.0)
-}
-
 pub fn display_tls(id: usize) -> impl Widget<Broker> {
     Either::new(
         move |data: &Broker, _: &Env| data.tls,
@@ -141,7 +124,7 @@ pub fn display_tls(id: usize) -> impl Widget<Broker> {
     )
 }
 
-pub fn display_credential(id: usize) -> impl Widget<Broker> {
+pub fn display_credential(_id: usize) -> impl Widget<Broker> {
     Either::new(
         move |data: &Broker, _: &Env| data.use_credentials,
         Flex::column()

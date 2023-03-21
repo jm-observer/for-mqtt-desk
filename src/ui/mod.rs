@@ -3,13 +3,12 @@ use crate::data::lens::BrokerSelectedOrZero;
 use crate::data::AppEvent;
 use crate::ui::broker_info::display_broker;
 use crate::ui::broker_list::init_broker_list;
-use crate::ui::common::{label_dy_expand_width, label_static, LABLE_PADDING};
+use crate::ui::common::{LABLE_PADDING};
 use crate::ui::tabs::init_brokers_tabs;
 use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
-    Axis, Button, Container, CrossAxisAlignment, Either, Flex, Label, LabelText, Padding, Split,
-    Tabs, TabsEdge, TabsTransition,
+    Button, Container, CrossAxisAlignment, Either, Flex, Label, Split,
 };
 use druid::{Env, UnitPoint, Widget, WidgetExt};
 use log::{debug, info};
@@ -38,13 +37,13 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .padding(LABLE_PADDING);
 
     let history = Button::new("History")
-        .on_click(|ctx, data: &mut bool, env| {
+        .on_click(|_ctx, data: &mut bool, _env| {
             info!("history click: {}", data);
             *data = !*data;
         })
         .lens(AppData::display_history);
     let info = Button::new("Info")
-        .on_click(|ctx, data: &mut bool, env| {
+        .on_click(|_ctx, data: &mut bool, _env| {
             debug!("info: {}", data);
             *data = !*data;
         })

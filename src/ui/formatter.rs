@@ -1,12 +1,12 @@
 use crate::data::common::QoS;
 use crate::data::AString;
-use crate::ui::ids::{ID_ADDR, SHOW_ERROR};
+
 use crate::ForError;
 use druid::text::Formatter;
 use druid::text::{Selection, Validation, ValidationError};
-use druid::EventCtx;
+
 use log::debug;
-use std::fmt::Display;
+
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -25,7 +25,7 @@ impl Formatter<AString> for MustInput {
         value.as_str().to_string()
     }
 
-    fn validate_partial_input(&self, input: &str, _sel: &Selection) -> Validation {
+    fn validate_partial_input(&self, _input: &str, _sel: &Selection) -> Validation {
         Validation::success()
         // parse_to_no_empty(input).to_validation()
     }

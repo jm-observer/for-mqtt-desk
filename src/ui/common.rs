@@ -1,15 +1,15 @@
-use crate::data::common::QoS;
-use crate::data::{AString, AppEvent};
+
+use crate::data::{AString};
 use crate::ui::ids::{ErrorController, ERROR_TEXT_COLOR};
-use crossbeam_channel::Sender;
+
 use druid::text::ValidationError;
-use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
+
 use druid::widget::{Controller, Either, Label, LabelText, SizedBox, Svg, SvgData, TextBox};
 use druid::{
     Application, Color, Data, Env, Event, EventCtx, UnitPoint, Widget, WidgetExt, WidgetId,
 };
-use druid_widget_nursery::DropdownSelect;
-use log::{debug, error, info, warn};
+
+use log::{info};
 use std::sync::Arc;
 
 pub const LABLE_WIDTH: f64 = 80.;

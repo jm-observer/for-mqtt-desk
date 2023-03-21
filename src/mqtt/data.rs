@@ -1,4 +1,4 @@
-use crate::data::common::{PayloadTy, PublicInput, QoS, SubscribeHis, SubscribeInput};
+use crate::data::common::{QoS, SubscribeHis, SubscribeInput};
 use bytes::Bytes;
 use std::sync::Arc;
 

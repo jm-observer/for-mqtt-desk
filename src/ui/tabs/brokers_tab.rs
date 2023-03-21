@@ -1,10 +1,10 @@
-use crate::data::common::Broker;
+
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerId;
 use crate::data::AppEvent;
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
-use druid::widget::{Axis, TabInfo, Tabs, TabsEdge, TabsPolicy, TabsTransition};
+use druid::widget::{TabInfo, TabsPolicy};
 use druid::{Data, Env};
 use druid::{Widget, WidgetExt};
 use log::{debug, error};

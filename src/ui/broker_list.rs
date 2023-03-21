@@ -5,25 +5,24 @@ use crate::data::lens::{
     BrokerSelectedOrZero, BrokerStoredList, LensSubscribeHisQoS, SubscribeHisPayloadLens,
 };
 use crate::data::AppEvent;
-use crate::ui::auto_scroll::AutoScrollController;
+
 use crate::ui::common::{
-    label_dy, label_dy_expand_width, label_static, label_static_expand_width, svg, title,
-    RightClickToCopy, QOS, SILVER, TOPIC,
+    label_dy, label_dy_expand_width, svg, title, SILVER, TOPIC,
 };
-use crate::ui::icons::{added_icon, connect_icon, copy_icon, modified_icon, removed_icon};
-use crate::ui::ids::SCROLL_SUBSCRIBE_ID;
+use crate::ui::icons::{added_icon, connect_icon, modified_icon, removed_icon};
+
 use crate::ui::payload_ty::payload_ty_init;
 use crate::ui::qos::qos_init;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
-    Button, Container, CrossAxisAlignment, Either, Flex, Label, List, Padding, Scroll, Split,
+    Container, CrossAxisAlignment, Either, Flex, List, Scroll, Split,
 };
-use druid::widget::{SizedBox, Svg};
+use druid::widget::{SizedBox};
 use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
-use log::{debug, error};
+use log::{error};
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     Split::rows(
@@ -31,7 +30,7 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             .rounded(8.0)
             .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
         Either::<AppData>::new(
-            |x, env| {
+            |x, _env| {
                 if let Ok(broker) = x.get_selected_broker() {
                     broker.stored
                 } else {
@@ -86,7 +85,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
             1.0,
         )
         .with_child(
-            svg(removed_icon()).on_click(move |_ctx, data: &mut Broker, _env| {
+            svg(removed_icon()).on_click(move |_ctx, _data: &mut Broker, _env| {
                 if let Err(_) = tx_removed_icon.send(AppEvent::RemoveSubscribeHis) {
                     error!("fail to send event")
                 }

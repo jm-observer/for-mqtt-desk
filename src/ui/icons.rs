@@ -1,5 +1,5 @@
-use druid::widget::{Svg, SvgData};
-use std::collections::HashMap;
+use druid::widget::{SvgData};
+
 
 pub fn modified_icon() -> SvgData {
     include_str!("../../resources/icons/diff-modified.svg")

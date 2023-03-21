@@ -1,13 +1,12 @@
-use crate::data::hierarchy::AppData;
+
 use crate::ui::ids::SELECTOR_AUTO_SCROLL;
-use druid::commands::SCROLL_TO_VIEW;
-use druid::debug_state::DebugState;
-use druid::widget::{Axis, Controller, Scroll};
+
+
+use druid::widget::{Controller, Scroll};
 use druid::{
-    BoxConstraints, Data, Env, Event, EventCtx, LayoutCtx, LifeCycle, LifeCycleCtx, PaintCtx, Rect,
-    Size, UpdateCtx, Vec2, Widget,
+    Env, Event, EventCtx, Rect, Widget,
 };
-use log::info;
+
 
 pub struct AutoScrollController;
 

@@ -1,7 +1,7 @@
 #![feature(type_alias_impl_trait)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
+// #![allow(dead_code)]
+// #![allow(unused_imports)]
+// #![allow(unused_variables)]
 // pub mod config;
 pub mod data;
 pub mod logic;

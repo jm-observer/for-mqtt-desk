@@ -3,7 +3,7 @@ use crate::ui::common::GREEN;
 use druid::widget::TextBox;
 use druid::{Data, Lens, Widget, WidgetExt};
 use druid_widget_nursery::DropdownSelect;
-use for_mqtt_client::QoSWithPacketId;
+
 use std::sync::Arc;
 
 pub fn qos_init<T: Data>(data: impl Lens<T, Arc<String>>) -> impl Widget<T> {

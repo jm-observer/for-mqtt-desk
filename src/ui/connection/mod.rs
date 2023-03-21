@@ -1,38 +1,36 @@
 use crate::data::click_ty::ClickTy;
-use crate::data::common::{Broker, Msg, PublicInput, QoS, SubscribeInput, SubscribeTopic};
-use crate::data::hierarchy::AppData;
+use crate::data::common::{Broker, Msg, PublicInput, SubscribeInput, SubscribeTopic};
+
 use crate::data::lens::{
-    BrokerIndexLensPublicInput, BrokerIndexLensSubscribeInput, BrokerIndexLensVecMsg,
-    BrokerIndexLensVecSubscribeTopic, Index, MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens,
+    MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens,
     MsgTopicLens, SubscribeTopicPayloadLens,
 };
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING, GREEN, MSG, QOS,
-    SILVER, TOPIC, YELLOW,
+    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING,
 };
-use crate::ui::formatter::{check_no_empty, check_qos, MustInput};
+
 use crate::ui::icons::removed_icon;
 use crate::ui::ids::{
-    TextBoxErrorDelegate, CLEAR_ERROR, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC,
+    CLEAR_ERROR, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC,
     ID_SUBSCRIBE_QOS, ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SHOW_ERROR,
 };
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
 use crate::ui::qos::{down_select_qos, qos_init, qos_success};
 use crate::ForError;
-use chrono::SubsecRound;
+
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{
-    Align, Button, Container, CrossAxisAlignment, Either, Flex, List, Padding, Scroll, Split, Svg,
+    Align, Button, Container, Either, Flex, List, Scroll, Split,
     TextBox,
 };
 use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
-use log::{debug, error, warn};
+use log::{error, warn};
 
 pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     let subscribe_list = Container::new(

@@ -4,15 +4,14 @@ use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::click_ty::ClickTy;
 use crate::data::common::{
-    Broker, Id, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput,
-    SubscribeMsg,
+    Broker, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput,
 };
 use crate::mqtt::data::MqttPublicInput;
 use crate::mqtt::Client;
 use crate::ui::ids::{
     SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID,
 };
-use crate::util::consts::{QosToString, GITHUB_ADDR};
+use crate::util::consts::QosToString;
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
@@ -23,11 +22,11 @@ use bytes::Bytes;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
 use druid::piet::TextStorage;
-use druid::Application;
+
 use for_mqtt_client::SubscribeAck;
 use log::{debug, error, info, warn};
 use std::collections::HashMap;
-use std::hash::Hash;
+
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -291,8 +290,8 @@ fn un_sub_ack(event_sink: &druid::ExtEventSink, broke_id: usize, unsubscribe_pk_
 
 async fn connect_by_button(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &mut HashMap<usize, Client>,
-    tx: Sender<AppEvent>,
+    _mqtt_clients: &mut HashMap<usize, Client>,
+    _tx: Sender<AppEvent>,
     id: usize,
 ) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
@@ -303,7 +302,7 @@ async fn connect_by_button(
 }
 
 async fn connect(
-    event_sink: &druid::ExtEventSink,
+    _event_sink: &druid::ExtEventSink,
     mqtt_clients: &mut HashMap<usize, Client>,
     tx: Sender<AppEvent>,
     broker: Broker,
@@ -443,42 +442,12 @@ fn click_broker(event_sink: &druid::ExtEventSink, id: usize) {
     });
 }
 
-fn db_click_check(clicks: &mut HashMap<usize, usize>, id: usize) {
-    if let Some(_previous) = clicks.remove(&id) {}
-}
-
 fn click_subscribe_his(event_sink: &druid::ExtEventSink, his: SubscribeHis) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.click_subscribe_his(his) {
             error!("{:?}", e);
         }
     });
-}
-
-async fn double_click_subscribe_his(
-    event_sink: &druid::ExtEventSink,
-    tx: Sender<AppEvent>,
-    mqtt_clients: &HashMap<usize, Client>,
-    his: SubscribeHis,
-) -> Result<()> {
-    let index = his.broker_id;
-    if let Some(client) = mqtt_clients.get(&index) {
-        let packet_id = client
-            .to_subscribe(his.topic.as_str().clone(), his.qos.clone().into())
-            .await?;
-        event_sink.add_idle_callback(move |data: &mut AppData| {
-            if let Err(e) = data.subscribe_by_his(index, his, packet_id) {
-                error!("{:?}", e);
-            }
-        });
-    }
-    return Ok(());
-}
-
-async fn db_click_check_subscribe_his(click_his: &mut Option<SubscribeHis>, his: SubscribeHis) {
-    if click_his.as_ref().map_or(false, |x| *x == his) {
-        click_his.take();
-    }
 }
 
 async fn reconnect(
@@ -498,7 +467,7 @@ async fn reconnect(
 }
 
 async fn to_disconnect(
-    event_sink: &druid::ExtEventSink,
+    _event_sink: &druid::ExtEventSink,
     mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
 ) -> Result<()> {
@@ -510,7 +479,7 @@ async fn to_disconnect(
 
 async fn disconnect(
     event_sink: &druid::ExtEventSink,
-    mqtt_clients: &mut HashMap<usize, Client>,
+    _mqtt_clients: &mut HashMap<usize, Client>,
     id: usize,
 ) -> Result<()> {
     event_sink.add_idle_callback(move |data: &mut AppData| {

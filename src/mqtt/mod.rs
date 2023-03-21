@@ -1,17 +1,17 @@
 pub mod data;
 
 use crate::data::common::{Broker, Protocol};
-use crate::data::common::{SignedTy, SubscribeMsg};
-use crate::data::{AString, AppEvent};
+use crate::data::common::{SignedTy};
+use crate::data::{AppEvent};
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
-use crate::util::consts::QosToString;
+
 use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use druid::piet::TextStorage;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::Duration;
+
 
 use for_mqtt_client::protocol::packet::Publish;
 use for_mqtt_client::protocol::MqttOptions;
@@ -154,8 +154,8 @@ fn update_option(mut option: MqttOptions, some: SomeMqttOption) -> MqttOptions {
         clean_session,
         max_incoming_packet_size,
         max_outgoing_packet_size,
-        inflight,
-        conn_timeout,
+        inflight: _,
+        conn_timeout: _,
     } = some;
     // .set_inflight(inflight)
     // .set_connection_timeout(conn_timeout)

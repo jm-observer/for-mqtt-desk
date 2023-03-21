@@ -1,13 +1,13 @@
 use crate::data::AppEvent;
 use crossbeam_channel::Sender;
 use flexi_logger::writers::LogWriter;
-use flexi_logger::{DeferredNow, FormatFunction, Logger};
-use log::{debug, info, Level, Record};
+use flexi_logger::{DeferredNow};
+use log::{Level, Record};
 
 pub struct CustomWriter(pub Sender<AppEvent>);
 
 impl LogWriter for CustomWriter {
-    fn write(&self, now: &mut DeferredNow, record: &Record) -> std::io::Result<()> {
+    fn write(&self, _now: &mut DeferredNow, record: &Record) -> std::io::Result<()> {
         let level = record.level();
         if level <= self.max_log_level() {
             let msg = if level <= Level::Warn {

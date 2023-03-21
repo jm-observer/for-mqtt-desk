@@ -1,11 +1,11 @@
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
-use crate::ui::ids::{SELECTOR_TABS_CLOSE, SELECTOR_TABS_SELECTED, TABS_ID};
+use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::ui::tabs::brokers_tab::BrokersTabs;
 use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Axis, Container, Controller, Tabs, TabsEdge, TabsTransition};
-use druid::{Env, Event, EventCtx, Selector, Widget, WidgetExt, WidgetId};
+use druid::{Env, Event, EventCtx, Widget, WidgetExt};
 
 mod broker_tab;
 mod brokers_tab;

@@ -4,7 +4,7 @@ use crate::data::common::{
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
-use druid::im::{HashMap, Vector};
+use druid::im::{Vector};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

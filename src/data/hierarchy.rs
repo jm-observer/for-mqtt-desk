@@ -1,7 +1,7 @@
-use crate::data::common::{Broker, Id, PayloadTy, QoS, SignedTy};
+use crate::data::common::{Broker, PayloadTy, QoS, SignedTy};
 use crate::data::common::{
-    Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
-    SubscribeStatus, SubscribeTopic, TabStatus,
+    Msg, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
+    SubscribeStatus, SubscribeTopic,
 };
 use crate::data::{AString, AppEvent, EventUnSubscribe};
 use crate::util::consts::QosToString;
@@ -12,10 +12,10 @@ use anyhow::Result;
 use anyhow::{anyhow, bail};
 use bytes::Bytes;
 use crossbeam_channel::Sender;
-use custom_utils::{tx, tx_async};
+use custom_utils::{tx};
 use druid::im::Vector;
-use druid::{im::HashMap, Data, Lens};
-use for_mqtt_client::protocol::packet::{PubAck, SubscribeReasonCode};
+use druid::{Data, Lens};
+use for_mqtt_client::protocol::packet::{SubscribeReasonCode};
 use for_mqtt_client::SubscribeAck;
 use log::{debug, error, warn};
 use std::sync::Arc;
@@ -134,7 +134,7 @@ impl AppData {
             .ok_or(anyhow!("could not find broker selected"))
     }
     pub fn get_mut_selected_broker_or_zero(&mut self) -> &mut Broker {
-        let index = match self.get_selected_broker_index() {
+        let _index = match self.get_selected_broker_index() {
             None => 0,
             Some(index) => index,
         };
@@ -313,7 +313,7 @@ impl AppData {
             .subscribe_topics
             .iter()
             .enumerate()
-            .find(|(index, x)| x.topic == sub.topic)
+            .find(|(_index, x)| x.topic == sub.topic)
         {
             broker.subscribe_topics.remove(index);
             broker.subscribe_topics.push_back(sub.into());
@@ -563,7 +563,7 @@ impl AppData {
         Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
     pub fn clear_msg(&mut self, id: usize) -> Result<()> {
-        let broker = self.find_mut_broker_by_id(id)?.msgs.clear();
+        let _broker = self.find_mut_broker_by_id(id)?.msgs.clear();
         Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
     }
 

@@ -6,7 +6,7 @@ use crate::data::AString;
 use crate::mqtt;
 use crate::util::consts::QosToString;
 use crate::util::now_time;
-use druid::Data;
+
 use std::sync::Arc;
 
 impl SubscribeTopic {

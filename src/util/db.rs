@@ -4,12 +4,12 @@ use sled::{Config, Db};
 use std::sync::Arc;
 
 use crate::data::common::{
-    Broker, Protocol, PublicInput, SignedTy, SubscribeHis, SubscribeInput, TabStatus,
+    Broker, Protocol, PublicInput, SignedTy, SubscribeInput, TabStatus,
 };
 use crate::data::db::{BrokerDB, DbKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
-use druid::im::{HashMap, Vector};
+use druid::im::{Vector};
 use log::{debug, warn};
 
 #[derive(Clone, Debug)]
@@ -163,11 +163,11 @@ const OPTION: &str = r#"{
 
 #[cfg(test)]
 mod test {
-    use crate::data::common::Broker;
-    use crate::util::db::BROKERS;
-    use druid::im::vector;
-    use sled::Config;
-    use std::sync::Arc;
+    
+    
+    
+    
+    
 
     #[test]
     fn insert_broker() {
