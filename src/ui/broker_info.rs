@@ -257,9 +257,6 @@ fn connect_button(connect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
     Button::new(LocalizedString::new("Connect")).on_click(move |_ctx, broker: &mut Broker, _env| {
         debug!("{:?}", broker);
         _ctx.set_focus(ID_BUTTON_CONNECT);
-        if broker.client_id.as_str().is_empty() {
-            broker.client_id = general_id().into();
-        }
         if let Err(e) = connect_tx_1.send(AppEvent::ConnectByButton(broker.id)) {
             error!("{:?}", e);
         }

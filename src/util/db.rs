@@ -40,24 +40,6 @@ impl ArcDb {
             for (index, id) in db_brokers_ids.into_iter().enumerate() {
                 if let Some(val) = self.db.remove(DbKey::broker_key(id).as_bytes()?)? {
                     let broker: BrokerDB = serde_json::from_slice(&val)?;
-                    // broker.id = index;
-                    // let hises = if let Some(val) =
-                    //     self.db.remove(DbKey::subscribe_his_key(id).as_bytes()?)?
-                    // {
-                    //     let mut hises: Vector<SubscribeHis> = serde_json::from_slice(&val)?;
-                    //     hises = {
-                    //         let mut tmp = Vector::new();
-                    //         for mut his in hises {
-                    //             his.broker_id = index;
-                    //             tmp.push_back(his);
-                    //         }
-                    //         tmp
-                    //     };
-                    //     hises
-                    // } else {
-                    //     Vector::new()
-                    // };
-                    // debug!("{:?} {:?}", broker, hises);
                     brokers.push_back(broker);
                     // subscribe_hises.insert(index, hises);
                     self.ids.push_back(index);
@@ -72,13 +54,6 @@ impl ArcDb {
         let mut brokers = Vector::new();
         {
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
-            // for (index, his_tmp) in subscribe_hises.iter() {
-            //     self.db.insert(
-            //         DbKey::subscribe_his_key(*index).as_bytes()?,
-            //         serde_json::to_vec(&his_tmp)?,
-            //     )?;
-            // }
-
             for tmp_broker in db_brokers.into_iter() {
                 self.db.insert(
                     DbKey::broker_key(tmp_broker.id).as_bytes()?,
@@ -93,7 +68,7 @@ impl ArcDb {
             db: self.clone(),
             hint: "".to_string().into(),
             self_signed_file: None,
-            display_history: true,
+            display_history: false,
             display_broker_info: false,
             tx: self.tx.clone(),
         })

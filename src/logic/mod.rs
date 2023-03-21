@@ -491,7 +491,7 @@ async fn reconnect(
     }
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.reconnect(id) {
-            error!("{:?}", e);
+            error!("{}", e.to_string());
         }
     });
     Ok(())

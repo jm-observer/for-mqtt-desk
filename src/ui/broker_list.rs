@@ -17,30 +17,36 @@ use crate::ui::qos::qos_init;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::Svg;
 use druid::widget::{
     Button, Container, CrossAxisAlignment, Either, Flex, Label, List, Padding, Scroll, Split,
 };
+use druid::widget::{SizedBox, Svg};
 use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
 use log::{debug, error};
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
-    Either::<AppData>::new(
-        |x, env| x.get_selected_broker().is_ok(),
-        Split::rows(
-            Container::new(init_broker_list_1(tx.clone()))
-                .rounded(8.0)
-                .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+    Split::rows(
+        Container::new(init_broker_list_1(tx.clone()))
+            .rounded(8.0)
+            .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+        Either::<AppData>::new(
+            |x, env| {
+                if let Ok(broker) = x.get_selected_broker() {
+                    broker.stored
+                } else {
+                    false
+                }
+            },
             Container::new(init_subscribe_his_list(tx.clone()).lens(BrokerSelectedOrZero))
                 .rounded(8.0)
                 .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
-        )
-        .split_point(0.55)
-        .draggable(true)
-        .padding(5.0),
-        init_broker_list_1(tx),
+            SizedBox::empty(),
+        ),
     )
+    .split_point(0.55)
+    .draggable(true)
+    .padding(5.0)
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {

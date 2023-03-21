@@ -1,4 +1,4 @@
-use crate::data::common::{Broker, Id, PayloadTy, QoS};
+use crate::data::common::{Broker, Id, PayloadTy, QoS, SignedTy};
 use crate::data::common::{
     Msg, PublicInput, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic, TabStatus,
@@ -7,7 +7,7 @@ use crate::data::{AString, AppEvent, EventUnSubscribe};
 use crate::util::consts::QosToString;
 use crate::util::db::ArcDb;
 use crate::util::hint::*;
-use crate::util::now_time;
+use crate::util::{general_id, now_time};
 use anyhow::Result;
 use anyhow::{anyhow, bail};
 use bytes::Bytes;
@@ -188,13 +188,33 @@ impl AppData {
         Ok(())
     }
     pub fn init_connection(&mut self, id: usize) -> Result<()> {
-        self.init_broker_tab(id);
         let broker = self.find_mut_broker_by_id(id)?;
+        if broker.client_id.as_str().is_empty() {
+            broker.client_id = general_id().into();
+        }
+
+        if broker.addr.is_empty() {
+            bail!("addr not be empty");
+        } else if broker.port.is_none() {
+            bail!("port not be empty");
+        } else if broker.use_credentials {
+            if broker.user_name.is_empty() {
+                bail!("user name not be empty");
+            } else if broker.password.is_empty() {
+                bail!("password not be empty");
+            }
+        } else if broker.tls && broker.signed_ty == SignedTy::SelfSigned {
+            if broker.self_signed_ca.is_empty() {
+                bail!("self signed ca not be empty");
+            }
+        }
         broker.tab_status.try_connect = true;
         broker.stored = true;
         let broker_db = broker.clone_to_db();
         let broker = broker.clone();
+        self.init_broker_tab(id);
         self.db.save_broker(broker_db)?;
+        self.display_broker_info = false;
         self.send_event(AppEvent::ToConnect(broker));
         Ok(())
     }
@@ -429,6 +449,7 @@ impl AppData {
                 broker.selected = false;
             }
         }
+        self.display_broker_info = true;
     }
     pub fn touch_delete_broker_selected(&mut self) -> Result<()> {
         let broker = self.brokers.remove(
@@ -449,6 +470,17 @@ impl AppData {
             self.touch_add_broker();
         }
         Ok(())
+    }
+
+    pub fn init_broker(&mut self) {
+        if self.brokers.len() == 0 {
+            self.touch_add_broker();
+            self.display_broker_info = true;
+            self.display_history = false;
+        } else {
+            self.display_broker_info = false;
+            self.display_history = true;
+        }
     }
 
     pub fn click_subscribe_his(&mut self, his: SubscribeHis) -> Result<()> {
