@@ -5,10 +5,11 @@ pub mod hierarchy;
 pub mod lens;
 
 use crate::data::click_ty::ClickTy;
-use crate::data::common::{PublicInput, QoS, SubscribeHis, SubscribeInput};
+use crate::data::common::{QoS, SubscribeHis, SubscribeTopic};
 use bytes::Bytes;
 use common::Broker;
 
+use crate::mqtt::data::MqttPublicInput;
 use for_mqtt_client::{SubscribeAck, UnsubscribeAck};
 use std::sync::Arc;
 
@@ -37,16 +38,20 @@ pub enum AppEvent {
     // select brokers tab
     SelectTabs(usize),
     RemoveSubscribeHis,
-    Subscribe(SubscribeInput, usize),
-    SubscribeFromHis(SubscribeHis),
+    /// 根据输入进行订阅
+    TouchSubscribeByInput(usize),
+    TouchSubscribeFromHis(SubscribeHis),
+    /// 通知client进行订阅
+    ToSubscribe(SubscribeTopic),
     ToUnSubscribe {
         broker_id: usize,
         trace_id: u32,
     },
+    ToPublish(MqttPublicInput),
     UnSubscribeIng(EventUnSubscribe),
     ConnectAckSuccess(usize),
     ConnectAckFail(usize, Arc<String>),
-    Public(PublicInput),
+    TouchPublic(usize),
     ReceivePublic(usize, Arc<String>, Arc<Bytes>, QoS),
     PubAck(usize, u32),
     SubAck(usize, SubscribeAck),

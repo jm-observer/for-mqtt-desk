@@ -4,27 +4,27 @@ use crate::mqtt::{init_connect, mqtt_public, mqtt_subscribe, to_unsubscribe};
 // use crate::ui::tabs::init_brokers_tabs;
 use crate::data::click_ty::ClickTy;
 use crate::data::common::{
-    Broker, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput,
+    Broker, QoS, SubscribeHis, SubscribeTopic,
 };
 use crate::mqtt::data::MqttPublicInput;
 use crate::mqtt::Client;
 use crate::ui::ids::{
     SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID,
 };
-use crate::util::consts::QosToString;
+
 use crate::util::hint::{
     DELETE_BROKER_SUCCESS, DELETE_SUBSCRIBE_SUCCESS, DISCONNECT_SUCCESS, PUBLISH_SUCCESS,
     SAVE_BROKER_SUCCESS, SUBSCRIBE_SUCCESS, UNSUBSCRIBE_SUCCESS,
 };
-use crate::util::now_time;
+
 use anyhow::Result;
 use bytes::Bytes;
 use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
-use druid::piet::TextStorage;
+
 
 use for_mqtt_client::SubscribeAck;
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use std::collections::HashMap;
 
 use std::sync::Arc;
@@ -64,14 +64,14 @@ pub async fn deal_event(
             AppEvent::ConnectByButton(broke_id) => {
                 connect_by_button(&event_sink, &mut mqtt_clients, tx.clone(), broke_id).await
             }
-            AppEvent::Subscribe(input, index) => {
-                subscribe(&event_sink, &mqtt_clients, index, input).await
+            AppEvent::TouchSubscribeByInput(index) => {
+                touch_subscribe_by_input(&event_sink, index).await
             }
-            AppEvent::SubscribeFromHis(his) => {
-                subscribe_from_his(&event_sink, &mqtt_clients, his).await
+            AppEvent::TouchSubscribeFromHis(his) => {
+                touch_subscribe_from_his(&event_sink, his).await
             }
-            AppEvent::Public(input) => {
-                if let Err(e) = publish(&event_sink, &mqtt_clients, input.broker_id, input).await {
+            AppEvent::TouchPublic(broker_id) => {
+                if let Err(e) = touch_publish(&event_sink, broker_id).await {
                     error!("{:?}", e);
                 }
             }
@@ -117,7 +117,7 @@ pub async fn deal_event(
                         click_his = Some(ty)
                     } else {
                         // double click
-                        if let Err(e) = double_click(&event_sink, ty, &mqtt_clients).await {
+                        if let Err(e) = double_click(&event_sink, ty).await {
                             error!("{:?}", e);
                         }
                     }
@@ -145,6 +145,14 @@ pub async fn deal_event(
                     error!("{:?}", e);
                 }
             }
+            AppEvent::ToSubscribe(input) => {
+                to_subscribe(&mqtt_clients, input).await;
+            }
+            AppEvent::ToPublish(input) => {
+                if let Err(e) = to_publish(&mqtt_clients, input).await {
+                    error!("{:?}", e);
+                }
+            }
         }
     }
 }
@@ -158,11 +166,7 @@ async fn first_click(event_sink: &druid::ExtEventSink, ty: ClickTy) {
         ClickTy::SubscribeHis(his) => click_subscribe_his(event_sink, his.clone()),
     }
 }
-async fn double_click(
-    event_sink: &druid::ExtEventSink,
-    ty: ClickTy,
-    mqtt_clients: &HashMap<usize, Client>,
-) -> Result<()> {
+async fn double_click(event_sink: &druid::ExtEventSink, ty: ClickTy) -> Result<()> {
     match ty {
         ClickTy::Broker(id) => {
             event_sink.add_idle_callback(move |data: &mut AppData| {
@@ -175,17 +179,19 @@ async fn double_click(
             to_un_subscribe(&event_sink, broker_id, trace_id);
         }
         ClickTy::SubscribeHis(his) => {
-            let index = his.broker_id;
-            if let Some(client) = mqtt_clients.get(&index) {
-                let packet_id = client
-                    .to_subscribe(his.topic.as_str().clone(), his.qos.clone().into())
-                    .await?;
-                event_sink.add_idle_callback(move |data: &mut AppData| {
-                    if let Err(e) = data.subscribe_by_his(index, his, packet_id) {
-                        error!("{:?}", e);
-                    }
-                });
-            }
+            event_sink.add_idle_callback(move |data: &mut AppData| {
+                if let Err(e) = data.touch_subscribe_from_his(his) {
+                    error!("{:?}", e);
+                }
+            });
+            //
+            // let index = his.broker_id;
+            // if let Some(client) = mqtt_clients.get(&index) {
+            //     let packet_id = client
+            //         .to_subscribe(his.topic.as_str().clone(), his.qos.clone().into())
+            //         .await?;
+            //
+            // }
         }
     }
     Ok(())
@@ -323,74 +329,42 @@ async fn connect(
     }
 }
 
-async fn subscribe(
-    event_sink: &druid::ExtEventSink,
-    mqtt_clients: &HashMap<usize, Client>,
-    index: usize,
-    input: SubscribeInput,
-) {
-    match mqtt_subscribe(index, input.clone().into(), &mqtt_clients).await {
-        Ok(id) => {
-            event_sink.add_idle_callback(move |data: &mut AppData| {
-                if let Err(e) = data.subscribe_by_input(index, input, id) {
-                    error!("{:?}", e);
-                }
-            });
-        }
-        Err(e) => {
-            error!("{:?}", e);
-        }
-    }
-}
-
-async fn subscribe_from_his(
-    event_sink: &druid::ExtEventSink,
-    mqtt_clients: &HashMap<usize, Client>,
-    input: SubscribeHis,
-) {
-    match mqtt_subscribe(input.broker_id, input.clone().into(), &mqtt_clients).await {
-        Ok(id) => {
-            event_sink.add_idle_callback(move |data: &mut AppData| {
-                if let Err(e) = data.subscribe_by_his(input.broker_id, input, id) {
-                    error!("{:?}", e);
-                }
-            });
-        }
-        Err(e) => {
-            error!("{:?}", e);
-        }
-    }
-}
-
-async fn publish(
-    event_sink: &druid::ExtEventSink,
-    mqtt_clients: &HashMap<usize, Client>,
-    index: usize,
-    input: PublicInput,
-) -> anyhow::Result<()> {
-    let (payload, payload_str) = input.payload_ty.to_bytes(&input.msg)?;
-    debug!("{:?} {:x}", payload_str, payload);
-    let publish = MqttPublicInput {
-        topic: input.topic.clone(),
-        msg: payload,
-        qos: input.qos.clone(),
-        retain: input.retain,
-    };
-    let id = mqtt_public(index, publish, &mqtt_clients).await?;
-    let msg = PublicMsg {
-        trace_id: id,
-        topic: input.topic,
-        msg: Arc::new(payload_str),
-        qos: input.qos.qos_to_string(),
-        status: PublicStatus::Ing,
-        payload_ty: input.payload_ty.to_arc_string(),
-        time: Arc::new(now_time()),
-    };
+async fn touch_subscribe_by_input(event_sink: &druid::ExtEventSink, index: usize) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.publish(index, msg, id) {
+        if let Err(e) = data.touch_subscribe_by_input(index) {
             error!("{:?}", e);
         }
     });
+}
+
+async fn to_subscribe(mqtt_clients: &HashMap<usize, Client>, input: SubscribeTopic) {
+    match mqtt_subscribe(input.broker_id, input.clone().into(), &mqtt_clients).await {
+        Ok(()) => {}
+        Err(e) => {
+            error!("{:?}", e);
+        }
+    }
+}
+
+async fn touch_subscribe_from_his(event_sink: &druid::ExtEventSink, input: SubscribeHis) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.touch_subscribe_from_his(input) {
+            error!("{:?}", e);
+        }
+    });
+}
+
+async fn touch_publish(event_sink: &druid::ExtEventSink, broker_id: usize) -> Result<()> {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.publish(broker_id) {
+            error!("{:?}", e);
+        }
+    });
+    Ok(())
+}
+
+async fn to_publish(mqtt_clients: &HashMap<usize, Client>, publish: MqttPublicInput) -> Result<()> {
+    mqtt_public(publish.broker_id, publish, &mqtt_clients).await?;
     Ok(())
 }
 

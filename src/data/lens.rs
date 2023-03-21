@@ -1,12 +1,10 @@
-use crate::data::common::Broker;
-use crate::data::common::{
-    Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic,
-};
+use crate::data::common::{Broker, QoS};
+use crate::data::common::{Msg, PublicInput, SubscribeHis, SubscribeInput, SubscribeTopic};
 use crate::data::hierarchy::AppData;
 use crate::data::AString;
 use crate::util::consts::QosToString;
 use druid::im::Vector;
-use druid::{Lens};
+use druid::Lens;
 
 use std::sync::Arc;
 
@@ -371,5 +369,16 @@ impl Lens<SubscribeHis, Arc<String>> for SubscribeHisPayloadLens {
 
     fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut SubscribeHis, f: F) -> V {
         f(&mut data.payload_ty.to_arc_string())
+    }
+}
+
+pub struct LensQoSAString;
+impl Lens<QoS, Arc<String>> for LensQoSAString {
+    fn with<V, F: FnOnce(&Arc<String>) -> V>(&self, data: &QoS, f: F) -> V {
+        f(&data.qos_to_string())
+    }
+
+    fn with_mut<V, F: FnOnce(&mut Arc<String>) -> V>(&self, data: &mut QoS, f: F) -> V {
+        f(&mut data.qos_to_string())
     }
 }

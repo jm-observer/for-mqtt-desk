@@ -3,13 +3,11 @@ use crossbeam_channel::Sender;
 use sled::{Config, Db};
 use std::sync::Arc;
 
-use crate::data::common::{
-    Broker, Protocol, PublicInput, SignedTy, SubscribeInput, TabStatus,
-};
+use crate::data::common::{Broker, Protocol, PublicInput, SignedTy, SubscribeInput, TabStatus};
 use crate::data::db::{BrokerDB, DbKey};
 use crate::data::hierarchy::AppData;
 use crate::data::AppEvent;
-use druid::im::{Vector};
+use druid::im::Vector;
 use log::{debug, warn};
 
 #[derive(Clone, Debug)]
@@ -33,16 +31,16 @@ impl ArcDb {
     }
 
     pub fn read_app_data(&mut self) -> Result<AppData> {
-        let db_brokers = if let Some(val) = self.db.remove(BROKERS)? {
+        let brokers = if let Some(val) = self.db.get(BROKERS)? {
             let db_brokers_ids: Vector<usize> = serde_json::from_slice(&val)?;
             let mut brokers = Vector::new();
-            self.index = db_brokers_ids.len();
-            for (index, id) in db_brokers_ids.into_iter().enumerate() {
-                if let Some(val) = self.db.remove(DbKey::broker_key(id).as_bytes()?)? {
+            for id in db_brokers_ids.into_iter() {
+                if id > self.index {
+                    self.index = id;
+                }
+                if let Some(val) = self.db.get(DbKey::broker_key(id).as_bytes()?)? {
                     let broker: BrokerDB = serde_json::from_slice(&val)?;
-                    brokers.push_back(broker);
-                    // subscribe_hises.insert(index, hises);
-                    self.ids.push_back(index);
+                    brokers.push_back(broker.to_broker(self.tx.clone()));
                 } else {
                     warn!("can't find id: {}", id);
                 };
@@ -51,17 +49,17 @@ impl ArcDb {
         } else {
             Vector::new()
         };
-        let mut brokers = Vector::new();
-        {
-            self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
-            for tmp_broker in db_brokers.into_iter() {
-                self.db.insert(
-                    DbKey::broker_key(tmp_broker.id).as_bytes()?,
-                    serde_json::to_vec(&tmp_broker)?,
-                )?;
-                brokers.push_back(tmp_broker.to_broker(self.tx.clone()));
-            }
-        }
+        // let mut brokers = Vector::new();
+        // {
+        //     self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
+        //     for tmp_broker in db_brokers.into_iter() {
+        //         self.db.insert(
+        //             DbKey::broker_key(tmp_broker.id).as_bytes()?,
+        //             serde_json::to_vec(&tmp_broker)?,
+        //         )?;
+        //         brokers.push_back(tmp_broker.to_broker(self.tx.clone()));
+        //     }
+        // }
         Ok(AppData {
             brokers,
             broker_tabs: Default::default(),
@@ -163,11 +161,6 @@ const OPTION: &str = r#"{
 
 #[cfg(test)]
 mod test {
-    
-    
-    
-    
-    
 
     #[test]
     fn insert_broker() {

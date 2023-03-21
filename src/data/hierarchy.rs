@@ -1,9 +1,9 @@
-use crate::data::common::{Broker, PayloadTy, QoS, SignedTy};
+use crate::data::common::{Broker, Id, PayloadTy, QoS, SignedTy};
 use crate::data::common::{
-    Msg, PublicMsg, PublicStatus, SubscribeHis, SubscribeInput, SubscribeMsg,
-    SubscribeStatus, SubscribeTopic,
+    Msg, PublicMsg, PublicStatus, SubscribeHis, SubscribeMsg, SubscribeStatus, SubscribeTopic,
 };
 use crate::data::{AString, AppEvent, EventUnSubscribe};
+use crate::mqtt::data::MqttPublicInput;
 use crate::util::consts::QosToString;
 use crate::util::db::ArcDb;
 use crate::util::hint::*;
@@ -12,10 +12,10 @@ use anyhow::Result;
 use anyhow::{anyhow, bail};
 use bytes::Bytes;
 use crossbeam_channel::Sender;
-use custom_utils::{tx};
+use custom_utils::tx;
 use druid::im::Vector;
 use druid::{Data, Lens};
-use for_mqtt_client::protocol::packet::{SubscribeReasonCode};
+use for_mqtt_client::protocol::packet::SubscribeReasonCode;
 use for_mqtt_client::SubscribeAck;
 use log::{debug, error, warn};
 use std::sync::Arc;
@@ -300,7 +300,8 @@ impl AppData {
         Ok(())
     }
 
-    fn subscribe(&mut self, id: usize, sub: SubscribeTopic) -> Result<()> {
+    fn subscribe(&mut self, sub: SubscribeTopic) -> Result<()> {
+        let id = sub.broker_id;
         let broker = self.find_mut_broker_by_id(id)?;
         if broker
             .subscribe_topics
@@ -308,7 +309,7 @@ impl AppData {
             .find(|x| x.is_equal(&sub))
             .is_none()
         {
-            broker.subscribe_topics.push_back(sub.into());
+            broker.subscribe_topics.push_back(sub.clone().into());
         } else if let Some((index, _)) = broker
             .subscribe_topics
             .iter()
@@ -316,34 +317,44 @@ impl AppData {
             .find(|(_index, x)| x.topic == sub.topic)
         {
             broker.subscribe_topics.remove(index);
-            broker.subscribe_topics.push_back(sub.into());
+            broker.subscribe_topics.push_back(sub.clone().into());
         }
-        Ok(())
-    }
-    pub fn subscribe_by_his(
-        &mut self,
-        id: usize,
-        input: SubscribeHis,
-        trace_id: u32,
-    ) -> Result<()> {
-        self.subscribe(id, SubscribeTopic::from_his(input, trace_id))?;
-        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
-    }
 
-    pub fn subscribe_by_input(
-        &mut self,
-        id: usize,
-        input: SubscribeInput,
-        trace_id: u32,
-    ) -> Result<()> {
-        self.subscribe(id, SubscribeTopic::from(input.clone(), trace_id))?;
-        let broker = self.find_mut_broker_by_id(id)?;
-        let his: SubscribeHis = input.into();
+        let his: SubscribeHis = sub.clone().into();
         if broker.subscribe_hises.iter().find(|x| *x == &his).is_none() {
             broker.subscribe_hises.push_back(his.into());
         }
-        Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
+        self.db.tx.send(AppEvent::ToSubscribe(sub))?;
+        self.db.tx.send(AppEvent::ScrollSubscribeWin)?;
+
+        Ok(())
     }
+    pub fn touch_subscribe_from_his(&mut self, input: SubscribeHis) -> Result<()> {
+        self.subscribe(SubscribeTopic::from_his(input, Id::to_id()))?;
+        Ok(())
+    }
+
+    pub fn touch_subscribe_by_input(&mut self, id: usize) -> Result<()> {
+        let input = self.find_broker_by_id(id)?.subscribe_input.clone();
+        self.subscribe(SubscribeTopic::from(input, Id::to_id()))?;
+        Ok(())
+    }
+
+    // pub fn subscribe_by_input(
+    //     &mut self,
+    //     id: usize,
+    //     input: SubscribeInput,
+    //     trace_id: u32,
+    // ) -> Result<()> {
+    //     self.subscribe(id, SubscribeTopic::from(input.clone(), trace_id))?;
+    //     let broker = self.find_mut_broker_by_id(id)?;
+    //     let his: SubscribeHis = input.into();
+    //     if broker.subscribe_hises.iter().find(|x| *x == &his).is_none() {
+    //         broker.subscribe_hises.push_back(his.into());
+    //     }
+    //     Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
+    // }
+
     pub fn remove_subscribe_his(&mut self) -> Result<()> {
         let Some(id) = self.get_selected_broker_id() else {
             bail!(DELETE_SUBSCRIBE_NO_SELECTED);
@@ -361,6 +372,7 @@ impl AppData {
         }
         bail!(DELETE_SUBSCRIBE_NO_SELECTED);
     }
+
     pub fn sub_ack(&mut self, id: usize, input: SubscribeAck) -> Result<()> {
         let broker = self.find_mut_broker_by_id(id)?;
         let SubscribeAck { id, mut acks } = input;
@@ -372,15 +384,15 @@ impl AppData {
             {
                 match ack {
                     SubscribeReasonCode::QoS0 => {
-                        subscribe_topic.qos = QoS::AtMostOnce.qos_to_string();
+                        subscribe_topic.qos = QoS::AtMostOnce.clone();
                         subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
                     }
                     SubscribeReasonCode::QoS1 => {
-                        subscribe_topic.qos = QoS::AtLeastOnce.qos_to_string();
+                        subscribe_topic.qos = QoS::AtLeastOnce.clone();
                         subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
                     }
                     SubscribeReasonCode::QoS2 => {
-                        subscribe_topic.qos = QoS::ExactlyOnce.qos_to_string();
+                        subscribe_topic.qos = QoS::ExactlyOnce.clone();
                         subscribe_topic.status = SubscribeStatus::SubscribeSuccess;
                     }
                     _reasone => {
@@ -396,14 +408,41 @@ impl AppData {
         //     warn!("could not find subscribe");
         // }
     }
-    pub fn publish(&mut self, id: usize, input: PublicMsg, trace_id: u32) -> Result<()> {
-        debug!("publish: tarce_id {}", trace_id);
+    pub fn publish(&mut self, id: usize) -> Result<()> {
         let broker = self.find_mut_broker_by_id(id)?;
-        broker.msgs.push_back(input.into());
+        let (payload, payload_str) = broker
+            .public_input
+            .payload_ty
+            .to_bytes(&broker.public_input.msg)?;
+        let trace_id = Id::to_id();
+        let msg = PublicMsg {
+            trace_id,
+            topic: broker.public_input.topic.clone(),
+            msg: Arc::new(payload_str),
+            qos: broker.public_input.qos.qos_to_string(),
+            status: PublicStatus::Ing,
+            payload_ty: broker.public_input.payload_ty.to_arc_string(),
+            time: Arc::new(now_time()),
+        };
+        debug!("publish: tarce_id {}", trace_id);
+
+        broker.msgs.push_back(msg.into());
         if broker.msgs.len() > 50 {
             broker.msgs.pop_front();
         }
-        Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
+
+        let publish = MqttPublicInput {
+            broker_id: broker.id,
+            trace_id,
+            topic: broker.public_input.topic.clone(),
+            msg: payload,
+            qos: broker.public_input.qos.clone(),
+            retain: broker.public_input.retain,
+        };
+
+        self.send_event(AppEvent::ToPublish(publish));
+        self.send_event(AppEvent::ScrollMsgWin);
+        Ok(())
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
         self.select_broker(id);

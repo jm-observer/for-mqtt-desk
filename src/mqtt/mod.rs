@@ -1,8 +1,8 @@
 pub mod data;
 
+use crate::data::common::SignedTy;
 use crate::data::common::{Broker, Protocol};
-use crate::data::common::{SignedTy};
-use crate::data::{AppEvent};
+use crate::data::AppEvent;
 use crate::mqtt::data::{MqttPublicInput, MqttSubscribeInput};
 
 use anyhow::{bail, Result};
@@ -11,7 +11,6 @@ use druid::piet::TextStorage;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 
 use for_mqtt_client::protocol::packet::Publish;
 use for_mqtt_client::protocol::MqttOptions;
@@ -27,12 +26,13 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
         // error!("port is none");
         bail!("port is none");
     };
-    let mut mqttoptions = MqttOptions::new(broker.client_id.clone(), broker.addr.as_str(), port);
+    let mut mqttoptions = MqttOptions::new(broker.client_id.clone(), broker.addr.as_str(), port)?;
     if broker.use_credentials {
         mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }
     let some = serde_json::from_str(broker.params.as_str())?;
-    let mqttoptions = update_tls_option(update_option(mqttoptions, some), broker.clone()).auto_reconnect();
+    let mqttoptions =
+        update_tls_option(update_option(mqttoptions, some), broker.clone()).auto_reconnect();
     debug!("{:?}", mqttoptions);
     let client = match broker.protocol {
         Protocol::V4 => mqttoptions.connect_to_v4().await,
@@ -117,11 +117,13 @@ pub async fn mqtt_subscribe(
     index: usize,
     input: MqttSubscribeInput,
     clients: &HashMap<usize, Client>,
-) -> Result<u32> {
+) -> Result<()> {
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
-    Ok(client.to_subscribe(input.topic, input.qos.into()).await?)
+    Ok(client
+        .to_subscribe_with_trace_id(input.topic, input.qos.into(), input.trace_id)
+        .await?)
 }
 
 pub async fn to_unsubscribe(
@@ -139,12 +141,18 @@ pub async fn mqtt_public(
     index: usize,
     input: MqttPublicInput,
     clients: &HashMap<usize, Client>,
-) -> Result<u32> {
+) -> Result<()> {
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
     Ok(client
-        .publish(input.topic, input.qos.into(), input.msg, input.retain)
+        .publish_with_trace_id(
+            input.topic,
+            input.qos.into(),
+            input.msg,
+            input.retain,
+            input.trace_id,
+        )
         .await?)
 }
 

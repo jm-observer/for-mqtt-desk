@@ -5,15 +5,14 @@ use crate::data::hierarchy::UnsubcribeTracing;
 use crate::data::{AString, AppEvent};
 use crate::util::consts::{TY_HEX, TY_JSON, TY_TEXT};
 use anyhow::bail;
-use bytes::{Bytes};
+use bytes::Bytes;
 use crossbeam_channel::Sender;
-use druid::im::{Vector};
+use druid::im::Vector;
 use druid::{Data, Lens};
 use log::{debug, warn};
 use pretty_hex::simple_hex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
 
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -22,6 +21,12 @@ static U32: AtomicU32 = AtomicU32::new(0);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Data)]
 pub struct Id(u32);
+
+impl Id {
+    pub fn to_id() -> u32 {
+        Self::default().0
+    }
+}
 
 impl Default for Id {
     fn default() -> Self {
@@ -36,14 +41,14 @@ pub struct SubscribeTopic {
     #[data(ignore)]
     pub topic: AString,
     #[data(ignore)]
-    pub qos: AString,
+    pub qos: QoS,
     pub status: SubscribeStatus,
     pub payload_ty: PayloadTy,
 }
 #[derive(Debug, Clone, Eq, Lens, Deserialize, Serialize, Data)]
 pub struct SubscribeHis {
-    #[serde(skip)]
-    pub(crate) id: Id,
+    // #[serde(skip)]
+    // pub(crate) id: Id,
     #[serde(skip)]
     pub(crate) broker_id: usize,
     #[serde(skip)]

@@ -1,8 +1,11 @@
-use crate::data::common::{QoS, SubscribeHis, SubscribeInput};
+use crate::data::common::{QoS, SubscribeTopic};
 use bytes::Bytes;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct MqttPublicInput {
+    pub broker_id: usize,
+    pub trace_id: u32,
     pub topic: Arc<String>,
     pub msg: Bytes,
     pub qos: QoS,
@@ -10,6 +13,7 @@ pub struct MqttPublicInput {
 }
 
 pub struct MqttSubscribeInput {
+    pub trace_id: u32,
     pub topic: String,
     pub qos: QoS,
 }
@@ -25,19 +29,20 @@ pub struct MqttSubscribeInput {
 //         }
 //     }
 // }
-impl From<SubscribeInput> for MqttSubscribeInput {
-    fn from(val: SubscribeInput) -> Self {
+impl From<SubscribeTopic> for MqttSubscribeInput {
+    fn from(val: SubscribeTopic) -> Self {
         Self {
+            trace_id: val.trace_id,
             topic: val.topic.as_ref().clone(),
             qos: QoS::AtLeastOnce,
         }
     }
 }
-impl From<SubscribeHis> for MqttSubscribeInput {
-    fn from(val: SubscribeHis) -> Self {
-        Self {
-            topic: val.topic.as_ref().clone(),
-            qos: val.qos.into(),
-        }
-    }
-}
+// impl From<SubscribeHis> for MqttSubscribeInput {
+//     fn from(val: SubscribeHis) -> Self {
+//         Self {
+//             topic: val.topic.as_ref().clone(),
+//             qos: val.qos.into(),
+//         }
+//     }
+// }

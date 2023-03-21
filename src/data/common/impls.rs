@@ -1,5 +1,5 @@
 use crate::data::common::{
-    Id, Msg, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput, SubscribeMsg,
+    Msg, PublicInput, PublicMsg, PublicStatus, QoS, SubscribeHis, SubscribeInput, SubscribeMsg,
     SubscribeStatus, SubscribeTopic,
 };
 use crate::data::AString;
@@ -10,12 +10,12 @@ use crate::util::now_time;
 use std::sync::Arc;
 
 impl SubscribeTopic {
-    pub fn from(val: SubscribeInput, packet_id: u32) -> Self {
+    pub fn from(val: SubscribeInput, trace_id: u32) -> Self {
         Self {
             broker_id: val.broker_id,
-            trace_id: packet_id,
+            trace_id,
             topic: val.topic.clone(),
-            qos: val.qos.qos_to_string(),
+            qos: val.qos.clone(),
             status: SubscribeStatus::SubscribeIng,
             payload_ty: val.payload_ty,
         }
@@ -25,7 +25,7 @@ impl SubscribeTopic {
             broker_id: val.broker_id,
             trace_id,
             topic: val.topic.clone(),
-            qos: val.qos.qos_to_string(),
+            qos: val.qos.clone(),
             status: SubscribeStatus::SubscribeIng,
             payload_ty: val.payload_ty,
         }
@@ -59,7 +59,20 @@ impl PublicMsg {
 impl From<SubscribeInput> for SubscribeHis {
     fn from(val: SubscribeInput) -> Self {
         Self {
-            id: Id::default(),
+            // id: Id::default(),
+            broker_id: val.broker_id,
+            selected: false,
+            topic: val.topic.clone(),
+            qos: val.qos.clone(),
+            payload_ty: val.payload_ty,
+        }
+    }
+}
+
+impl From<SubscribeTopic> for SubscribeHis {
+    fn from(val: SubscribeTopic) -> Self {
+        Self {
+            // id: Id::default(),
             broker_id: val.broker_id,
             selected: false,
             topic: val.topic.clone(),

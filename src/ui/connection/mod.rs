@@ -2,8 +2,8 @@ use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Msg, PublicInput, SubscribeInput, SubscribeTopic};
 
 use crate::data::lens::{
-    MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens,
-    MsgTopicLens, SubscribeTopicPayloadLens,
+    LensQoSAString, MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens, MsgTopicLens,
+    SubscribeTopicPayloadLens,
 };
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
@@ -13,8 +13,8 @@ use crate::ui::common::{
 
 use crate::ui::icons::removed_icon;
 use crate::ui::ids::{
-    CLEAR_ERROR, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC,
-    ID_SUBSCRIBE_QOS, ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SHOW_ERROR,
+    CLEAR_ERROR, ID_PUBLISH_MSG, ID_PUBLISH_QOS, ID_PUBLISH_TOPIC, ID_SUBSCRIBE_QOS,
+    ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SHOW_ERROR,
 };
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
 use crate::ui::qos::{down_select_qos, qos_init, qos_success};
@@ -24,10 +24,7 @@ use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{
-    Align, Button, Container, Either, Flex, List, Scroll, Split,
-    TextBox,
-};
+use druid::widget::{Align, Button, Container, Either, Flex, List, Scroll, Split, TextBox};
 use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{error, warn};
@@ -87,8 +84,8 @@ fn init_subscribe_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
             ))
             .with_child(Either::new(
                 |data: &SubscribeTopic, _env| data.is_sucess(),
-                qos_success(SubscribeTopic::qos),
-                qos_init(SubscribeTopic::qos),
+                qos_success(SubscribeTopic::qos.then(LensQoSAString)),
+                qos_init(SubscribeTopic::qos.then(LensQoSAString)),
             ))
             .with_child(payload_ty_init(SubscribeTopicPayloadLens))
             .with_child(
@@ -249,13 +246,6 @@ fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                 .with_child(label_static("topic", UnitPoint::RIGHT))
                 .with_child(
                     TextBox::new()
-                        // .with_formatter(MustInput)
-                        // .update_data_while_editing(true)
-                        // .validate_while_editing(false)
-                        // .delegate(
-                        //     TextBoxErrorDelegate::new(ID_SUBSCRIBE_TOPIC, check_no_empty)
-                        //         .sends_partial_errors(true),
-                        // )
                         .lens(Broker::subscribe_input.then(SubscribeInput::topic))
                         .fix_width(150.),
                 )
@@ -280,7 +270,6 @@ fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                     down_select_payload_ty()
                         .lens(Broker::subscribe_input.then(SubscribeInput::payload_ty)),
                 )
-                // .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
         )
         .with_child(
@@ -297,8 +286,7 @@ fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                             return;
                         }
                         ctx.submit_command(CLEAR_ERROR.to(ID_SUBSCRIBE_TOPIC));
-                        if let Err(e) = subscribe_tx
-                            .send(AppEvent::Subscribe(data.subscribe_input.clone(), data.id))
+                        if let Err(e) = subscribe_tx.send(AppEvent::TouchSubscribeByInput(data.id))
                         {
                             error!("{:?}", e);
                         }
@@ -387,9 +375,7 @@ fn init_public_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                         }
                         ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_TOPIC));
                         ctx.submit_command(CLEAR_ERROR.to(ID_PUBLISH_MSG));
-                        if let Err(e) =
-                            public_tx.send(AppEvent::Public(broker.public_input.clone()))
-                        {
+                        if let Err(e) = public_tx.send(AppEvent::TouchPublic(broker.id)) {
                             error!("{:?}", e);
                         }
                     })

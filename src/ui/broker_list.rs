@@ -6,9 +6,7 @@ use crate::data::lens::{
 };
 use crate::data::AppEvent;
 
-use crate::ui::common::{
-    label_dy, label_dy_expand_width, svg, title, SILVER, TOPIC,
-};
+use crate::ui::common::{label_dy, label_dy_expand_width, svg, title, SILVER, TOPIC};
 use crate::ui::icons::{added_icon, connect_icon, modified_icon, removed_icon};
 
 use crate::ui::payload_ty::payload_ty_init;
@@ -16,13 +14,11 @@ use crate::ui::qos::qos_init;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{
-    Container, CrossAxisAlignment, Either, Flex, List, Scroll, Split,
-};
-use druid::widget::{SizedBox};
+use druid::widget::SizedBox;
+use druid::widget::{Container, CrossAxisAlignment, Either, Flex, List, Scroll, Split};
 use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
-use log::{error};
+use log::error;
 
 pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     Split::rows(
@@ -94,7 +90,9 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
         .with_child(
             svg(connect_icon()).on_click(move |_ctx, data: &mut Broker, _env| {
                 if let Some(his) = data.subscribe_hises.iter().find(|x| x.selected) {
-                    if let Err(_) = tx_connect_icon.send(AppEvent::SubscribeFromHis(his.clone())) {
+                    if let Err(_) =
+                        tx_connect_icon.send(AppEvent::TouchSubscribeFromHis(his.clone()))
+                    {
                         error!("fail to send event");
                     }
                 }
