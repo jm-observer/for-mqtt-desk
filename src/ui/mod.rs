@@ -3,15 +3,15 @@ use crate::data::lens::BrokerSelectedOrZero;
 use crate::data::AppEvent;
 use crate::ui::broker_info::display_broker;
 use crate::ui::broker_list::init_broker_list;
-use crate::ui::common::{LABLE_PADDING};
+use crate::ui::common::*;
+use crate::ui::icons::{broker_info, broker_list, tips};
+use crate::ui::ids::TIPS;
 use crate::ui::tabs::init_brokers_tabs;
 use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{
-    Button, Container, CrossAxisAlignment, Either, Flex, Label, Split,
-};
+use druid::widget::{Container, CrossAxisAlignment, Either, Flex, Label, Split, Svg};
 use druid::{Env, UnitPoint, Widget, WidgetExt};
-use log::{debug, info};
+use log::debug;
 
 pub mod auto_scroll;
 mod broker_info;
@@ -31,28 +31,61 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     let hint = Label::dynamic(|data: &AppData, _: &Env| format!("{}", data.hint))
         .with_text_size(12.0)
         .expand_width()
-        .debug_paint_layout()
+        // .debug_paint_layout()
         .align_vertical(UnitPoint::LEFT)
-        .fix_height(40.0)
+        .fix_height(20.0)
         .padding(LABLE_PADDING);
 
-    let history = Button::new("History")
-        .on_click(|_ctx, data: &mut bool, _env| {
-            info!("history click: {}", data);
+    // let history = Button::new("History")
+    //     .on_click(|_ctx, data: &mut bool, _env| {
+    //         info!("history click: {}", data);
+    //         *data = !*data;
+    //     })
+    //     .lens(AppData::display_history);
+
+    let history = Svg::new(broker_list())
+        .fix_size(28.0, 28.0)
+        .on_click(move |_ctx, data: &mut bool, _env| {
             *data = !*data;
         })
         .lens(AppData::display_history);
-    let info = Button::new("Info")
+    let info = Svg::new(broker_info())
+        .fix_size(28.0, 28.0)
         .on_click(|_ctx, data: &mut bool, _env| {
             debug!("info: {}", data);
             *data = !*data;
         })
         .lens(AppData::display_broker_info);
+    let tips = Svg::new(tips())
+        .fix_size(28.0, 28.0)
+        .background(SILVER)
+        .on_click(|_ctx, _data: &mut AppData, _env| _ctx.submit_command(TIPS));
+
+    let icons = Flex::column()
+        .with_child(history)
+        .with_child(info)
+        .with_child(tips)
+        .expand_height();
+
+    // let info = Button::new("Info")
+    //     .on_click(|_ctx, data: &mut bool, _env| {
+    //         debug!("info: {}", data);
+    //         *data = !*data;
+    //     })
+    //     .lens(AppData::display_broker_info);
 
     let content = Flex::row()
-        .with_child(history)
-        .with_flex_child(display_history(tx), 1.0)
-        .with_child(info);
+        // .main_axis_alignment(MainAxisAlignment::End)
+        // .cross_axis_alignment(C)
+        .with_child(icons)
+        .with_flex_child(
+            display_history(tx)
+                .padding((5.0, 0.0))
+                .background(B_CONTENT), //
+            1.0,
+        )
+        // .with_child(info)
+        .padding(5.0);
 
     let flex = Flex::column()
         .cross_axis_alignment(CrossAxisAlignment::Center)
@@ -60,7 +93,8 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .with_child(hint)
         .expand_height()
         .expand_width();
-    flex.border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+    flex
+    // flex.border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
     // history.debug_paint_layout()
     // Tabs::Padding::new(5.0, flex).border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
@@ -78,8 +112,7 @@ fn display_history(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         )
         .split_point(0.25)
         .draggable(true)
-        .bar_size(0.0)
-        .padding(5.0),
+        .bar_size(0.0),
         display_broker_info(tx.clone()),
     )
 }

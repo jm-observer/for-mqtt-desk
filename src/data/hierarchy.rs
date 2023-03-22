@@ -461,7 +461,6 @@ impl AppData {
         if let Ok(broker) = self.get_selected_broker() {
             self.init_broker_tab(broker.id);
         } else {
-            // todo
             warn!("edit_broker: not selected broker");
         }
     }

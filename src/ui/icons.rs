@@ -1,5 +1,4 @@
-use druid::widget::{SvgData};
-
+use druid::widget::SvgData;
 
 pub fn modified_icon() -> SvgData {
     include_str!("../../resources/icons/diff-modified.svg")
@@ -24,6 +23,22 @@ pub fn added_icon() -> SvgData {
 }
 pub fn connect_icon() -> SvgData {
     include_str!("../../resources/icons/diff-connect.svg")
+        .parse::<SvgData>()
+        .unwrap()
+}
+
+pub fn broker_list() -> SvgData {
+    include_str!("../../resources/icons/wenjianjia.svg")
+        .parse::<SvgData>()
+        .unwrap()
+}
+pub fn broker_info() -> SvgData {
+    include_str!("../../resources/icons/wendangxiugai.svg")
+        .parse::<SvgData>()
+        .unwrap()
+}
+pub fn tips() -> SvgData {
+    include_str!("../../resources/icons/zhongyaotishi.svg")
         .parse::<SvgData>()
         .unwrap()
 }

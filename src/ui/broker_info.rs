@@ -2,7 +2,8 @@ use crate::data::common::{Broker, Protocol, SignedTy};
 use crate::data::lens::PortLens;
 use crate::data::AppEvent;
 use crate::ui::common::{
-    error_display_widget, label_static, BUTTON_PADDING, TEXTBOX_MULTI_WIDTH, TEXTBOX_WIDTH,
+    error_display_widget, label_static, BUTTON_PADDING, B_BOXTEXT, B_CONTENT, TEXTBOX_MULTI_WIDTH,
+    TEXTBOX_WIDTH,
 };
 use crate::ui::formatter::{check_port, MustInput};
 use crate::ui::ids::{
@@ -94,6 +95,7 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
                 .with_child(label_static("params", UnitPoint::RIGHT))
                 .with_flex_child(
                     TextBox::multiline()
+                        // .background(B_BOXTEXT)
                         // .with_placeholder("Multi")
                         .lens(Broker::params)
                         .fix_height(180.)

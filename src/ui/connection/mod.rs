@@ -8,7 +8,7 @@ use crate::data::lens::{
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING,
+    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING, B_BOXTEXT,
 };
 
 use crate::ui::icons::removed_icon;
@@ -307,7 +307,8 @@ fn init_public_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                 .with_child(
                     TextBox::new()
                         .lens(Broker::public_input.then(PublicInput::topic))
-                        .fix_width(300.),
+                        .fix_width(300.)
+                        .background(B_BOXTEXT),
                 )
                 .with_child(error_display_widget(ID_PUBLISH_TOPIC))
                 .align_left(),
