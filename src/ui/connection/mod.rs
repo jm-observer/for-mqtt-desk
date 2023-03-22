@@ -74,7 +74,7 @@ fn init_subscribe_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
         Flex::row()
             .with_child(svg(removed_icon()).on_click(
                 move |_ctx, data: &mut SubscribeTopic, _env| {
-                    if let Err(_) = tx.send(AppEvent::ToUnSubscribe {
+                    if let Err(_) = tx.send(AppEvent::TouchUnSubscribe {
                         broker_id: data.broker_id,
                         trace_id: data.trace_id,
                     }) {
@@ -99,7 +99,7 @@ fn init_subscribe_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
             // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
             .expand_width()
             .on_click(move |_ctx, data: &mut SubscribeTopic, _env| {
-                if let Err(_) = tx1.send(AppEvent::Click(ClickTy::SubscribeTopic(
+                if let Err(_) = tx1.send(AppEvent::TouchClick(ClickTy::SubscribeTopic(
                     data.broker_id,
                     data.trace_id,
                 ))) {
@@ -226,7 +226,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let tools = Flex::row()
         .with_child(
             Button::new("Clear").on_click(move |_, data: &mut Broker, _| {
-                if clear_tx.send(AppEvent::ClearMsg(data.id)).is_err() {
+                if clear_tx.send(AppEvent::TouchClearMsg(data.id)).is_err() {
                     error!("could not to send clear command");
                 }
             }),

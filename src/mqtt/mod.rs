@@ -52,17 +52,17 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                     deal_conn_fail(format!("{:?}", err), tx, id);
                 }
                 MqttEvent::PublishSuccess(packet_id) => {
-                    if let Err(_) = tx.send(AppEvent::PubAck(id, packet_id)) {
+                    if let Err(_) = tx.send(AppEvent::ClientPubAck(id, packet_id)) {
                         error!("fail to send event!");
                     };
                 }
                 MqttEvent::SubscribeAck(packet) => {
-                    if let Err(_) = tx.send(AppEvent::SubAck(id, packet)) {
+                    if let Err(_) = tx.send(AppEvent::ClientSubAck(id, packet)) {
                         error!("fail to send event!");
                     };
                 }
                 MqttEvent::UnsubscribeAck(packet) => {
-                    if let Err(_) = tx.send(AppEvent::UnSubAck(id, packet)) {
+                    if let Err(_) = tx.send(AppEvent::ClientUnSubAck(id, packet)) {
                         error!("fail to send event!");
                     };
                 }
@@ -75,8 +75,12 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                         payload,
                         ..
                     } = msg;
-                    if let Err(_) = tx.send(AppEvent::ReceivePublic(id, topic, payload, qos.into()))
-                    {
+                    if let Err(_) = tx.send(AppEvent::ClientReceivePublic(
+                        id,
+                        topic,
+                        payload,
+                        qos.into(),
+                    )) {
                         error!("fail to send event!");
                     };
                 }
@@ -103,12 +107,12 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
 
 fn deal_conn_success(tx: Sender<AppEvent>, id: usize) {
     debug!("connect success!");
-    if let Err(_) = tx.send(AppEvent::ConnectAckSuccess(id)) {
+    if let Err(_) = tx.send(AppEvent::ClientConnectAckSuccess(id)) {
         error!("fail to send event!");
     }
 }
 fn deal_conn_fail(err: String, tx: Sender<AppEvent>, id: usize) {
-    if let Err(_) = tx.send(AppEvent::ConnectAckFail(id, err.into())) {
+    if let Err(_) = tx.send(AppEvent::ClientConnectAckFail(id, err.into())) {
         error!("fail to send event!");
     }
 }

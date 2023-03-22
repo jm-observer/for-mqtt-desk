@@ -170,14 +170,14 @@ impl AppData {
             .get_mut(id)
             .ok_or(anyhow!("could not find broker:{}", id))
     }
-    pub fn save_broker(&mut self, id: usize) -> Result<()> {
+    pub fn touch_save_broker(&mut self, id: usize) -> Result<()> {
         if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
             broker.stored = true;
             self.db.save_broker(broker.clone_to_db())?;
         }
         Ok(())
     }
-    pub fn reconnect(&mut self, id: usize) -> Result<()> {
+    pub fn touch_reconnect(&mut self, id: usize) -> Result<()> {
         self.disconnect(id)?;
         self.init_connection(id)?;
         // if let Some(broker) = self.brokers.iter().find(|x| (*x).id == id) {
@@ -224,7 +224,10 @@ impl AppData {
         status.connected = true;
         Ok(())
     }
-    pub fn disconnect(&mut self, id: usize) -> Result<()> {
+    pub(crate) fn touch_disconnect(&mut self, id: usize) -> Result<()> {
+        self.disconnect(id)
+    }
+    fn disconnect(&mut self, id: usize) -> Result<()> {
         let broker = self.find_mut_broker_by_id(id)?;
         broker.tab_status.try_connect = false;
         broker.tab_status.connected = false;
@@ -240,7 +243,7 @@ impl AppData {
         status.connected = false;
         Ok(())
     }
-    pub fn unsubscribe(
+    pub fn to_unsubscribe(
         &mut self,
         broker_id: usize,
         subscribe_pkid: u32,
@@ -272,7 +275,7 @@ impl AppData {
                 .map(|(index, _x)| index)
             {
                 _broker.subscribe_topics.remove(index);
-                return Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?);
+                return Ok(self.db.tx.send(AppEvent::UpdateScrollSubscribeWin)?);
             } else {
                 bail!("can't find broker's subscribe");
             }
@@ -280,7 +283,7 @@ impl AppData {
             bail!("can't find broker's unsubscribe_tracing");
         }
     }
-    pub fn to_unscribe(&mut self, broker_id: usize, trace_id: u32) -> Result<()> {
+    pub fn touch_unsubscribe(&mut self, broker_id: usize, trace_id: u32) -> Result<()> {
         let _broker = self.find_mut_broker_by_id(broker_id)?;
         if let Some(index) = _broker
             .subscribe_topics
@@ -293,7 +296,7 @@ impl AppData {
                 subscribe_pk_id: index.trace_id,
                 topic: index.topic.as_ref().clone(),
             };
-            tx!(self.db.tx, AppEvent::UnSubscribeIng(event));
+            self.send_event(AppEvent::ToUnsubscribeIng(event));
             return Ok(());
         }
         warn!("can't find the subscribe to unsubscibe");
@@ -325,7 +328,7 @@ impl AppData {
             broker.subscribe_hises.push_back(his.into());
         }
         self.db.tx.send(AppEvent::ToSubscribe(sub))?;
-        self.db.tx.send(AppEvent::ScrollSubscribeWin)?;
+        self.db.tx.send(AppEvent::UpdateScrollSubscribeWin)?;
 
         Ok(())
     }
@@ -355,10 +358,10 @@ impl AppData {
     //     Ok(self.db.tx.send(AppEvent::ScrollSubscribeWin)?)
     // }
 
-    pub fn remove_subscribe_his(&mut self) -> Result<()> {
-        let Some(id) = self.get_selected_broker_id() else {
-            bail!(DELETE_SUBSCRIBE_NO_SELECTED);
-        };
+    pub fn touch_remove_subscribe_his(&mut self, id: usize) -> Result<()> {
+        // let Some(id) = self.get_selected_broker_id() else {
+        //     bail!(DELETE_SUBSCRIBE_NO_SELECTED);
+        // };
         let broker = self.find_mut_broker_by_id(id)?;
         if let Some(index) = broker
             .subscribe_hises
@@ -370,7 +373,8 @@ impl AppData {
             broker.subscribe_hises.remove(index);
             return Ok(());
         }
-        bail!(DELETE_SUBSCRIBE_NO_SELECTED);
+        warn!("{}", DELETE_SUBSCRIBE_NO_SELECTED);
+        Ok(())
     }
 
     pub fn sub_ack(&mut self, id: usize, input: SubscribeAck) -> Result<()> {
@@ -441,14 +445,14 @@ impl AppData {
         };
 
         self.send_event(AppEvent::ToPublish(publish));
-        self.send_event(AppEvent::ScrollMsgWin);
+        self.send_event(AppEvent::UpdateScrollMsgWin);
         Ok(())
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
         self.select_broker(id);
         for (index, tab) in self.broker_tabs.iter().enumerate() {
             if *tab == id {
-                tx!(self.db.tx, AppEvent::SelectTabs(index));
+                tx!(self.db.tx, AppEvent::UpdateToSelectTabs(index));
             }
         }
         Ok(())
@@ -491,19 +495,15 @@ impl AppData {
         self.display_broker_info = true;
     }
     pub fn touch_delete_broker_selected(&mut self) -> Result<()> {
+        let id = self.get_selected_broker()?.id;
+
+        self.close_broker_tab(id)?;
+        self.disconnect(id)?;
+
         let broker = self.brokers.remove(
             self.get_selected_broker_index()
                 .ok_or(anyhow!("could not find broker selected"))?,
         );
-        if let Some((index, _)) = self
-            .broker_tabs
-            .iter()
-            .enumerate()
-            .find(|x| *(*x).1 == broker.id)
-        {
-            self.broker_tabs.remove(index);
-            self.disconnect(broker.id)?;
-        }
         self.db.delete_broker(broker.id)?;
         if self.brokers.len() == 0 {
             self.touch_add_broker();
@@ -538,23 +538,20 @@ impl AppData {
         Ok(())
     }
 
-    pub fn close_tab(&mut self, id: usize) -> Result<()> {
+    pub fn touch_close_broker_tab(&mut self, id: usize) -> Result<()> {
+        self.close_broker_tab(id)?;
+        self.disconnect(id)?;
+        Ok(())
+    }
+
+    fn close_broker_tab(&mut self, id: usize) -> Result<()> {
         if let Some((index, _)) = self.broker_tabs.iter().enumerate().find(|x| *(*x).1 == id) {
             debug!("close_tab：{} {}", index, self.broker_tabs.len());
             self.broker_tabs.remove(index);
-            // 删除未保存的broker todo 会导致tab的label panic
-            if let Some((index, _broker)) = self.brokers.iter().enumerate().find(|x| {
-                let broker = (*x).1;
-                broker.id == id && broker.stored == false
-            }) {
-                self.brokers.remove(index);
-            }
-            if self.db.tx.send(AppEvent::Disconnect(id)).is_err() {
-                error!("fail to send event");
-            }
         }
         Ok(())
     }
+
     pub fn pub_ack(&mut self, id: usize, trace_id: u32) -> Result<()> {
         debug!("pub_ack: tarce_id {}", trace_id);
         let broker = self.find_mut_broker_by_id(id)?;
@@ -599,11 +596,11 @@ impl AppData {
         if broker.msgs.len() > 50 {
             broker.msgs.pop_front();
         }
-        Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
+        Ok(self.db.tx.send(AppEvent::UpdateScrollMsgWin)?)
     }
     pub fn clear_msg(&mut self, id: usize) -> Result<()> {
         let _broker = self.find_mut_broker_by_id(id)?.msgs.clear();
-        Ok(self.db.tx.send(AppEvent::ScrollMsgWin)?)
+        Ok(self.db.tx.send(AppEvent::UpdateScrollMsgWin)?)
     }
 
     // pub fn msgs_ref_mut(&mut self, id: usize) -> &mut Vector<Msg> {

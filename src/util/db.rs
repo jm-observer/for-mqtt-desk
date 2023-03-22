@@ -31,8 +31,11 @@ impl ArcDb {
     }
 
     pub fn read_app_data(&mut self) -> Result<AppData> {
+        // let mut brokers = Vector::new();
         let brokers = if let Some(val) = self.db.get(BROKERS)? {
             let db_brokers_ids: Vector<usize> = serde_json::from_slice(&val)?;
+            self.ids = db_brokers_ids.clone();
+            debug!("{:?}", self.ids);
             let mut brokers = Vector::new();
             for id in db_brokers_ids.into_iter() {
                 if id > self.index {
@@ -49,17 +52,6 @@ impl ArcDb {
         } else {
             Vector::new()
         };
-        // let mut brokers = Vector::new();
-        // {
-        //     self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
-        //     for tmp_broker in db_brokers.into_iter() {
-        //         self.db.insert(
-        //             DbKey::broker_key(tmp_broker.id).as_bytes()?,
-        //             serde_json::to_vec(&tmp_broker)?,
-        //         )?;
-        //         brokers.push_back(tmp_broker.to_broker(self.tx.clone()));
-        //     }
-        // }
         Ok(AppData {
             brokers,
             broker_tabs: Default::default(),
@@ -73,8 +65,8 @@ impl ArcDb {
     }
 
     pub fn new_broker(&mut self) -> Broker {
-        let id = self.index;
         self.index += 1;
+        let id = self.index;
         Broker {
             id,
             protocol: Protocol::V4,
@@ -113,6 +105,7 @@ impl ArcDb {
             self.ids.push_back(id);
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
         }
+        debug!("{:?}", self.ids);
         self.db.insert(
             DbKey::broker_key(id).as_bytes()?,
             serde_json::to_vec(&broker)?,

@@ -209,7 +209,7 @@ fn open(index: usize) -> impl Widget<Broker> {
 
 fn save_button(save_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
     Button::new(LocalizedString::new("Save")).on_click(move |_ctx, data: &mut Broker, _env| {
-        if let Err(e) = save_tx_1.send(AppEvent::SaveBroker(data.id)) {
+        if let Err(e) = save_tx_1.send(AppEvent::TouchSaveBroker(data.id)) {
             error!("{:?}", e);
         }
     })
@@ -218,7 +218,7 @@ fn save_button(save_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
 fn disconnect_button(reconnect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
     Button::new(LocalizedString::new("Disconnect")).on_click(
         move |_ctx, data: &mut Broker, _env| {
-            if let Err(e) = reconnect_tx_1.send(AppEvent::Disconnect(data.id)) {
+            if let Err(e) = reconnect_tx_1.send(AppEvent::TouchDisconnect(data.id)) {
                 error!("{:?}", e);
             }
         },
@@ -229,7 +229,7 @@ fn reconnect_button(reconnect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
     Button::new(LocalizedString::new("Reconnect"))
         .on_click(move |_ctx, data: &mut Broker, _env| {
             _ctx.set_focus(ID_BUTTON_RECONNECT);
-            if let Err(e) = reconnect_tx_1.send(AppEvent::ReConnect(data.id)) {
+            if let Err(e) = reconnect_tx_1.send(AppEvent::TouchReConnect(data.id)) {
                 error!("{:?}", e);
             }
         })
@@ -240,7 +240,7 @@ fn connect_button(connect_tx_1: Sender<AppEvent>) -> impl Widget<Broker> {
     Button::new(LocalizedString::new("Connect")).on_click(move |_ctx, broker: &mut Broker, _env| {
         debug!("{:?}", broker);
         _ctx.set_focus(ID_BUTTON_CONNECT);
-        if let Err(e) = connect_tx_1.send(AppEvent::ConnectByButton(broker.id)) {
+        if let Err(e) = connect_tx_1.send(AppEvent::TouchConnectByButton(broker.id)) {
             error!("{:?}", e);
         }
     })

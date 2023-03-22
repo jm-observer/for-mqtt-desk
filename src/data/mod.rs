@@ -25,49 +25,48 @@ pub enum AppEvent {
     TouchConnectBrokerSelected,
     /// broker列表的删除图标。删除选择的broker
     TouchDeleteBrokerSelected,
-    SaveBroker(usize),
-    ReConnect(usize),
+    /// 根据输入进行订阅
+    TouchSubscribeByInput(usize),
+    TouchSubscribeFromHis(SubscribeHis),
+    // e.g: delete broker; close tab; click button "disconnect"
+    TouchDisconnect(usize),
+    TouchSaveBroker(usize),
+    TouchReConnect(usize),
     /// broker信息界面中连接按钮。
-    ConnectByButton(usize),
+    TouchConnectByButton(usize),
     /// 调用第三方库连接broker
     ToConnect(Broker),
     /// 调用第三方库断开连接
     ToDisconnect(usize),
-    // e.g: delete broker; close tab; click button "disconnect"
-    Disconnect(usize),
     // select brokers tab
-    SelectTabs(usize),
-    RemoveSubscribeHis,
-    /// 根据输入进行订阅
-    TouchSubscribeByInput(usize),
-    TouchSubscribeFromHis(SubscribeHis),
+    UpdateToSelectTabs(usize),
+    TouchRemoveSubscribeHis(usize),
     /// 通知client进行订阅
     ToSubscribe(SubscribeTopic),
-    ToUnSubscribe {
+    TouchUnSubscribe {
         broker_id: usize,
         trace_id: u32,
     },
     ToPublish(MqttPublicInput),
-    UnSubscribeIng(EventUnSubscribe),
-    ConnectAckSuccess(usize),
-    ConnectAckFail(usize, Arc<String>),
+    ToUnsubscribeIng(EventUnSubscribe),
+    ClientConnectAckSuccess(usize),
+    ClientConnectAckFail(usize, Arc<String>),
     TouchPublic(usize),
-    ReceivePublic(usize, Arc<String>, Arc<Bytes>, QoS),
-    PubAck(usize, u32),
-    SubAck(usize, SubscribeAck),
-    UnSubAck(usize, UnsubscribeAck),
-    Click(ClickTy),
-    ClickLifeDead(ClickTy),
-    CloseBrokerTab(usize),
-    CloseConnectionTab(usize),
-
+    ClientReceivePublic(usize, Arc<String>, Arc<Bytes>, QoS),
+    ClientPubAck(usize, u32),
+    ClientSubAck(usize, SubscribeAck),
+    ClientUnSubAck(usize, UnsubscribeAck),
+    TouchClick(ClickTy),
+    OtherClickLifeDead(ClickTy),
+    TouchCloseBrokerTab(usize),
+    // CloseConnectionTab(usize),
     UpdateStatusBar(String),
     /// 清空消息
-    ClearMsg(usize),
+    TouchClearMsg(usize),
     /// 滚动消息窗口
-    ScrollMsgWin,
+    UpdateScrollMsgWin,
     /// 滚动订阅窗口
-    ScrollSubscribeWin,
+    UpdateScrollSubscribeWin,
 }
 #[derive(Debug, Clone)]
 pub struct EventUnSubscribe {

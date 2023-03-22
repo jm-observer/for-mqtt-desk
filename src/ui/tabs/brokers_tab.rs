@@ -1,4 +1,3 @@
-
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerId;
 use crate::data::AppEvent;
@@ -51,7 +50,7 @@ impl TabsPolicy for BrokersTabs {
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {
-        if let Err(_) = data.db.tx.send(AppEvent::CloseBrokerTab(key)) {
+        if let Err(_) = data.db.tx.send(AppEvent::TouchCloseBrokerTab(key)) {
             error!("fail to send event");
         }
     }

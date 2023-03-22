@@ -1,7 +1,7 @@
 pub const DELETE_BROKER_SUCCESS: &str = "delete success!";
 
 pub const DELETE_SUBSCRIBE_SUCCESS: &str = "delete success!";
-pub const DELETE_SUBSCRIBE_NO_SELECTED: &str = "there is no selected history!";
+pub const DELETE_SUBSCRIBE_NO_SELECTED: &str = "no selected history!";
 
 pub const SAVE_BROKER_SUCCESS: &str = "save success!";
 pub const CONNECT_SUCCESS: &str = "connect success!";
