@@ -8,7 +8,7 @@ use crate::data::lens::{
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING, B_BOXTEXT,
+    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING,
 };
 
 use crate::ui::icons::removed_icon;
@@ -28,6 +28,9 @@ use druid::widget::{Align, Button, Container, Either, Flex, List, Scroll, Split,
 use druid::{LensExt, LocalizedString};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{error, warn};
+
+const NAME_WIDTH: f64 = 80.0;
+const PULL_DOWN_WIDTH: f64 = 60.0;
 
 pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     let subscribe_list = Container::new(
@@ -243,31 +246,33 @@ fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
-                .with_child(label_static("topic", UnitPoint::RIGHT))
-                .with_child(
+                .with_child(label_static("topic", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
+                .with_flex_child(
                     TextBox::new()
                         .lens(Broker::subscribe_input.then(SubscribeInput::topic))
-                        .fix_width(150.),
+                        .expand_width(),
+                    1.0,
                 )
-                .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC))
+                .with_child(error_display_widget(ID_SUBSCRIBE_TOPIC).fix_width(20.0))
                 .align_left(),
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("QoS", UnitPoint::RIGHT))
+                .with_child(label_static("QoS", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
                 .with_child(
                     down_select_qos()
                         .lens(Broker::subscribe_input.then(SubscribeInput::qos))
-                        .fix_width(150.),
+                        .fix_width(PULL_DOWN_WIDTH),
                 )
                 .with_child(error_display_widget(ID_SUBSCRIBE_QOS))
                 .align_left(),
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("Byte Type", UnitPoint::RIGHT))
+                .with_child(label_static("Byte Type", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
                 .with_child(
                     down_select_payload_ty()
+                        .fix_width(PULL_DOWN_WIDTH)
                         .lens(Broker::subscribe_input.then(SubscribeInput::payload_ty)),
                 )
                 .align_left(),
@@ -303,48 +308,51 @@ fn init_public_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let connection = Flex::column()
         .with_child(
             Flex::row()
-                .with_child(label_static("topic", UnitPoint::RIGHT))
-                .with_child(
+                .with_child(label_static("topic", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
+                .with_flex_child(
                     TextBox::new()
                         .lens(Broker::public_input.then(PublicInput::topic))
-                        .fix_width(300.)
-                        .background(B_BOXTEXT),
+                        .expand_width(),
+                    1.0, // .fix_width(300.)
                 )
-                .with_child(error_display_widget(ID_PUBLISH_TOPIC))
+                .with_child(error_display_widget(ID_PUBLISH_TOPIC).fix_width(50.0))
                 .align_left(),
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("QoS", UnitPoint::RIGHT))
+                .with_child(label_static("QoS", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
                 .with_child(
                     down_select_qos()
                         .lens(Broker::public_input.then(PublicInput::qos))
-                        .fix_width(300.),
+                        .fix_width(PULL_DOWN_WIDTH),
                 )
                 .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
         )
         .with_child(
             Flex::row()
-                .with_child(label_static("Byte Type", UnitPoint::RIGHT))
+                .with_child(label_static("Byte Type", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
                 .with_child(
                     down_select_payload_ty()
-                        .lens(Broker::public_input.then(PublicInput::payload_ty)),
+                        .lens(Broker::public_input.then(PublicInput::payload_ty))
+                        .fix_width(PULL_DOWN_WIDTH),
                 )
                 // .with_child(error_display_widget(ID_PUBLISH_QOS))
                 .align_left(),
         )
-        .with_child(
+        .with_flex_child(
             Flex::row()
-                .with_child(label_static("msg", UnitPoint::RIGHT))
-                .with_child(
+                .with_child(label_static("msg", UnitPoint::RIGHT).fix_width(NAME_WIDTH))
+                .with_flex_child(
                     TextBox::multiline()
-                        .fix_height(60.)
-                        .fix_width(300.)
-                        .lens(Broker::public_input.then(PublicInput::msg)),
+                        .lens(Broker::public_input.then(PublicInput::msg))
+                        .expand_width()
+                        .expand_height(),
+                    1.0,
                 )
-                .with_child(error_display_widget(ID_PUBLISH_MSG))
+                .with_child(error_display_widget(ID_PUBLISH_MSG).fix_width(50.0))
                 .align_left(),
+            1.0,
         )
         .with_child(
             Flex::row().with_child(

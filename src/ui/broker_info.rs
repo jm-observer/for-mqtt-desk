@@ -2,8 +2,7 @@ use crate::data::common::{Broker, Protocol, SignedTy};
 use crate::data::lens::PortLens;
 use crate::data::AppEvent;
 use crate::ui::common::{
-    error_display_widget, label_static, BUTTON_PADDING, B_BOXTEXT, B_CONTENT, TEXTBOX_MULTI_WIDTH,
-    TEXTBOX_WIDTH,
+    error_display_widget, label_static, BUTTON_PADDING, TEXTBOX_MULTI_WIDTH, TEXTBOX_WIDTH,
 };
 use crate::ui::formatter::{check_port, MustInput};
 use crate::ui::ids::{
@@ -17,7 +16,7 @@ use druid::{Env, FileDialogOptions, FileSpec, UnitPoint, Widget};
 use druid::{LocalizedString, WidgetExt};
 use log::{debug, error};
 
-pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
+pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let save_tx_0 = tx.clone();
     let _save_tx_1 = tx.clone();
     let connect_tx_1 = tx.clone();
@@ -25,7 +24,7 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
     let save_tx_1 = tx.clone();
     let reconnect_tx_1 = tx.clone();
 
-    let connection = Flex::column()
+    Flex::column()
         .with_child(
             Flex::row()
                 .with_child(label_static("name", UnitPoint::RIGHT))
@@ -90,21 +89,24 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> Container<Broker> {
                 .with_child(connect_button(connect_tx_1))
                 .align_left(),
         ))
-        .with_child(
+        .with_flex_child(
             Flex::row()
-                .with_child(label_static("params", UnitPoint::RIGHT))
+                .with_child(label_static("params", UnitPoint::RIGHT).expand_height())
                 .with_flex_child(
                     TextBox::multiline()
                         // .background(B_BOXTEXT)
                         // .with_placeholder("Multi")
                         .lens(Broker::params)
-                        .fix_height(180.)
-                        .fix_width(TEXTBOX_MULTI_WIDTH),
+                        .expand_width()
+                        .expand_height()
+                        .align_left(),
                     1.0,
                 )
-                .align_left(),
-        );
-    Container::new(connection)
+                .expand_height(),
+            1.0,
+        )
+        .padding(5.0)
+        .expand_height()
 }
 
 pub fn display_tls(id: usize) -> impl Widget<Broker> {

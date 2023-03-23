@@ -6,7 +6,7 @@ use crate::data::lens::{
 };
 use crate::data::AppEvent;
 
-use crate::ui::common::{label_dy, label_dy_expand_width, svg, title, SILVER, TOPIC};
+use crate::ui::common::{svg, title, SILVER, TOPIC};
 use crate::ui::icons::{added_icon, connect_icon, modified_icon, removed_icon};
 
 use crate::ui::payload_ty::payload_ty_init;
@@ -14,8 +14,8 @@ use crate::ui::qos::qos_init;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::SizedBox;
 use druid::widget::{Container, CrossAxisAlignment, Either, Flex, List, Scroll, Split};
+use druid::widget::{Label, SizedBox};
 use druid::{Env, EventCtx, UnitPoint};
 use druid::{Widget, WidgetExt};
 use log::error;
@@ -24,7 +24,8 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
     Split::rows(
         Container::new(init_broker_list_1(tx.clone()))
             .rounded(8.0)
-            .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH),
+            .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+            .expand_height(),
         Either::<AppData>::new(
             |x, _env| {
                 if let Ok(broker) = x.get_selected_broker() {
@@ -40,8 +41,8 @@ pub fn init_broker_list(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         ),
     )
     .split_point(0.55)
+    .bar_size(0.0)
     .draggable(true)
-    .padding(5.0)
 }
 
 fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
@@ -113,26 +114,39 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
 
 pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
     let version = || {
-        label_dy(|data: &Broker, _: &Env| match data.protocol {
+        Label::dynamic(|data: &Broker, _: &Env| match data.protocol {
             Protocol::V4 => "v3".to_string(),
             Protocol::V5 => "v5".to_string(),
         })
+        .fix_width(24.0)
+        .padding((2.0, 5.0))
+        .border(SILVER, 0.1)
     };
-    let name = || label_dy(|data: &Broker, _: &Env| format!("{}", data.name));
+    let name = || {
+        Label::dynamic(|data: &Broker, _: &Env| format!("{}", data.name))
+            .padding((2.0, 5.0))
+            .align_vertical(UnitPoint::LEFT)
+            .fix_width(80.0)
+            .border(SILVER, 0.1)
+    };
     let addr = || {
-        label_dy_expand_width(|data: &Broker, _: &Env| match data.port {
+        Label::dynamic(|data: &Broker, _: &Env| match data.port {
             None => {
                 format!("{}", data.addr)
             }
             Some(port) => format!("{}:{:?}", data.addr, port),
         })
+        .align_vertical(UnitPoint::LEFT)
+        .expand_width()
+        .padding((2.0, 5.0))
+        .border(SILVER, 0.1)
     };
 
     let list: List<Broker> = List::new(move || {
         Either::new(
             |data: &Broker, _env| data.selected,
             Flex::row()
-                .with_child(version().fix_width(20.0))
+                .with_child(version())
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
@@ -142,7 +156,7 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 })
                 .background(SILVER),
             Flex::row()
-                .with_child(version().fix_width(20.0))
+                .with_child(version())
                 .with_child(name())
                 .with_flex_child(addr(), 1.0)
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {

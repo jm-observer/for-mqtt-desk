@@ -28,7 +28,6 @@ pub const WHITE: Color = Color::grey8(255);
 
 pub const B_WINDOW: Color = Color::rgb8(242, 242, 242);
 pub const B_CONTENT: Color = Color::rgb8(41, 41, 41);
-pub const B_BOXTEXT: Color = Color::rgb8(58, 58, 58);
 
 pub fn svg<T: druid::Data>(data: SvgData) -> impl Widget<T> {
     Svg::new(data).fix_size(18.0, 18.0).padding(1.0)

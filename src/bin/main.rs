@@ -1,8 +1,7 @@
 #![windows_subsystem = "windows"]
 
 use druid::{
-    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString, Menu,
-    MenuItem, PlatformError, Target, WidgetExt, WindowDesc, WindowId,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString, PlatformError, Target, WindowDesc,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 
@@ -13,7 +12,7 @@ use for_mqtt::logic::deal_event;
 use for_mqtt::ui::ids::{SELF_SIGNED_FILE, TIPS};
 use for_mqtt::ui::{init_layout, tips};
 
-use for_mqtt::ui::common::{B_WINDOW, SILVER};
+
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
@@ -60,7 +59,7 @@ fn main() -> Result<(), PlatformError> {
         }
     }));
 
-    let win = WindowDesc::new(init_layout(tx.clone()).background(B_WINDOW))
+    let win = WindowDesc::new(init_layout(tx.clone())) //.background(B_WINDOW))
         .title(LocalizedString::new("app-names"))
         // .show_titlebar(false)
         // .menu(make_menu)

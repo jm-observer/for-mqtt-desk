@@ -18,7 +18,7 @@ pub fn init_brokers_tabs(tx: Sender<AppEvent>) -> impl Widget<AppData> {
             .with_transition(TabsTransition::Instant)
             .controller(TabsControler)
             .with_id(TABS_ID)
-            .padding(5.0),
+            .padding(2.0),
     )
     .rounded(8.0)
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH);
