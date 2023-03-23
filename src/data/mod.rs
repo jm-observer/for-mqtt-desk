@@ -29,11 +29,11 @@ pub enum AppEvent {
     TouchSubscribeByInput(usize),
     TouchSubscribeFromHis(SubscribeHis),
     // e.g: delete broker; close tab; click button "disconnect"
-    TouchDisconnect(usize),
-    TouchSaveBroker(usize),
-    TouchReConnect(usize),
+    TouchDisconnect,
+    TouchSaveBroker,
+    TouchReConnect,
     /// broker信息界面中连接按钮。
-    TouchConnectByButton(usize),
+    TouchConnectByButton,
     /// 调用第三方库连接broker
     ToConnect(Broker),
     /// 调用第三方库断开连接

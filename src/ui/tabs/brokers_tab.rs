@@ -1,5 +1,5 @@
 use crate::data::hierarchy::AppData;
-use crate::data::lens::BrokerId;
+use crate::data::lens::BrokerIdForTab;
 use crate::data::AppEvent;
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
@@ -46,7 +46,7 @@ impl TabsPolicy for BrokersTabs {
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
         debug!("tab_body");
-        display_connection(self.0.clone()).lens(BrokerId(_key))
+        display_connection(self.0.clone()).lens(BrokerIdForTab(_key))
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {

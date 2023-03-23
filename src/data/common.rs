@@ -14,6 +14,7 @@ use pretty_hex::simple_hex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::util::general_id;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
@@ -199,6 +200,30 @@ pub struct Broker {
 }
 
 impl Broker {
+    pub fn init_connection(&mut self) -> anyhow::Result<()> {
+        if self.client_id.as_str().is_empty() {
+            self.client_id = general_id().into();
+        }
+
+        if self.addr.is_empty() {
+            bail!("addr not be empty");
+        } else if self.port.is_none() {
+            bail!("port not be empty");
+        } else if self.use_credentials {
+            if self.user_name.is_empty() {
+                bail!("user name not be empty");
+            } else if self.password.is_empty() {
+                bail!("password not be empty");
+            }
+        } else if self.tls && self.signed_ty == SignedTy::SelfSigned {
+            if self.self_signed_ca.is_empty() {
+                bail!("self signed ca not be empty");
+            }
+        }
+        self.tab_status.try_connect = true;
+        self.stored = true;
+        Ok(())
+    }
     pub fn clone_to_db(&self) -> BrokerDB {
         BrokerDB {
             id: self.id,
@@ -216,6 +241,14 @@ impl Broker {
             self_signed_ca: self.self_signed_ca.clone(),
             subscribe_hises: self.subscribe_hises.clone(),
         }
+    }
+
+    pub fn disconnect(&mut self) {
+        self.tab_status.try_connect = false;
+        self.tab_status.connected = false;
+        self.subscribe_topics.clear();
+        self.msgs.clear();
+        self.unsubscribe_ing.clear();
     }
 }
 

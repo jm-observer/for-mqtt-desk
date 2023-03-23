@@ -1,4 +1,4 @@
-use crate::data::common::{Broker, Id, PayloadTy, QoS, SignedTy};
+use crate::data::common::{Broker, Id, PayloadTy, QoS};
 use crate::data::common::{
     Msg, PublicMsg, PublicStatus, SubscribeHis, SubscribeMsg, SubscribeStatus, SubscribeTopic,
 };
@@ -7,7 +7,7 @@ use crate::mqtt::data::MqttPublicInput;
 use crate::util::consts::QosToString;
 use crate::util::db::ArcDb;
 use crate::util::hint::*;
-use crate::util::{general_id, now_time};
+use crate::util::{now_time};
 use anyhow::Result;
 use anyhow::{anyhow, bail};
 use bytes::Bytes;
@@ -170,70 +170,53 @@ impl AppData {
             .get_mut(id)
             .ok_or(anyhow!("could not find broker:{}", id))
     }
-    pub fn touch_save_broker(&mut self, id: usize) -> Result<()> {
-        if let Some(broker) = self.brokers.iter_mut().find(|x| (*x).id == id) {
-            broker.stored = true;
-            self.db.save_broker(broker.clone_to_db())?;
-        }
-        Ok(())
-    }
-    pub fn touch_reconnect(&mut self, id: usize) -> Result<()> {
-        self.disconnect(id)?;
-        self.init_connection(id)?;
-        // if let Some(broker) = self.brokers.iter().find(|x| (*x).id == id) {
-        //     tx!(self.db.tx, AppEvent::Connect(broker.clone()))
-        // } else {
-        //     error!("not find the broker");
-        // }
-        Ok(())
-    }
-    pub fn init_connection(&mut self, id: usize) -> Result<()> {
-        let broker = self.find_mut_broker_by_id(id)?;
-        if broker.client_id.as_str().is_empty() {
-            broker.client_id = general_id().into();
-        }
-
-        if broker.addr.is_empty() {
-            bail!("addr not be empty");
-        } else if broker.port.is_none() {
-            bail!("port not be empty");
-        } else if broker.use_credentials {
-            if broker.user_name.is_empty() {
-                bail!("user name not be empty");
-            } else if broker.password.is_empty() {
-                bail!("password not be empty");
-            }
-        } else if broker.tls && broker.signed_ty == SignedTy::SelfSigned {
-            if broker.self_signed_ca.is_empty() {
-                bail!("self signed ca not be empty");
-            }
-        }
-        broker.tab_status.try_connect = true;
+    pub fn touch_save_broker(&mut self) -> Result<()> {
+        let broker = self.get_selected_mut_broker()?;
         broker.stored = true;
+        let broker = broker.clone_to_db();
+        self.db.save_broker(broker)?;
+        Ok(())
+    }
+    pub fn touch_reconnect(&mut self) -> Result<()> {
+        let broker = self.get_selected_mut_broker()?;
+        broker.disconnect();
+        broker.init_connection()?;
+        let broker = broker.clone();
+        self.disconnect(broker.id)?;
+        self.init_connection_by_broker(broker)?;
+        Ok(())
+    }
+    pub fn init_connection_for_selected(&mut self) -> Result<()> {
+        let broker = self.get_selected_mut_broker()?;
+        broker.init_connection()?;
+        let broker = broker.clone();
+        self.init_connection_by_broker(broker)?;
+        Ok(())
+    }
+
+    fn init_connection_by_broker(&mut self, broker: Broker) -> Result<()> {
         let broker_db = broker.clone_to_db();
         let broker = broker.clone();
-        self.init_broker_tab(id);
+        self.init_broker_tab(broker.id);
         self.db.save_broker(broker_db)?;
         self.display_broker_info = false;
         self.send_event(AppEvent::ToConnect(broker));
         Ok(())
     }
+
     pub fn update_to_connected(&mut self, id: usize) -> Result<()> {
         let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
         status.try_connect = false;
         status.connected = true;
         Ok(())
     }
-    pub(crate) fn touch_disconnect(&mut self, id: usize) -> Result<()> {
+    pub(crate) fn touch_disconnect(&mut self) -> Result<()> {
+        let broker = self.get_selected_mut_broker()?;
+        broker.disconnect();
+        let id = broker.id;
         self.disconnect(id)
     }
-    fn disconnect(&mut self, id: usize) -> Result<()> {
-        let broker = self.find_mut_broker_by_id(id)?;
-        broker.tab_status.try_connect = false;
-        broker.tab_status.connected = false;
-        broker.subscribe_topics.clear();
-        broker.msgs.clear();
-        broker.unsubscribe_ing.clear();
+    fn disconnect(&self, id: usize) -> Result<()> {
         self.send_event(AppEvent::ToDisconnect(id));
         Ok(())
     }
@@ -464,17 +447,18 @@ impl AppData {
             warn!("edit_broker: not selected broker");
         }
     }
-    pub fn connect_broker_selected(&mut self) -> Result<()> {
-        let broker = self.get_selected_broker()?;
-        self.init_connection(broker.id)?;
+    pub fn touch_connect_broker_selected(&mut self) -> Result<()> {
+        self.init_connection_for_selected()?;
         Ok(())
     }
     pub fn db_click_broker(&mut self, id: usize) -> Result<()> {
         // 若已存在，则跳转至该tag；重连。否则，新增tag，连接
-        if self.broker_tabs.iter().find(|x| **x == id).is_some() {
-            self.disconnect(id)?;
-        }
-        self.init_connection(id)?;
+        let broker = self.find_mut_broker_by_id(id)?;
+        broker.disconnect();
+        broker.init_connection()?;
+        let broker = broker.clone();
+        self.disconnect(broker.id)?;
+        self.init_connection_by_broker(broker)?;
         // if self.init_broker_tab(id) {
         //     self.db.tx.send(AppEvent::ReConnect(id))?;
         // } else {
@@ -494,16 +478,17 @@ impl AppData {
         self.display_broker_info = true;
     }
     pub fn touch_delete_broker_selected(&mut self) -> Result<()> {
-        let id = self.get_selected_broker()?.id;
-
-        self.close_broker_tab(id)?;
-        self.disconnect(id)?;
-
-        let broker = self.brokers.remove(
+        // let broker = self.get_selected_mut_broker()?;
+        let mut broker = self.brokers.remove(
             self.get_selected_broker_index()
                 .ok_or(anyhow!("could not find broker selected"))?,
         );
-        self.db.delete_broker(broker.id)?;
+        broker.disconnect();
+        let id = broker.id;
+        self.close_broker_tab(id)?;
+        self.disconnect(id)?;
+
+        self.db.delete_broker(id)?;
         if self.brokers.len() == 0 {
             self.touch_add_broker();
         }
@@ -539,6 +524,7 @@ impl AppData {
 
     pub fn touch_close_broker_tab(&mut self, id: usize) -> Result<()> {
         self.close_broker_tab(id)?;
+        self.find_mut_broker_by_id(id)?.disconnect();
         self.disconnect(id)?;
         Ok(())
     }

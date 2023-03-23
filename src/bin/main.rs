@@ -1,7 +1,8 @@
 #![windows_subsystem = "windows"]
 
 use druid::{
-    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString, PlatformError, Target, WindowDesc,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString,
+    PlatformError, Target, WindowDesc,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 
@@ -11,7 +12,6 @@ use for_mqtt::logic::deal_event;
 
 use for_mqtt::ui::ids::{SELF_SIGNED_FILE, TIPS};
 use for_mqtt::ui::{init_layout, tips};
-
 
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
@@ -43,6 +43,7 @@ fn main() -> Result<(), PlatformError> {
         .build();
 
     panic::set_hook(Box::new(|panic_info| {
+        error!("{:?}", panic_info);
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             error!("panic occurred: {s:?}");
         } else {
@@ -61,8 +62,6 @@ fn main() -> Result<(), PlatformError> {
 
     let win = WindowDesc::new(init_layout(tx.clone())) //.background(B_WINDOW))
         .title(LocalizedString::new("app-names"))
-        // .show_titlebar(false)
-        // .menu(make_menu)
         .window_size((1200.0, 710.0)); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
     let mut data = db.read_app_data()?;

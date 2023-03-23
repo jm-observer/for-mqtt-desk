@@ -42,8 +42,8 @@ pub async fn deal_event(
         match rx!(rx) {
             AppEvent::TouchAddBroker => touch_add_broker(&event_sink),
             AppEvent::TouchEditBrokerSelected => edit_broker(&event_sink),
-            AppEvent::TouchConnectBrokerSelected => connect_broker_selected(&event_sink),
-            AppEvent::TouchSaveBroker(index) => touch_save_broker(&event_sink, index),
+            AppEvent::TouchConnectBrokerSelected => touch_connect_broker_selected(&event_sink),
+            AppEvent::TouchSaveBroker => touch_save_broker(&event_sink),
             AppEvent::TouchRemoveSubscribeHis(id) => touch_delete_subscribe_his(&event_sink, id),
             AppEvent::TouchUnSubscribe {
                 broker_id,
@@ -58,9 +58,7 @@ pub async fn deal_event(
             AppEvent::ToConnect(broker) => {
                 connect(&event_sink, &mut mqtt_clients, tx.clone(), broker).await
             }
-            AppEvent::TouchConnectByButton(broke_id) => {
-                touch_connect_by_button(&event_sink, &mut mqtt_clients, tx.clone(), broke_id).await
-            }
+            AppEvent::TouchConnectByButton => touch_connect_by_button(&event_sink).await,
             AppEvent::TouchSubscribeByInput(index) => {
                 touch_subscribe_by_input(&event_sink, index).await
             }
@@ -80,13 +78,13 @@ pub async fn deal_event(
             AppEvent::ClientPubAck(id, ack) => pub_ack(&event_sink, id, ack),
             AppEvent::ClientSubAck(id, ack) => sub_ack(&event_sink, id, ack),
             AppEvent::UpdateToSelectTabs(id) => update_to_select_tabs(&event_sink, id),
-            AppEvent::TouchReConnect(id) => {
-                if let Err(e) = touch_reconnect(&event_sink, id).await {
+            AppEvent::TouchReConnect => {
+                if let Err(e) = touch_reconnect(&event_sink).await {
                     error!("{}", e.to_string());
                 }
             }
-            AppEvent::TouchDisconnect(id) => {
-                if let Err(e) = disconnect(&event_sink, &mut mqtt_clients, id).await {
+            AppEvent::TouchDisconnect => {
+                if let Err(e) = disconnect(&event_sink).await {
                     error!("{}", e.to_string());
                 }
             }
@@ -221,17 +219,17 @@ fn edit_broker(event_sink: &druid::ExtEventSink) {
     });
 }
 
-fn connect_broker_selected(event_sink: &druid::ExtEventSink) {
+fn touch_connect_broker_selected(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.connect_broker_selected() {
+        if let Err(e) = data.touch_connect_broker_selected() {
             error!("{:?}", e);
         }
     });
 }
 
-fn touch_save_broker(event_sink: &druid::ExtEventSink, index: usize) {
+fn touch_save_broker(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.touch_save_broker(index) {
+        if let Err(e) = data.touch_save_broker() {
             error!("{:?}", e);
         } else {
             info!("{}", SAVE_BROKER_SUCCESS);
@@ -291,14 +289,9 @@ fn un_sub_ack(event_sink: &druid::ExtEventSink, broke_id: usize, unsubscribe_pk_
     });
 }
 
-async fn touch_connect_by_button(
-    event_sink: &druid::ExtEventSink,
-    _mqtt_clients: &mut HashMap<usize, Client>,
-    _tx: Sender<AppEvent>,
-    id: usize,
-) {
+async fn touch_connect_by_button(event_sink: &druid::ExtEventSink) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.init_connection(id) {
+        if let Err(e) = data.init_connection_for_selected() {
             error!("{:?}", e);
         }
     });
@@ -421,12 +414,12 @@ fn click_subscribe_his(event_sink: &druid::ExtEventSink, his: SubscribeHis) {
     });
 }
 
-async fn touch_reconnect(event_sink: &druid::ExtEventSink, id: usize) -> Result<()> {
+async fn touch_reconnect(event_sink: &druid::ExtEventSink) -> Result<()> {
     // if let Some(client) = mqtt_clients.remove(&id) {
     //     client.disconnect().await?;
     // }
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.touch_reconnect(id) {
+        if let Err(e) = data.touch_reconnect() {
             error!("{}", e.to_string());
         }
     });
@@ -448,13 +441,9 @@ async fn to_disconnect(
     Ok(())
 }
 
-async fn disconnect(
-    event_sink: &druid::ExtEventSink,
-    _mqtt_clients: &mut HashMap<usize, Client>,
-    id: usize,
-) -> Result<()> {
+async fn disconnect(event_sink: &druid::ExtEventSink) -> Result<()> {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.touch_disconnect(id) {
+        if let Err(e) = data.touch_disconnect() {
             error!("{:?}", e);
         }
     });

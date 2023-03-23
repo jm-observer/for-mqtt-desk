@@ -6,6 +6,7 @@ use crate::util::consts::QosToString;
 use druid::im::Vector;
 use druid::Lens;
 
+
 use std::sync::Arc;
 
 pub struct BrokerSelectedOrZero;
@@ -19,14 +20,18 @@ impl druid::Lens<AppData, Broker> for BrokerSelectedOrZero {
     }
 }
 
-pub struct BrokerId(pub usize);
+pub struct BrokerIdForTab(pub usize);
 
-impl druid::Lens<AppData, Broker> for BrokerId {
+impl druid::Lens<AppData, Broker> for BrokerIdForTab {
     fn with<V, F: FnOnce(&Broker) -> V>(&self, data: &AppData, f: F) -> V {
         f(data.find_broker_by_id(self.0).unwrap())
     }
     fn with_mut<V, F: FnOnce(&mut Broker) -> V>(&self, data: &mut AppData, f: F) -> V {
-        f(data.find_mut_broker_by_id(self.0).unwrap())
+        match data.find_mut_broker_by_id(self.0) {
+            Ok(broker) => f(broker),
+            Err(_) => f(data.find_mut_broker_by_index(0).unwrap()),
+        }
+        // f(data.find_mut_broker_by_id(self.0).unwrap())
     }
 }
 
