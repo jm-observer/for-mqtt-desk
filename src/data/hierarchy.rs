@@ -61,6 +61,11 @@ pub struct AppData {
 }
 
 impl AppData {
+    pub(crate) fn client_disconnect(&mut self, id: usize) -> Result<()> {
+        let broker = self.find_mut_broker_by_id(id)?;
+        broker.disconnect();
+        Ok(())
+    }
     fn send_event(&self, event: AppEvent) {
         if let Err(e) = self.tx.send(event) {
             error!("fail to send event: {:?}", e.0)

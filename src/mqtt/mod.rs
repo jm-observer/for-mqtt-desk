@@ -46,25 +46,19 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
             debug!("{:?}", event);
             match event {
                 MqttEvent::ConnectSuccess(_) => {
-                    deal_conn_success(tx, id);
+                    send_event(tx, AppEvent::ClientConnectAckSuccess(id));
                 }
                 MqttEvent::ConnectFail(err) => {
-                    deal_conn_fail(format!("{:?}", err), tx, id);
+                    send_event(tx, AppEvent::ClientConnectAckFail(id, format!("{:?}", err).into()));
                 }
                 MqttEvent::PublishSuccess(packet_id) => {
-                    if let Err(_) = tx.send(AppEvent::ClientPubAck(id, packet_id)) {
-                        error!("fail to send event!");
-                    };
+                    send_event(tx, AppEvent::ClientPubAck(id, packet_id));
                 }
                 MqttEvent::SubscribeAck(packet) => {
-                    if let Err(_) = tx.send(AppEvent::ClientSubAck(id, packet)) {
-                        error!("fail to send event!");
-                    };
+                    send_event(tx, AppEvent::ClientSubAck(id, packet));
                 }
                 MqttEvent::UnsubscribeAck(packet) => {
-                    if let Err(_) = tx.send(AppEvent::ClientUnSubAck(id, packet)) {
-                        error!("fail to send event!");
-                    };
+                    send_event(tx, AppEvent::ClientUnSubAck(id, packet));
                 }
                 MqttEvent::Publish(msg) => {
                     let Publish {
@@ -75,14 +69,12 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                         payload,
                         ..
                     } = msg;
-                    if let Err(_) = tx.send(AppEvent::ClientReceivePublic(
+                    send_event(tx, AppEvent::ClientReceivePublic(
                         id,
                         topic,
                         payload,
                         qos.into(),
-                    )) {
-                        error!("fail to send event!");
-                    };
+                    ));
                 }
                 MqttEvent::PublishFail(reason) => {
                     error!("{}", reason);
@@ -90,13 +82,15 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                 MqttEvent::SubscribeFail(reason) => {
                     error!("{}", reason);
                 }
+                MqttEvent::ConnectedErr(reason) => {
+                    error!("{}", reason);
+                    send_event(tx, AppEvent::ClientConnectedErr(id, reason));
+                }
                 MqttEvent::UnsubscribeFail(reason) => {
                     error!("{}", reason);
                 }
-                MqttEvent::ConnectedErr(reason) => {
-                    error!("{}", reason);
-                }
                 MqttEvent::Disconnected => {
+                    send_event(tx, AppEvent::ClientDisconnect(id));
                     info!("Disconnected");
                 }
             }
@@ -105,14 +99,8 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
     Ok(client)
 }
 
-fn deal_conn_success(tx: Sender<AppEvent>, id: usize) {
-    debug!("connect success!");
-    if let Err(_) = tx.send(AppEvent::ClientConnectAckSuccess(id)) {
-        error!("fail to send event!");
-    }
-}
-fn deal_conn_fail(err: String, tx: Sender<AppEvent>, id: usize) {
-    if let Err(_) = tx.send(AppEvent::ClientConnectAckFail(id, err.into())) {
+fn send_event(tx: Sender<AppEvent>, event: AppEvent) {
+    if let Err(_) = tx.send(event) {
         error!("fail to send event!");
     }
 }

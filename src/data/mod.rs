@@ -51,6 +51,8 @@ pub enum AppEvent {
     ToUnsubscribeIng(EventUnSubscribe),
     ClientConnectAckSuccess(usize),
     ClientConnectAckFail(usize, Arc<String>),
+    ClientConnectedErr(usize, String),
+    ClientDisconnect(usize),
     TouchPublic(usize),
     ClientReceivePublic(usize, Arc<String>, Arc<Bytes>, QoS),
     ClientPubAck(usize, u32),

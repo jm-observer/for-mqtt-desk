@@ -99,6 +99,12 @@ pub async fn deal_event(
             AppEvent::TouchDeleteBrokerSelected => touch_delete_broker_selected(&event_sink),
             AppEvent::ClientConnectAckSuccess(id) => update_to_connected(&event_sink, id), // _ => {}
             AppEvent::ClientConnectAckFail(_id, _msg) => error!("{}", _msg.to_string()),
+            AppEvent::ClientDisconnect(id) => {
+                client_disconnect(&event_sink, id);
+            }
+            AppEvent::ClientConnectedErr(id, msg) => {
+                client_connect_err(&event_sink, id, msg);
+            }
             AppEvent::UpdateStatusBar(msg) => {
                 update_status_bar(&event_sink, msg);
             }
@@ -179,14 +185,6 @@ async fn double_click(event_sink: &druid::ExtEventSink, ty: ClickTy) -> Result<(
                     error!("{:?}", e);
                 }
             });
-            //
-            // let index = his.broker_id;
-            // if let Some(client) = mqtt_clients.get(&index) {
-            //     let packet_id = client
-            //         .to_subscribe(his.topic.as_str().clone(), his.qos.clone().into())
-            //         .await?;
-            //
-            // }
         }
     }
     Ok(())
@@ -482,6 +480,22 @@ fn clear_msg(event_sink: &druid::ExtEventSink, id: usize) {
             error!("{:?}", e);
         } else {
             info!("clear msg success!");
+        }
+    });
+}
+
+fn client_disconnect(event_sink: &druid::ExtEventSink, id: usize) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.client_disconnect(id) {
+            error!("{:?}", e);
+        }
+    });
+}
+fn client_connect_err(event_sink: &druid::ExtEventSink, id: usize, msg: String) {
+    error!("{:?}", msg);
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.client_disconnect(id) {
+            error!("{:?}", e);
         }
     });
 }
