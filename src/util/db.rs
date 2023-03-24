@@ -43,7 +43,9 @@ impl ArcDb {
                 }
                 if let Some(val) = self.db.get(DbKey::broker_key(id).as_bytes()?)? {
                     let broker: BrokerDB = serde_json::from_slice(&val)?;
-                    brokers.push_back(broker.to_broker(self.tx.clone()));
+                    let broker = broker.to_broker(self.tx.clone());
+                    debug!("{:?}", broker);
+                    brokers.push_back(broker);
                 } else {
                     warn!("can't find id: {}", id);
                 };

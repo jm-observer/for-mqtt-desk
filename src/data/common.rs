@@ -50,7 +50,6 @@ pub struct SubscribeTopic {
 pub struct SubscribeHis {
     // #[serde(skip)]
     // pub(crate) id: Id,
-    #[serde(skip)]
     pub(crate) broker_id: usize,
     #[serde(skip)]
     pub(crate) selected: bool,

@@ -125,6 +125,7 @@ pub async fn mqtt_subscribe(
     let Some(client) = clients.get(&index) else {
         bail!("can't get mqtt client: {}", index);
     };
+    debug!("{:?}", input);
     Ok(client
         .to_subscribe_with_trace_id(input.topic, input.qos.into(), input.trace_id)
         .await?)

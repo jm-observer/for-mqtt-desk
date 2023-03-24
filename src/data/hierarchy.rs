@@ -7,7 +7,7 @@ use crate::mqtt::data::MqttPublicInput;
 use crate::util::consts::QosToString;
 use crate::util::db::ArcDb;
 use crate::util::hint::*;
-use crate::util::{now_time};
+use crate::util::now_time;
 use anyhow::Result;
 use anyhow::{anyhow, bail};
 use bytes::Bytes;
@@ -138,9 +138,12 @@ impl AppData {
             None => 0,
             Some(index) => index,
         };
-        self.brokers.get_mut(0).unwrap()
+        self.brokers.get_mut(_index).unwrap()
     }
     pub fn get_selected_broker_or_zero(&self) -> &Broker {
+        // for i in self.brokers.iter() {
+        //     debug!("{} {}", i.id, i.selected);
+        // }
         if let Some(broker) = self.brokers.iter().find(|x| x.selected) {
             broker
         } else {
@@ -309,6 +312,8 @@ impl AppData {
         let his: SubscribeHis = sub.clone().into();
         if broker.subscribe_hises.iter().find(|x| *x == &his).is_none() {
             broker.subscribe_hises.push_back(his.into());
+            let broker = broker.clone_to_db();
+            self.db.save_broker(broker)?;
         }
         self.db.tx.send(AppEvent::ToSubscribe(sub))?;
         self.db.tx.send(AppEvent::UpdateScrollSubscribeWin)?;
@@ -316,6 +321,7 @@ impl AppData {
         Ok(())
     }
     pub fn touch_subscribe_from_his(&mut self, input: SubscribeHis) -> Result<()> {
+        debug!("{:?}", input);
         self.subscribe(SubscribeTopic::from_his(input, Id::to_id()))?;
         Ok(())
     }
@@ -342,9 +348,6 @@ impl AppData {
     // }
 
     pub fn touch_remove_subscribe_his(&mut self, id: usize) -> Result<()> {
-        // let Some(id) = self.get_selected_broker_id() else {
-        //     bail!(DELETE_SUBSCRIBE_NO_SELECTED);
-        // };
         let broker = self.find_mut_broker_by_id(id)?;
         if let Some(index) = broker
             .subscribe_hises
@@ -354,6 +357,8 @@ impl AppData {
             .map(|(index, _his)| index)
         {
             broker.subscribe_hises.remove(index);
+            let broker = broker.clone_to_db();
+            self.db.save_broker(broker)?;
             return Ok(());
         }
         warn!("{}", DELETE_SUBSCRIBE_NO_SELECTED);

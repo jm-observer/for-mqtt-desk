@@ -11,7 +11,7 @@ pub struct MqttPublicInput {
     pub qos: QoS,
     pub retain: bool,
 }
-
+#[derive(Debug)]
 pub struct MqttSubscribeInput {
     pub trace_id: u32,
     pub topic: String,
@@ -34,7 +34,7 @@ impl From<SubscribeTopic> for MqttSubscribeInput {
         Self {
             trace_id: val.trace_id,
             topic: val.topic.as_ref().clone(),
-            qos: QoS::AtLeastOnce,
+            qos: val.qos,
         }
     }
 }
