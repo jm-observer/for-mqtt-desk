@@ -1,5 +1,6 @@
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIdForTab;
+use crate::data::localized::Locale;
 use crate::data::AppEvent;
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
@@ -9,7 +10,7 @@ use druid::{Widget, WidgetExt};
 use log::{debug, error};
 
 #[derive(Clone)]
-pub struct BrokersTabs(pub Sender<AppEvent>);
+pub struct BrokersTabs(pub Sender<AppEvent>, pub Locale);
 
 impl Data for BrokersTabs {
     fn same(&self, _other: &Self) -> bool {
@@ -46,7 +47,7 @@ impl TabsPolicy for BrokersTabs {
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
         debug!("tab_body");
-        display_connection(self.0.clone()).lens(BrokerIdForTab(_key))
+        display_connection(self.0.clone(), self.1.clone()).lens(BrokerIdForTab(_key))
     }
 
     fn close_tab(&self, key: Self::Key, data: &mut Self::Input) {

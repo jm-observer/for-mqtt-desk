@@ -1,8 +1,8 @@
 #![windows_subsystem = "windows"]
 
 use druid::{
-    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, LocalizedString,
-    PlatformError, Target, WindowDesc,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, PlatformError, Target,
+    WindowDesc,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 
@@ -13,6 +13,7 @@ use for_mqtt::logic::deal_event;
 use for_mqtt::ui::ids::{SELF_SIGNED_FILE, TIPS};
 use for_mqtt::ui::{init_layout, tips};
 
+use for_mqtt::data::localized::{get_locale, Locale};
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
@@ -59,9 +60,9 @@ fn main() -> Result<(), PlatformError> {
             error!("panic occurred but can't get location information...");
         }
     }));
-
-    let win = WindowDesc::new(init_layout(tx.clone())) //.background(B_WINDOW))
-        .title(LocalizedString::new("app-names"))
+    let locale = get_locale();
+    let win = WindowDesc::new(init_layout(tx.clone(), locale.clone())) //.background(B_WINDOW))
+        .title("for-mqtt")
         .window_size((1200.0, 710.0)); //.menu(menu);
     let mut db = ArcDb::init_db(tx.clone())?;
     let mut data = db.read_app_data()?;
@@ -70,7 +71,7 @@ fn main() -> Result<(), PlatformError> {
         .configure_env(|_env: &mut Env, _data: &AppData| {
             // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
         })
-        .delegate(Delegate);
+        .delegate(Delegate(locale));
     let event_sink = launcher.get_external_handle();
     thread::Builder::new()
         .name("logic-worker".to_string())
@@ -87,7 +88,7 @@ fn main() -> Result<(), PlatformError> {
     Ok(())
 }
 
-pub struct Delegate;
+pub struct Delegate(Locale);
 impl AppDelegate<AppData> for Delegate {
     fn command(
         &mut self,
@@ -110,7 +111,7 @@ impl AppDelegate<AppData> for Delegate {
                 }
             }
         } else if let Some(_) = cmd.get(TIPS) {
-            let new_win = WindowDesc::new(tips::tips_ui_builder())
+            let new_win = WindowDesc::new(tips::tips_ui_builder(self.0.clone()))
                 .window_size((500.0, 210.0))
                 .resizable(false)
                 .set_always_on_top(true);

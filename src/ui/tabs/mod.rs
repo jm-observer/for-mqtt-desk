@@ -1,4 +1,5 @@
 use crate::data::hierarchy::AppData;
+use crate::data::localized::Locale;
 use crate::data::AppEvent;
 use crate::ui::ids::{SELECTOR_TABS_SELECTED, TABS_ID};
 use crate::ui::tabs::brokers_tab::BrokersTabs;
@@ -10,9 +11,9 @@ use druid::{Env, Event, EventCtx, Widget, WidgetExt};
 mod broker_tab;
 mod brokers_tab;
 
-pub fn init_brokers_tabs(tx: Sender<AppEvent>) -> impl Widget<AppData> {
+pub fn init_brokers_tabs(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData> {
     let tabs = Container::new(
-        Tabs::for_policy(BrokersTabs(tx))
+        Tabs::for_policy(BrokersTabs(tx, locale))
             .with_axis(Axis::Horizontal)
             .with_edge(TabsEdge::Leading)
             .with_transition(TabsTransition::Instant)

@@ -1,18 +1,19 @@
 use crate::data::hierarchy::AppData;
+use crate::data::localized::Locale;
 use crate::util::consts::{GITHUB_ADDR, TIPS_CONTENT};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Button, Flex, Label};
 use druid::{commands, Application, Env, Widget, WidgetExt};
 use log::info;
 
-pub fn tips_ui_builder() -> impl Widget<AppData> {
+pub fn tips_ui_builder(locale: Locale) -> impl Widget<AppData> {
     // TextBox::multiline()
     Flex::column()
         .with_child(Label::dynamic(|_: &AppData, _: &Env| TIPS_CONTENT.to_string()).padding(8.0))
         .with_child(
             Flex::row()
                 .with_child(
-                    Button::new("复制github")
+                    Button::new(locale.copy_github)
                         .padding(8.0)
                         .on_click(move |_ctx, _data: &mut AppData, _env| {
                             Application::global()
@@ -24,7 +25,7 @@ pub fn tips_ui_builder() -> impl Widget<AppData> {
                         .padding(8.0),
                 )
                 .with_child(
-                    Button::new("关闭")
+                    Button::new(locale.close)
                         .padding(8.0)
                         .on_click(move |_ctx, _data: &mut AppData, _env| {
                             _ctx.submit_command(commands::CLOSE_WINDOW);

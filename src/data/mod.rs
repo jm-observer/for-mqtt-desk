@@ -3,6 +3,7 @@ pub mod common;
 pub mod db;
 pub mod hierarchy;
 pub mod lens;
+pub mod localized;
 
 use crate::data::click_ty::ClickTy;
 use crate::data::common::{QoS, SubscribeHis, SubscribeTopic};

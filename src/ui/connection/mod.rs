@@ -20,19 +20,20 @@ use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
 use crate::ui::qos::{down_select_qos, qos_init, qos_success};
 use crate::ForError;
 
+use crate::data::localized::Locale;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Align, Button, Container, Either, Flex, List, Scroll, Split, TextBox};
-use druid::{LensExt, LocalizedString};
+use druid::LensExt;
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{error, warn};
 
 const NAME_WIDTH: f64 = 80.0;
 const PULL_DOWN_WIDTH: f64 = 60.0;
 
-pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
+pub fn display_connection(tx: Sender<AppEvent>, locale: Locale) -> Container<Broker> {
     let subscribe_list = Container::new(
         init_subscribe_list(tx.clone()), // Split::rows(init_subscribe_list(id), init_subscribe_his_list(id, tx))
                                          //     .split_point(0.75)
@@ -42,9 +43,12 @@ pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
     .padding(0.5);
     let subscribe = Container::new(
-        Split::rows(subscribe_list, init_subscribe_input(tx.clone()))
-            .split_point(0.65)
-            .bar_size(1.0),
+        Split::rows(
+            subscribe_list,
+            init_subscribe_input(tx.clone(), locale.clone()),
+        )
+        .split_point(0.65)
+        .bar_size(1.0),
     )
     .rounded(8.0)
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
@@ -53,7 +57,7 @@ pub fn display_connection(tx: Sender<AppEvent>) -> Container<Broker> {
     let msg = Container::new(
         Split::rows(
             Align::centered(init_msgs_list(tx.clone())),
-            Align::centered(init_public_input(tx.clone())),
+            Align::centered(init_public_input(tx.clone(), locale.clone())),
         )
         .split_point(0.65)
         .bar_size(1.0),
@@ -241,7 +245,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
 }
 
 //
-fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
+fn init_subscribe_input(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<Broker> {
     let subscribe_tx = tx.clone();
     let connection = Flex::column()
         .with_child(
@@ -279,7 +283,7 @@ fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
         )
         .with_child(
             Flex::row().with_child(
-                Button::new(LocalizedString::new("Subscribe"))
+                Button::new(locale.subscribe)
                     .on_click(move |ctx, data: &mut Broker, _env| {
                         if data.subscribe_input.topic.is_empty() {
                             warn!("topic is empty");
@@ -303,7 +307,7 @@ fn init_subscribe_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     connection
 }
 
-fn init_public_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
+fn init_public_input(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<Broker> {
     let public_tx = tx.clone();
     let connection = Flex::column()
         .with_child(
@@ -356,7 +360,7 @@ fn init_public_input(tx: Sender<AppEvent>) -> impl Widget<Broker> {
         )
         .with_child(
             Flex::row().with_child(
-                Button::new(LocalizedString::new("Publish"))
+                Button::new(locale.publish)
                     .on_click(move |ctx, broker: &mut Broker, _env| {
                         if broker.public_input.topic.is_empty()
                             || broker.public_input.msg.is_empty()
