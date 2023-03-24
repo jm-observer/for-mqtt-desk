@@ -102,6 +102,7 @@ impl ArcDb {
                 try_connect: false,
                 connected: false,
             },
+            auto_connect: true,
         }
     }
 

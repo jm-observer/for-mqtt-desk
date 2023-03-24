@@ -175,6 +175,7 @@ pub struct Broker {
     pub port: Option<u16>,
     pub params: AString,
     pub use_credentials: bool,
+    pub auto_connect: bool,
     pub user_name: AString,
     pub password: AString,
     #[data(ignore)]
@@ -239,6 +240,7 @@ impl Broker {
             signed_ty: self.signed_ty,
             self_signed_ca: self.self_signed_ca.clone(),
             subscribe_hises: self.subscribe_hises.clone(),
+            auto_connect: self.auto_connect.clone(),
         }
     }
 

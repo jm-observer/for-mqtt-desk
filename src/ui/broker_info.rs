@@ -12,7 +12,7 @@ use crossbeam_channel::Sender;
 use druid::widget::{Button, Either, Flex, RadioGroup, Switch, TextBox};
 use druid::{Env, FileDialogOptions, FileSpec, UnitPoint, Widget};
 use druid::{LocalizedString, WidgetExt};
-use log::{error};
+use log::error;
 
 pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let save_tx_0 = tx.clone();
@@ -62,6 +62,12 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>) -> impl Widget<Broker> {
                         .lens(PortLens),
                 )
                 .with_child(error_display_widget(ID_PORT))
+                .align_left(),
+        )
+        .with_child(
+            Flex::row()
+                .with_child(label_static("auto connect", UnitPoint::RIGHT))
+                .with_child(Switch::new().lens(Broker::auto_connect))
                 .align_left(),
         )
         .with_child(display_credential(id))

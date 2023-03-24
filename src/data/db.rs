@@ -4,7 +4,7 @@ use crate::data::common::{
 use crate::data::{AString, AppEvent};
 use anyhow::Result;
 use crossbeam_channel::Sender;
-use druid::im::{Vector};
+use druid::im::Vector;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,6 +56,7 @@ pub struct BrokerDB {
     pub port: Option<u16>,
     pub params: AString,
     pub use_credentials: bool,
+    pub auto_connect: bool,
     pub user_name: AString,
     pub password: AString,
     pub tls: bool,
@@ -81,6 +82,7 @@ impl BrokerDB {
             signed_ty: ca,
             self_signed_ca,
             subscribe_hises,
+            auto_connect,
         } = self;
         Broker {
             id,
@@ -110,6 +112,7 @@ impl BrokerDB {
                 try_connect: false,
                 connected: false,
             },
+            auto_connect,
         }
     }
 }
