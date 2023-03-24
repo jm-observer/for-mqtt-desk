@@ -33,7 +33,7 @@ pub fn init_layout(tx: Sender<AppEvent>) -> impl Widget<AppData> {
         .expand_width()
         // .debug_paint_layout()
         .align_vertical(UnitPoint::LEFT)
-        .fix_height(13.0)
+        .fix_height(18.0)
         .padding((35.0, 5.0));
 
     let history = Svg::new(broker_list())

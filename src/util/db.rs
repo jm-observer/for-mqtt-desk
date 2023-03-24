@@ -37,14 +37,19 @@ impl ArcDb {
             self.ids = db_brokers_ids.clone();
             debug!("{:?}", self.ids);
             let mut brokers = Vector::new();
+            let mut index = 0;
             for id in db_brokers_ids.into_iter() {
+                index += 1;
                 if id > self.index {
                     self.index = id;
                 }
                 if let Some(val) = self.db.get(DbKey::broker_key(id).as_bytes()?)? {
                     let broker: BrokerDB = serde_json::from_slice(&val)?;
-                    let broker = broker.to_broker(self.tx.clone());
+                    let mut broker = broker.to_broker(self.tx.clone());
                     debug!("{:?}", broker);
+                    if index == 1 {
+                        broker.selected = true;
+                    }
                     brokers.push_back(broker);
                 } else {
                     warn!("can't find id: {}", id);
