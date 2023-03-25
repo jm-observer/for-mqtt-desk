@@ -13,20 +13,22 @@ use for_mqtt::logic::deal_event;
 use for_mqtt::ui::ids::{SELF_SIGNED_FILE, TIPS};
 use for_mqtt::ui::{init_layout, tips};
 
+use directories::UserDirs;
 use for_mqtt::data::localized::{get_locale, Locale};
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
 use log::LevelFilter::{Debug, Info};
-use std::path::PathBuf;
-use std::str::FromStr;
 use std::sync::Arc;
 use std::{panic, thread};
 
 fn main() -> Result<(), PlatformError> {
     let (tx, rx) = crossbeam_channel::bounded(1024);
 
-    let fs_path = PathBuf::from_str("./resources/log").unwrap();
+    let user_dirs = UserDirs::new().unwrap();
+    let home_path = user_dirs.home_dir().to_path_buf().join(".for-mqtt");
+
+    let fs_path = home_path.clone();
     let fs = FileSpec::default()
         .directory(fs_path)
         .basename("for-mqtt")
@@ -64,7 +66,7 @@ fn main() -> Result<(), PlatformError> {
     let win = WindowDesc::new(init_layout(tx.clone(), locale.clone())) //.background(B_WINDOW))
         .title("for-mqtt")
         .window_size((1200.0, 710.0)); //.menu(menu);
-    let mut db = ArcDb::init_db(tx.clone())?;
+    let mut db = ArcDb::init_db(tx.clone(), home_path.join("db"))?;
     let mut data = db.read_app_data()?;
 
     let launcher = AppLauncher::with_window(win)

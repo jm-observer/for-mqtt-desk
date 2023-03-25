@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use crossbeam_channel::Sender;
-use directories::UserDirs;
 use sled::{Config, Db};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::data::common::{Broker, Protocol, PublicInput, SignedTy, SubscribeInput, TabStatus};
@@ -21,13 +21,7 @@ pub struct ArcDb {
 
 const BROKERS: &[u8; 7] = b"brokers";
 impl ArcDb {
-    pub fn init_db(tx: Sender<AppEvent>) -> Result<Self> {
-        let user_dirs = UserDirs::new().ok_or(anyhow!("could not find user dirs"))?;
-        let db_path = user_dirs
-            .home_dir()
-            .to_path_buf()
-            .join(".for-mqtt")
-            .join("db");
+    pub fn init_db(tx: Sender<AppEvent>, db_path: PathBuf) -> Result<Self> {
         let config = Config::new().path(db_path);
         Ok(ArcDb {
             index: 0,
