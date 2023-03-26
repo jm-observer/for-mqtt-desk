@@ -50,7 +50,10 @@ pub enum AppEvent {
     },
     ToPublish(MqttPublicInput),
     ToUnsubscribeIng(EventUnSubscribe),
-    ClientConnectAckSuccess(usize),
+    ClientConnectAckSuccess {
+        broker_id: usize,
+        retain: bool,
+    },
     ClientConnectAckFail(usize, Arc<String>),
     ClientConnectedErr(usize, String),
     ClientDisconnect(usize),

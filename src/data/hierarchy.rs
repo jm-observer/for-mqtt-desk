@@ -212,7 +212,7 @@ impl AppData {
         Ok(())
     }
 
-    pub fn update_to_connected(&mut self, id: usize) -> Result<()> {
+    pub fn update_to_connected(&mut self, id: usize, _retain: bool) -> Result<()> {
         let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
         status.try_connect = false;
         status.connected = true;

@@ -31,8 +31,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
         mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }
     let some = serde_json::from_str(broker.params.as_str())?;
-    mqttoptions =
-        update_tls_option(update_option(mqttoptions, some), broker.clone());
+    mqttoptions = update_tls_option(update_option(mqttoptions, some), broker.clone());
     if broker.auto_connect {
         mqttoptions = mqttoptions.auto_reconnect();
     }
@@ -48,11 +47,20 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
             let tx = tx.clone();
             debug!("{:?}", event);
             match event {
-                MqttEvent::ConnectSuccess(_) => {
-                    send_event(tx, AppEvent::ClientConnectAckSuccess(id));
+                MqttEvent::ConnectSuccess(retain) => {
+                    send_event(
+                        tx,
+                        AppEvent::ClientConnectAckSuccess {
+                            broker_id: id,
+                            retain,
+                        },
+                    );
                 }
                 MqttEvent::ConnectFail(err) => {
-                    send_event(tx, AppEvent::ClientConnectAckFail(id, format!("{:?}", err).into()));
+                    send_event(
+                        tx,
+                        AppEvent::ClientConnectAckFail(id, format!("{:?}", err).into()),
+                    );
                 }
                 MqttEvent::PublishSuccess(packet_id) => {
                     send_event(tx, AppEvent::ClientPubAck(id, packet_id));
@@ -72,12 +80,10 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                         payload,
                         ..
                     } = msg;
-                    send_event(tx, AppEvent::ClientReceivePublic(
-                        id,
-                        topic,
-                        payload,
-                        qos.into(),
-                    ));
+                    send_event(
+                        tx,
+                        AppEvent::ClientReceivePublic(id, topic, payload, qos.into()),
+                    );
                 }
                 MqttEvent::PublishFail(reason) => {
                     error!("{}", reason);

@@ -97,7 +97,9 @@ pub async fn deal_event(
             //     }
             // }
             AppEvent::TouchDeleteBrokerSelected => touch_delete_broker_selected(&event_sink),
-            AppEvent::ClientConnectAckSuccess(id) => update_to_connected(&event_sink, id), // _ => {}
+            AppEvent::ClientConnectAckSuccess { broker_id, retain } => {
+                update_to_connected(&event_sink, broker_id, retain)
+            } // _ => {}
             AppEvent::ClientConnectAckFail(_id, _msg) => error!("{}", _msg.to_string()),
             AppEvent::ClientDisconnect(id) => {
                 client_disconnect(&event_sink, id);
@@ -465,10 +467,10 @@ fn touch_delete_broker_selected(event_sink: &druid::ExtEventSink) {
         }
     });
 }
-fn update_to_connected(event_sink: &druid::ExtEventSink, id: usize) {
+fn update_to_connected(event_sink: &druid::ExtEventSink, id: usize, retain: bool) {
     info!("connect success!");
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.update_to_connected(id) {
+        if let Err(e) = data.update_to_connected(id, retain) {
             error!("{:?}", e);
         }
     });
