@@ -213,9 +213,13 @@ impl AppData {
     }
 
     pub fn update_to_connected(&mut self, id: usize, _retain: bool) -> Result<()> {
-        let status = &mut self.find_mut_broker_by_id(id)?.tab_status;
+        let broker = self.find_mut_broker_by_id(id)?;
+        let status = &mut broker.tab_status;
         status.try_connect = false;
         status.connected = true;
+        if !_retain {
+            broker.subscribe_topics.clear();
+        }
         Ok(())
     }
     pub(crate) fn touch_disconnect(&mut self) -> Result<()> {

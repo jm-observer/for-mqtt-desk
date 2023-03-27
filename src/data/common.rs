@@ -247,7 +247,9 @@ impl Broker {
     pub fn disconnect(&mut self) {
         self.tab_status.try_connect = false;
         self.tab_status.connected = false;
-        self.subscribe_topics.clear();
+        if !self.auto_connect {
+            self.subscribe_topics.clear();
+        }
         self.msgs.clear();
         self.unsubscribe_ing.clear();
     }
