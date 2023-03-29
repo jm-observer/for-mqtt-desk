@@ -32,6 +32,7 @@ use log::{error, warn};
 
 const NAME_WIDTH: f64 = 80.0;
 const PULL_DOWN_WIDTH: f64 = 60.0;
+const MSG_WIDTH: f64 = 330.0;
 
 pub fn display_connection(tx: Sender<AppEvent>, locale: Locale) -> Container<Broker> {
     let subscribe_list = Container::new(
@@ -168,7 +169,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                                     .lens(MsgMsgLens)
                                     .padding(1.5),
                             )
-                            .fix_width(250.),
+                            .fix_width(MSG_WIDTH),
                     )
                     .rounded(8.0)
                     .border(BORDER_LIGHT, 1.0),
@@ -211,7 +212,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                     )
                     .rounded(8.0)
                     .border(BORDER_LIGHT, 1.0)
-                    .fix_width(250.),
+                    .fix_width(MSG_WIDTH),
                 )
                 .align_horizontal(UnitPoint::TOP_LEFT)
                 .expand_width(),
