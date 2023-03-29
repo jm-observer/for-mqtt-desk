@@ -576,13 +576,16 @@ impl AppData {
         qos: QoS,
     ) -> Result<()> {
         let broker = self.find_mut_broker_by_id(id)?;
-        let payload_ty =
-            if let Some(subscribe) = broker.subscribe_topics.iter().find(|x| x.topic == topic) {
-                subscribe.payload_ty.clone()
-            } else {
-                warn!("could not find this publish's subscribe record");
-                PayloadTy::default()
-            };
+        let payload_ty = if let Some(subscribe) = broker
+            .subscribe_topics
+            .iter()
+            .find(|x| x.match_topic(topic.as_str()))
+        {
+            subscribe.payload_ty.clone()
+        } else {
+            warn!("could not find this publish's subscribe record");
+            PayloadTy::default()
+        };
         let payload = payload_ty.format(payload);
         let msg = SubscribeMsg {
             topic,

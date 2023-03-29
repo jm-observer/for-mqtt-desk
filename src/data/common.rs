@@ -42,6 +42,9 @@ pub struct SubscribeTopic {
     #[data(ignore)]
     pub topic: AString,
     #[data(ignore)]
+    /// 只针对通配符的topic
+    // pub sub_topic: AString,
+    #[data(ignore)]
     pub qos: QoS,
     pub status: SubscribeStatus,
     pub payload_ty: PayloadTy,

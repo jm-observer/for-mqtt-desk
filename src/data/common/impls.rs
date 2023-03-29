@@ -10,6 +10,29 @@ use crate::util::now_time;
 use std::sync::Arc;
 
 impl SubscribeTopic {
+    pub fn match_topic(&self, topic: &str) -> bool {
+        if self.topic.as_str() == "#" {
+            true
+        } else if self.topic.ends_with("/#") {
+            topic.starts_with(self.topic.split_at(self.topic.len() - 2).0)
+        } else if self.topic.as_str() == "+" {
+            if topic.contains('/') {
+                false
+            } else {
+                true
+            }
+        } else if self.topic.ends_with("/+") {
+            let sub_topic = self.topic.split_at(self.topic.len() - 2).0;
+            if topic.starts_with(sub_topic) {
+                topic.split_at(sub_topic.len()).1.contains('/')
+            } else {
+                false
+            }
+        } else {
+            self.topic.as_str() == topic
+        }
+    }
+
     pub fn from(val: SubscribeInput, trace_id: u32) -> Self {
         Self {
             broker_id: val.broker_id,
