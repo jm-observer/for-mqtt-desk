@@ -18,6 +18,8 @@ pub type AString = Arc<String>;
 
 #[derive(Debug)]
 pub enum AppEvent {
+    /// 点击了某个连接tab
+    TouchClickTab(usize),
     /// broker列表的新增图标。新增broker
     TouchAddBroker,
     /// broker列表的编辑图标。编辑选择的broker

@@ -373,6 +373,13 @@ impl AppData {
         warn!("{}", DELETE_SUBSCRIBE_NO_SELECTED);
         Ok(())
     }
+    pub fn touch_click_tab(&mut self, tab_index: usize) -> Result<()> {
+        let Some(id) = self.broker_tabs.get(tab_index) else {
+            bail!("could not find tab by index {}", tab_index);
+        };
+        self.select_broker(*id);
+        Ok(())
+    }
 
     pub fn sub_ack(&mut self, id: usize, input: SubscribeAck) -> Result<()> {
         let broker = self.find_mut_broker_by_id(id)?;

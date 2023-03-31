@@ -40,6 +40,7 @@ pub async fn deal_event(
         // let event = ;
         // debug!("{:?}", event);
         match rx!(rx) {
+            AppEvent::TouchClickTab(tab_index) => touch_click_tab(&event_sink, tab_index),
             AppEvent::TouchAddBroker => touch_add_broker(&event_sink),
             AppEvent::TouchEditBrokerSelected => edit_broker(&event_sink),
             AppEvent::TouchConnectBrokerSelected => touch_connect_broker_selected(&event_sink),
@@ -240,6 +241,16 @@ fn touch_save_broker(event_sink: &druid::ExtEventSink) {
 fn touch_delete_subscribe_his(event_sink: &druid::ExtEventSink, id: usize) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
         if let Err(e) = data.touch_remove_subscribe_his(id) {
+            warn!("{}", e.to_string());
+        } else {
+            info!("{}", DELETE_SUBSCRIBE_SUCCESS);
+        }
+    });
+}
+
+fn touch_click_tab(event_sink: &druid::ExtEventSink, tab_index: usize) {
+    event_sink.add_idle_callback(move |data: &mut AppData| {
+        if let Err(e) = data.touch_click_tab(tab_index) {
             warn!("{}", e.to_string());
         } else {
             info!("{}", DELETE_SUBSCRIBE_SUCCESS);
