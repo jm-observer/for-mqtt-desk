@@ -47,6 +47,9 @@ piet = { git = "https://github.com/jm-observer/piet.git"}
 #[patch.crates-io]
 #custom-utils = { path = "../custom-utils"}
 
+[build-dependencies]
+chrono = "0.4.23"
+anyhow = "1.0.69"
 
 [profile.release]
 lto = true

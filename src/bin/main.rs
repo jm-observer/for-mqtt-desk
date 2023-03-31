@@ -114,7 +114,7 @@ impl AppDelegate<AppData> for Delegate {
             }
         } else if let Some(_) = cmd.get(TIPS) {
             let new_win = WindowDesc::new(tips::tips_ui_builder(self.0.clone()))
-                .window_size((500.0, 210.0))
+                .window_size((500.0, 240.0))
                 .resizable(false)
                 .set_always_on_top(true);
             _ctx.new_window(new_win);
