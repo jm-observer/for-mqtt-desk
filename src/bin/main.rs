@@ -13,12 +13,14 @@ use for_mqtt::logic::deal_event;
 use for_mqtt::ui::ids::{SELF_SIGNED_FILE, TIPS};
 use for_mqtt::ui::{init_layout, tips};
 
+use backtrace::Backtrace;
 use directories::UserDirs;
 use for_mqtt::data::localized::{get_locale, Locale};
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
 use log::LevelFilter::{Debug, Info};
+use std::process::exit;
 use std::sync::Arc;
 use std::{panic, thread};
 
@@ -46,21 +48,15 @@ fn main() -> Result<(), PlatformError> {
         .build();
 
     panic::set_hook(Box::new(|panic_info| {
-        error!("{:?}", panic_info);
-        if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-            error!("panic occurred: {s:?}");
-        } else {
-            error!("panic occurred");
-        }
+        error!("{:?}", Backtrace::new());
         if let Some(location) = panic_info.location() {
             error!(
                 "panic occurred in file '{}' at line {}",
                 location.file(),
                 location.line(),
             );
-        } else {
-            error!("panic occurred but can't get location information...");
         }
+        exit(1);
     }));
     let locale = get_locale();
     let win = WindowDesc::new(init_layout(tx.clone(), locale.clone())) //.background(B_WINDOW))
