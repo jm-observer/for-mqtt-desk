@@ -6,7 +6,7 @@ use crate::data::lens::{
 };
 use crate::data::AppEvent;
 
-use crate::ui::common::{svg, title, SILVER, TOPIC};
+use crate::ui::common::{svg, title, QOS_COMMON, SILVER, TOPIC};
 use crate::ui::icons::{added_icon, connect_icon, modified_icon, removed_icon};
 
 use crate::ui::payload_ty::payload_ty_init;
@@ -50,7 +50,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let his_fn = move || {
         let tx_click = tx_click.clone();
         Flex::row()
-            .with_child(qos_init(LensSubscribeHisQoS))
+            .with_child(QOS_COMMON().lens(LensSubscribeHisQoS))
             .with_child(payload_ty_init(SubscribeHisPayloadLens))
             .with_child(TOPIC().lens(SubscribeHis::topic))
             .expand_width()
@@ -61,6 +61,7 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                     error!("fail to send event")
                 }
             })
+            .padding(1.0)
     };
 
     let list: List<SubscribeHis> = List::new(move || {

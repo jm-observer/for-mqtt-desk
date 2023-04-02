@@ -1,10 +1,12 @@
+use crate::data::click_ty::ClickTy;
 use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIdForTab;
 use crate::data::localized::Locale;
 use crate::data::AppEvent;
+use crate::ui::common::{GRAY, GREEN, RED};
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
-use druid::widget::{TabInfo, TabsPolicy};
+use druid::widget::{Either, Label, TabInfo, TabsPolicy};
 use druid::{Data, Env};
 use druid::{Widget, WidgetExt};
 use log::{debug, error};
@@ -36,9 +38,9 @@ impl TabsPolicy for BrokersTabs {
         return TabInfo::new(
             move |data: &AppData, _: &Env| {
                 if let Some(tabs) = data.brokers.iter().find(|x| (*x).id == key) {
-                    format!("{}", tabs.name)
+                    format!("{:width$}", tabs.name, width = 40)
                 } else {
-                    "".to_string()
+                    format!("{:width$}", "", width = 40)
                 }
             },
             true,
@@ -58,11 +60,41 @@ impl TabsPolicy for BrokersTabs {
 
     fn tab_label(
         &self,
-        _key: Self::Key,
+        key: Self::Key,
         _info: TabInfo<Self::Input>,
         _data: &Self::Input,
     ) -> Self::LabelWidget {
-        Self::default_make_label(_info)
+        let lable = if let Some(tabs) = _data.brokers.iter().find(|x| (*x).id == key) {
+            tabs.name.as_str().to_string()
+        } else {
+            "".to_string()
+        };
+        let tx = self.0.clone();
+        let lable = || {
+            let tx = tx.clone();
+            Label::new(lable.clone())
+                .fix_width(80.0)
+                .on_click(move |_, _, _| {
+                    if tx
+                        .send(AppEvent::TouchClick(ClickTy::ConnectTab(key)))
+                        .is_err()
+                    {
+                        error!("fail to send event");
+                    }
+                })
+        };
+
+        Either::new(
+            move |data: &AppData, env| {
+                if let Ok(broker) = data.find_broker_by_id(key) {
+                    broker.tab_status.connected
+                } else {
+                    false
+                }
+            },
+            lable().background(GREEN).rounded(3.0),
+            lable().background(RED).rounded(3.0),
+        )
     }
 }
 

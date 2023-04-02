@@ -373,11 +373,8 @@ impl AppData {
         warn!("{}", DELETE_SUBSCRIBE_NO_SELECTED);
         Ok(())
     }
-    pub fn touch_click_tab(&mut self, tab_index: usize) -> Result<()> {
-        let Some(id) = self.broker_tabs.get(tab_index) else {
-            bail!("could not find tab by index {}", tab_index);
-        };
-        self.select_broker(*id);
+    pub fn touch_click_tab(&mut self, broker_id: usize) -> Result<()> {
+        self.select_broker(broker_id);
         Ok(())
     }
 

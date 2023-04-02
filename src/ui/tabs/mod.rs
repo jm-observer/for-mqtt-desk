@@ -7,7 +7,6 @@ use crossbeam_channel::Sender;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Axis, Container, Controller, Tabs, TabsEdge, TabsTransition};
 use druid::{Env, Event, EventCtx, Widget, WidgetExt};
-use log::error;
 
 mod broker_tab;
 mod brokers_tab;
@@ -44,17 +43,17 @@ impl Controller<AppData, Tabs<BrokersTabs>> for TabsControler {
                     child.set_tab_index(*index);
                 }
             }
-            Event::MouseDown(_) => {
-                child.event(_ctx, event, _data, _env);
-                let index = child.tab_index();
-                if index != self.1 {
-                    self.1 = index;
-                    if self.0.send(AppEvent::TouchClickTab(index)).is_err() {
-                        error!("fail to send event");
-                    }
-                }
-                // debug!("{}", child.tab_index());
-            }
+            // Event::MouseDown(_) => {
+            //     child.event(_ctx, event, _data, _env);
+            //     let index = child.tab_index();
+            //     if index != self.1 {
+            //         self.1 = index;
+            //         if self.0.send(AppEvent::TouchClickTab(index)).is_err() {
+            //             error!("fail to send event");
+            //         }
+            //     }
+            //     // debug!("{}", child.tab_index());
+            // }
             _ => child.event(_ctx, event, _data, _env),
         }
     }

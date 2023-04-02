@@ -1,5 +1,6 @@
 use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Msg, PublicInput, SubscribeInput, SubscribeTopic};
+use std::sync::Arc;
 
 use crate::data::lens::{
     LensQoSAString, MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens, MsgTopicLens,
@@ -8,7 +9,8 @@ use crate::data::lens::{
 use crate::data::{AString, AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING,
+    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING, GRAY, GREEN,
+    QOS_COMMON, QOS_GREEN, TOPIC,
 };
 
 use crate::ui::icons::removed_icon;
@@ -25,8 +27,8 @@ use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{Align, Button, Container, Either, Flex, List, Scroll, Split, TextBox};
-use druid::LensExt;
+use druid::widget::{Align, Button, Container, Either, Flex, Label, List, Scroll, Split, TextBox};
+use druid::{Env, LensExt};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{error, warn};
 
@@ -79,41 +81,40 @@ fn init_subscribe_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
     let list: List<SubscribeTopic> = List::new(move || {
         let tx = tx.clone();
         let tx1 = tx.clone();
-        Flex::row()
-            .with_child(svg(removed_icon()).on_click(
-                move |_ctx, data: &mut SubscribeTopic, _env| {
-                    if let Err(_) = tx.send(AppEvent::TouchUnSubscribe {
-                        broker_id: data.broker_id,
-                        trace_id: data.trace_id,
-                    }) {
+        Container::new(
+            Flex::row()
+                .with_child(svg(removed_icon()).on_click(
+                    move |_ctx, data: &mut SubscribeTopic, _env| {
+                        if let Err(_) = tx.send(AppEvent::TouchUnSubscribe {
+                            broker_id: data.broker_id,
+                            trace_id: data.trace_id,
+                        }) {
+                            error!("fail to send event")
+                        }
+                    },
+                ))
+                .with_child(Either::new(
+                    |data: &SubscribeTopic, _env| data.is_sucess(),
+                    QOS_GREEN().lens(SubscribeTopic::qos.then(LensQoSAString)),
+                    // qos_success(SubscribeTopic::qos.then(LensQoSAString)),
+                    QOS_COMMON().lens(SubscribeTopic::qos.then(LensQoSAString)),
+                ))
+                .with_child(payload_ty_init(SubscribeTopicPayloadLens))
+                .with_child(TOPIC().lens(SubscribeTopic::topic))
+                .align_left()
+                .padding(2.0)
+                // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
+                .expand_width()
+                .on_click(move |_ctx, data: &mut SubscribeTopic, _env| {
+                    if let Err(_) = tx1.send(AppEvent::TouchClick(ClickTy::SubscribeTopic(
+                        data.broker_id,
+                        data.trace_id,
+                    ))) {
                         error!("fail to send event")
                     }
-                },
-            ))
-            .with_child(Either::new(
-                |data: &SubscribeTopic, _env| data.is_sucess(),
-                qos_success(SubscribeTopic::qos.then(LensQoSAString)),
-                qos_init(SubscribeTopic::qos.then(LensQoSAString)),
-            ))
-            .with_child(payload_ty_init(SubscribeTopicPayloadLens))
-            .with_child(
-                TextBox::new()
-                    .controller(RightClickToCopy)
-                    .disabled_if(|_, _| true)
-                    .lens(SubscribeTopic::topic)
-                    .fix_width(150.0),
-            )
-            .align_left()
-            // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-            .expand_width()
-            .on_click(move |_ctx, data: &mut SubscribeTopic, _env| {
-                if let Err(_) = tx1.send(AppEvent::TouchClick(ClickTy::SubscribeTopic(
-                    data.broker_id,
-                    data.trace_id,
-                ))) {
-                    error!("fail to send event")
-                }
-            })
+                }),
+        )
+        .rounded(3.0)
     });
 
     let scroll = Scroll::<Vector<SubscribeTopic>, List<SubscribeTopic>>::new(list)
@@ -146,18 +147,11 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                                 Flex::row()
                                     .with_child(Either::new(
                                         |data: &Msg, _env| data.is_sucess(),
-                                        qos_success(MsgQosLens),
-                                        qos_init(MsgQosLens),
+                                        QOS_GREEN().lens(MsgQosLens),
+                                        QOS_COMMON().lens(MsgQosLens),
                                     ))
                                     .with_child(payload_ty_init(MsgPayloadTyLens))
-                                    .with_flex_child(
-                                        TextBox::<AString>::new()
-                                            .controller(RightClickToCopy)
-                                            .disabled_if(|_, _| true)
-                                            .lens(MsgTopicLens)
-                                            .expand_width(),
-                                        1.0,
-                                    )
+                                    .with_flex_child(TOPIC().lens(MsgTopicLens), 1.0)
                                     .expand_width(),
                             )
                             .with_child(
@@ -189,16 +183,9 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                             )
                             .with_child(
                                 Flex::row()
-                                    .with_child(qos_success(MsgQosLens))
+                                    .with_child(QOS_GREEN().lens(MsgQosLens))
                                     .with_child(payload_ty_init(MsgPayloadTyLens))
-                                    .with_flex_child(
-                                        TextBox::<AString>::new()
-                                            .controller(RightClickToCopy)
-                                            .disabled_if(|_, _| true)
-                                            .lens(MsgTopicLens)
-                                            .expand_width(),
-                                        1.0,
-                                    )
+                                    .with_flex_child(TOPIC().lens(MsgTopicLens), 1.0)
                                     .expand_width(),
                             )
                             .with_child(

@@ -19,8 +19,9 @@ pub fn tips_ui_builder(locale: Locale) -> impl Widget<AppData> {
 2. 左键双击broker记录，即可进行连接
 3. 左键双击历史订阅记录，即可进行订阅
 4. 左键双击订阅记录，即可取消订阅
-5. 右键双击订阅topic、发布topic、发布payload，即复制对应内容
-6. 当前git编译版本: {}-{}，编译时间：{}"#,
+5. 左键双击tab颜色背景，即可重连该连接
+6. 右键双击订阅topic、发布topic、发布payload，即复制对应内容
+7. 当前git编译版本: {}-{}，编译时间：{}"#,
                     branch, commit, build_date_time
                 )
             })

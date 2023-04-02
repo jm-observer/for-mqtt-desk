@@ -27,30 +27,26 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>, locale: Locale) -> impl W
         .with_child(
             Flex::row()
                 .with_child(label_static("name", UnitPoint::RIGHT))
-                .with_child(TextBox::new().fix_width(TEXTBOX_WIDTH).lens(Broker::name))
+                .with_flex_child(TextBox::new().lens(Broker::name).expand_width(), 1.0)
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("client id", UnitPoint::RIGHT))
-                .with_child(
-                    TextBox::new()
-                        .fix_width(TEXTBOX_WIDTH)
-                        .lens(Broker::client_id),
-                )
+                .with_flex_child(TextBox::new().lens(Broker::client_id).expand_width(), 1.0)
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("addr", UnitPoint::RIGHT))
-                .with_child(TextBox::new().fix_width(TEXTBOX_WIDTH).lens(Broker::addr))
+                .with_flex_child(TextBox::new().lens(Broker::addr).expand_width(), 1.0)
                 .with_child(error_display_widget(ID_ADDR))
                 .align_left(),
         )
         .with_child(
             Flex::row()
                 .with_child(label_static("port", UnitPoint::RIGHT))
-                .with_child(
+                .with_flex_child(
                     TextBox::new()
                         .with_formatter(MustInput)
                         .update_data_while_editing(true)
@@ -59,8 +55,9 @@ pub fn display_broker(id: usize, tx: Sender<AppEvent>, locale: Locale) -> impl W
                             TextBoxErrorDelegate::new(ID_PORT, check_port)
                                 .sends_partial_errors(true),
                         )
-                        .fix_width(TEXTBOX_WIDTH)
-                        .lens(PortLens),
+                        .lens(PortLens)
+                        .expand_width(),
+                    1.0,
                 )
                 .with_child(error_display_widget(ID_PORT))
                 .align_left(),

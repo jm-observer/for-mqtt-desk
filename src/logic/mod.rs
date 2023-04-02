@@ -40,7 +40,7 @@ pub async fn deal_event(
         // let event = ;
         // debug!("{:?}", event);
         match rx!(rx) {
-            AppEvent::TouchClickTab(tab_index) => touch_click_tab(&event_sink, tab_index),
+            AppEvent::TouchClickTab(broker_id) => touch_click_tab(&event_sink, broker_id),
             AppEvent::TouchAddBroker => touch_add_broker(&event_sink),
             AppEvent::TouchEditBrokerSelected => edit_broker(&event_sink),
             AppEvent::TouchConnectBrokerSelected => touch_connect_broker_selected(&event_sink),
@@ -168,6 +168,7 @@ async fn first_click(event_sink: &druid::ExtEventSink, ty: ClickTy) {
         }
         ClickTy::SubscribeTopic(_, _) => {}
         ClickTy::SubscribeHis(his) => click_subscribe_his(event_sink, his.clone()),
+        ClickTy::ConnectTab(broker_id) => touch_click_tab(event_sink, broker_id),
     }
 }
 async fn double_click(event_sink: &druid::ExtEventSink, ty: ClickTy) -> Result<()> {
@@ -188,6 +189,9 @@ async fn double_click(event_sink: &druid::ExtEventSink, ty: ClickTy) -> Result<(
                     error!("{:?}", e);
                 }
             });
+        }
+        ClickTy::ConnectTab(_) => {
+            touch_reconnect(event_sink).await?;
         }
     }
     Ok(())
@@ -248,12 +252,10 @@ fn touch_delete_subscribe_his(event_sink: &druid::ExtEventSink, id: usize) {
     });
 }
 
-fn touch_click_tab(event_sink: &druid::ExtEventSink, tab_index: usize) {
+fn touch_click_tab(event_sink: &druid::ExtEventSink, broker_id: usize) {
     event_sink.add_idle_callback(move |data: &mut AppData| {
-        if let Err(e) = data.touch_click_tab(tab_index) {
+        if let Err(e) = data.touch_click_tab(broker_id) {
             warn!("{}", e.to_string());
-        } else {
-            info!("{}", DELETE_SUBSCRIBE_SUCCESS);
         }
     });
 }

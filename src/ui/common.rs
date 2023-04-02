@@ -3,11 +3,15 @@ use crate::ui::ids::{ErrorController, ERROR_TEXT_COLOR};
 
 use druid::text::ValidationError;
 
-use druid::widget::{Controller, Either, Label, LabelText, SizedBox, Svg, SvgData, TextBox};
+use druid::widget::{
+    Container, Controller, Either, Label, LabelText, SizedBox, Svg, SvgData, TextBox,
+};
 use druid::{
     Application, Color, Data, Env, Event, EventCtx, UnitPoint, Widget, WidgetExt, WidgetId,
 };
 
+use crate::data::common::SubscribeTopic;
+use chrono::SubsecRound;
 use log::info;
 use std::sync::Arc;
 
@@ -28,6 +32,7 @@ pub const WHITE: Color = Color::grey8(255);
 
 pub const B_WINDOW: Color = Color::rgb8(242, 242, 242);
 pub const B_CONTENT: Color = Color::rgb8(41, 41, 41);
+pub const GRAY: Color = Color::rgb8(58, 58, 58);
 
 pub fn svg<T: druid::Data>(data: SvgData) -> impl Widget<T> {
     Svg::new(data).fix_size(18.0, 18.0).padding(1.0)
@@ -78,16 +83,29 @@ pub fn label_static_expand_width<T: druid::Data>(
     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
 
-pub const QOS: fn() -> SizedBox<Arc<String>> = || {
+pub const QOS_COMMON: fn() -> Container<Arc<String>> = || {
     Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
-        .with_text_size(8.)
-        .fix_width(20f64)
+        .padding(1.0)
+        .fix_width(15.0)
+        .background(GRAY)
+        .rounded(1.0)
+};
+pub const QOS_GREEN: fn() -> Container<Arc<String>> = || {
+    Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
+        .padding(1.0)
+        .fix_width(15.0)
+        .background(GREEN)
+        .rounded(1.0)
 };
 
-pub const TOPIC: fn() -> SizedBox<AString> = || {
-    Label::dynamic(|data: &AString, _: &Env| format!("{}", data))
+pub const TOPIC: fn() -> Container<AString> = || {
+    Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
         .controller(RightClickToCopy)
-        .fix_width(150.)
+        .fix_width(150.0)
+        .expand_width()
+        .padding(1.0)
+        .background(GRAY)
+        .rounded(1.0)
 };
 
 pub const MSG: fn() -> SizedBox<AString> =

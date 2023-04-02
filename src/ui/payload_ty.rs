@@ -1,6 +1,7 @@
 use crate::data::common::PayloadTy;
-use druid::widget::TextBox;
-use druid::{Data, Lens, Widget, WidgetExt};
+use crate::ui::common::{B_CONTENT, B_WINDOW, GRAY};
+use druid::widget::{Label, TextBox};
+use druid::{Data, Env, Lens, Widget, WidgetExt};
 use druid_widget_nursery::DropdownSelect;
 use std::sync::Arc;
 
@@ -12,10 +13,17 @@ pub fn down_select_payload_ty() -> impl Widget<PayloadTy> {
     ])
 }
 
-pub fn payload_ty_init<T: Data>(data: impl Lens<T, Arc<String>>) -> impl Widget<T> {
-    TextBox::<Arc<String>>::new()
+pub fn payload_ty_init<T: Data>(data: impl Lens<T, Arc<String>> + 'static) -> impl Widget<T> {
+    // TextBox::<Arc<String>>::new()
+    //     .fix_width(15.0)
+    //     .padding(1.0)
+    //     .disabled_if(|_, _| true)
+    //     .lens(data)
+
+    Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
+        .lens(data)
         .fix_width(15.0)
         .padding(1.0)
-        .disabled_if(|_, _| true)
-        .lens(data)
+        .background(GRAY)
+        .rounded(1.0)
 }
