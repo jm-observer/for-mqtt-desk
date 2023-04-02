@@ -10,8 +10,6 @@ use druid::{
     Application, Color, Data, Env, Event, EventCtx, UnitPoint, Widget, WidgetExt, WidgetId,
 };
 
-use crate::data::common::SubscribeTopic;
-use chrono::SubsecRound;
 use log::info;
 use std::sync::Arc;
 
@@ -38,22 +36,6 @@ pub fn svg<T: druid::Data>(data: SvgData) -> impl Widget<T> {
     Svg::new(data).fix_size(18.0, 18.0).padding(1.0)
 }
 
-pub fn label_dy<T: druid::Data>(f: impl Fn(&T, &Env) -> String + 'static) -> impl Widget<T> {
-    Label::dynamic(f)
-        .align_vertical(UnitPoint::RIGHT)
-        .padding(LABLE_PADDING)
-        .fix_width(LABLE_WIDTH)
-    // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-}
-pub fn label_dy_expand_width<T: druid::Data>(
-    f: impl Fn(&T, &Env) -> String + 'static,
-) -> impl Widget<T> {
-    Label::dynamic(f)
-        .align_vertical(UnitPoint::RIGHT)
-        .padding(LABLE_PADDING)
-        .expand_width()
-    // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-}
 pub fn label_static<T: druid::Data>(
     text: impl Into<LabelText<T>>,
     unit: UnitPoint,
@@ -72,17 +54,6 @@ pub fn title<T: druid::Data>(text: impl Into<LabelText<T>>, unit: UnitPoint) -> 
         .fix_width(180.0)
     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
-pub fn label_static_expand_width<T: druid::Data>(
-    text: impl Into<LabelText<T>>,
-    unit: UnitPoint,
-) -> impl Widget<T> {
-    Label::new(text)
-        .align_vertical(unit)
-        .padding(LABLE_PADDING)
-        .expand_width()
-    // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
-}
-
 pub const QOS_COMMON: fn() -> Container<Arc<String>> = || {
     Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
         .padding(1.0)
@@ -107,9 +78,6 @@ pub const TOPIC: fn() -> Container<AString> = || {
         .background(GRAY)
         .rounded(1.0)
 };
-
-pub const MSG: fn() -> SizedBox<AString> =
-    || Label::dynamic(|data: &AString, _: &Env| format!("{}", data)).fix_width(170.);
 
 pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
     ErrorController::new(
