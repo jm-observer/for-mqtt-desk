@@ -10,7 +10,7 @@ use crate::ui::common::{svg, title, QOS_COMMON, SILVER, TOPIC};
 use crate::ui::icons::{added_icon, connect_icon, modified_icon, removed_icon};
 
 use crate::ui::payload_ty::payload_ty_init;
-use crate::ui::qos::qos_init;
+
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};

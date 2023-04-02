@@ -1,15 +1,15 @@
 use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Msg, PublicInput, SubscribeInput, SubscribeTopic};
-use std::sync::Arc;
+
 
 use crate::data::lens::{
     LensQoSAString, MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens, MsgTopicLens,
     SubscribeTopicPayloadLens,
 };
-use crate::data::{AString, AppEvent};
+use crate::data::{AppEvent};
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING, GRAY, GREEN,
+    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING,
     QOS_COMMON, QOS_GREEN, TOPIC,
 };
 
@@ -19,7 +19,7 @@ use crate::ui::ids::{
     ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SHOW_ERROR,
 };
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
-use crate::ui::qos::{down_select_qos, qos_init, qos_success};
+use crate::ui::qos::{down_select_qos};
 use crate::ForError;
 
 use crate::data::localized::Locale;
@@ -27,8 +27,8 @@ use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
-use druid::widget::{Align, Button, Container, Either, Flex, Label, List, Scroll, Split, TextBox};
-use druid::{Env, LensExt};
+use druid::widget::{Align, Button, Container, Either, Flex, List, Scroll, Split, TextBox};
+use druid::{LensExt};
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{error, warn};
 

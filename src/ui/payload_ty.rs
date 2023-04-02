@@ -1,6 +1,6 @@
 use crate::data::common::PayloadTy;
-use crate::ui::common::{B_CONTENT, B_WINDOW, GRAY};
-use druid::widget::{Label, TextBox};
+use crate::ui::common::{GRAY};
+use druid::widget::{Label};
 use druid::{Data, Env, Lens, Widget, WidgetExt};
 use druid_widget_nursery::DropdownSelect;
 use std::sync::Arc;

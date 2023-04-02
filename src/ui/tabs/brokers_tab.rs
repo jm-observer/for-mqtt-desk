@@ -3,7 +3,7 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIdForTab;
 use crate::data::localized::Locale;
 use crate::data::AppEvent;
-use crate::ui::common::{GRAY, GREEN, RED};
+use crate::ui::common::{GREEN, RED};
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
 use druid::widget::{Either, Label, TabInfo, TabsPolicy};
@@ -85,7 +85,7 @@ impl TabsPolicy for BrokersTabs {
         };
 
         Either::new(
-            move |data: &AppData, env| {
+            move |data: &AppData, _env| {
                 if let Ok(broker) = data.find_broker_by_id(key) {
                     broker.tab_status.connected
                 } else {
