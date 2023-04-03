@@ -46,7 +46,7 @@ fn main() -> Result<(), PlatformError> {
         Debug,
         Info,
         home_path.clone(),
-        home_path,
+        home_path.clone(),
     )
     .module("sled", Info)
     .config(fs, criterion, naming, cleanup, append)

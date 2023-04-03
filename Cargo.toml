@@ -44,6 +44,7 @@ backtrace = "0.3.67"
 [patch.crates-io]
 #piet = { path = "../piet/piet"}
 piet = { git = "https://github.com/jm-observer/piet.git"}
+bytes = { git = "https://github.com/jm-observer/bytes.git" }
 #druid = { path = "../druid-fork/druid"}
 #[patch.crates-io]
 #custom-utils = { path = "../custom-utils"}
