@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 druid = { version = "0.8.3", features = ["im", "serde", "svg"] }
-custom-utils = "0.10.12"
+custom-utils = "0.10.13"
 log = "0.4.17"
 anyhow = "1.0.64"
 sled = "0.34.7"

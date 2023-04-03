@@ -41,11 +41,17 @@ fn main() -> Result<(), PlatformError> {
     let cleanup = Cleanup::KeepLogFiles(2);
     let append = true;
 
-    let _logger = custom_utils::logger::logger_feature("for-mqtt", Debug, Info)
-        .module("sled", Info)
-        .config(fs, criterion, naming, cleanup, append)
-        .log_to_write(Box::new(CustomWriter(tx.clone())))
-        .build();
+    let _logger = custom_utils::logger::logger_feature_with_path(
+        "for-mqtt",
+        Debug,
+        Info,
+        home_path.clone(),
+        home_path,
+    )
+    .module("sled", Info)
+    .config(fs, criterion, naming, cleanup, append)
+    .log_to_write(Box::new(CustomWriter(tx.clone())))
+    .build();
 
     panic::set_hook(Box::new(|panic_info| {
         error!("{:?}", Backtrace::new());
