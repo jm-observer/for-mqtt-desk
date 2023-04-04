@@ -41,10 +41,9 @@ directories = "5.0.0"
 backtrace = "0.3.67"
 #[patch."https://github.com/jm-observer/for-mqtt-client.git"]
 #for-mqtt-client = { path = "../for-mqtt-client"}
-[patch.crates-io]
-#piet = { path = "../piet/piet"}
-piet = { git = "https://github.com/jm-observer/piet.git"}
-bytes = { git = "https://github.com/jm-observer/bytes.git" }
+#[patch.crates-io]
+#piet = { git = "https://github.com/jm-observer/piet.git"}
+#bytes = { git = "https://github.com/jm-observer/bytes.git" }
 #druid = { path = "../druid-fork/druid"}
 #[patch.crates-io]
 #custom-utils = { path = "../custom-utils"}
