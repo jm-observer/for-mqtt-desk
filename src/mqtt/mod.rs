@@ -36,23 +36,23 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
         mqttoptions = mqttoptions.auto_reconnect();
     }
     debug!("{:?}", mqttoptions);
-    let client = match broker.protocol {
-        Protocol::V4 => mqttoptions.connect_to_v4().await,
-        Protocol::V5 => mqttoptions.connect_to_v5().await,
+    let (client, mut eventloop) = match broker.protocol {
+        Protocol::V4 => mqttoptions.connect_to_v4().await?,
+        Protocol::V5 => mqttoptions.connect_to_v5().await?,
     };
-    let mut eventloop = client.init_receiver();
+    // let mut eventloop = client.init_receiver();
     let id = broker.id;
     tokio::spawn(async move {
-        while let Ok(event) = eventloop.recv().await {
+        while let Ok(event) = eventloop.identity_mut().recv().await {
             let tx = tx.clone();
             debug!("{:?}", event);
-            match event {
+            match event.as_ref() {
                 MqttEvent::ConnectSuccess(retain) => {
                     send_event(
                         tx,
                         AppEvent::ClientConnectAckSuccess {
                             broker_id: id,
-                            retain,
+                            retain: *retain,
                         },
                     );
                 }
@@ -63,13 +63,13 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                     );
                 }
                 MqttEvent::PublishSuccess(packet_id) => {
-                    send_event(tx, AppEvent::ClientPubAck(id, packet_id));
+                    send_event(tx, AppEvent::ClientPubAck(id, *packet_id));
                 }
                 MqttEvent::SubscribeAck(packet) => {
-                    send_event(tx, AppEvent::ClientSubAck(id, packet));
+                    send_event(tx, AppEvent::ClientSubAck(id, packet.clone()));
                 }
                 MqttEvent::UnsubscribeAck(packet) => {
-                    send_event(tx, AppEvent::ClientUnSubAck(id, packet));
+                    send_event(tx, AppEvent::ClientUnSubAck(id, packet.clone()));
                 }
                 MqttEvent::Publish(msg) => {
                     let Publish {
@@ -82,7 +82,12 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                     } = msg;
                     send_event(
                         tx,
-                        AppEvent::ClientReceivePublic(id, topic, payload, qos.into()),
+                        AppEvent::ClientReceivePublic(
+                            id,
+                            topic.clone(),
+                            payload.clone(),
+                            qos.clone().into(),
+                        ),
                     );
                 }
                 MqttEvent::PublishFail(reason) => {
@@ -93,7 +98,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                 }
                 MqttEvent::ConnectedErr(reason) => {
                     error!("{}", reason);
-                    send_event(tx, AppEvent::ClientConnectedErr(id, reason));
+                    send_event(tx, AppEvent::ClientConnectedErr(id, reason.clone()));
                 }
                 MqttEvent::UnsubscribeFail(reason) => {
                     error!("{}", reason);

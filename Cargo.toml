@@ -1,6 +1,6 @@
 [package]
 name = "for-mqtt"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -25,7 +25,7 @@ rand = "0.8.5"
 flexi_logger = { version = "0.24.0", features = ["specfile_without_notification", "specfile", "colors"], default-features = false }
 crossbeam-channel = "0.5.6"
 
-for-mqtt-client = "0.2.0"
+for-mqtt-client = "0.3.0"
 
 druid-widget-nursery = {git = "https://github.com/linebender/druid-widget-nursery.git"}
 
@@ -41,7 +41,12 @@ directories = "5.0.0"
 backtrace = "0.3.67"
 #[patch."https://github.com/jm-observer/for-mqtt-client.git"]
 #for-mqtt-client = { path = "../for-mqtt-client"}
+
+#for_event_bus = "0.1.1"
+
 #[patch.crates-io]
+#for_event_bus = {path = "../for_event_bus"}
+#for-mqtt-client = {path = "../for-mqtt-client"}
 #piet = { git = "https://github.com/jm-observer/piet.git"}
 #bytes = { git = "https://github.com/jm-observer/bytes.git" }
 #druid = { path = "../druid-fork/druid"}
