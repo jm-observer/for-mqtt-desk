@@ -1,4 +1,3 @@
-
 use druid::text::ValidationError;
 use druid::widget::{TextBoxEvent, ValidationDelegate};
 use druid::{
@@ -18,6 +17,12 @@ pub const ID_SUBSCRIBE_TOPIC: WidgetId = WidgetId::reserved(9);
 pub const ID_SUBSCRIBE_QOS: WidgetId = WidgetId::reserved(10);
 pub const ID_BUTTON_CONNECT: WidgetId = WidgetId::reserved(11);
 pub const ID_BUTTON_RECONNECT: WidgetId = WidgetId::reserved(12);
+pub const TABS_ID: WidgetId = WidgetId::reserved(13);
+
+/// 订阅的topic窗口
+pub const SCROLL_SUBSCRIBE_ID: WidgetId = WidgetId::reserved(14);
+/// 发布、接收订阅发布的窗口
+pub const SCROLL_MSG_ID: WidgetId = WidgetId::reserved(15);
 
 pub const ERROR_TEXT_COLOR: Color = Color::rgb8(0xB6, 0x00, 0x04);
 
@@ -137,14 +142,9 @@ impl<T, W: Widget<Option<ValidationError>>> Widget<T> for ErrorController<W> {
     }
 }
 
-pub const TABS_ID: WidgetId = WidgetId::reserved(1);
 pub const SELECTOR_TABS_SELECTED: Selector<usize> = Selector::new("tabs.selected");
 pub const SELECTOR_TABS_CLOSE: Selector<usize> = Selector::new("tabs.close");
 
-/// 订阅的topic窗口
-pub const SCROLL_SUBSCRIBE_ID: WidgetId = WidgetId::reserved(2);
-/// 发布、接收订阅发布的窗口
-pub const SCROLL_MSG_ID: WidgetId = WidgetId::reserved(3);
 pub const SELECTOR_AUTO_SCROLL: Selector<()> = Selector::new("scroll.auto");
 
 pub const SELF_SIGNED_FILE: Selector<usize> = Selector::new("self-signed-file");

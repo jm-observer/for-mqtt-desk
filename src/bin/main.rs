@@ -15,7 +15,9 @@ use for_mqtt::ui::{init_layout, tips};
 
 use backtrace::Backtrace;
 use directories::UserDirs;
+use for_mqtt::config::Config;
 use for_mqtt::data::localized::{get_locale, Locale};
+use for_mqtt::data::AppEvent;
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
@@ -64,6 +66,14 @@ fn main() -> Result<(), PlatformError> {
         }
         exit(1);
     }));
+
+    let mut config = Config::init(home_path.clone());
+    if config.display_tips {
+        config.display_tips = false;
+        config.update(home_path.clone());
+        tx.send(AppEvent::OtherDisplayTips).unwrap();
+    }
+
     let locale = get_locale();
     let win = WindowDesc::new(init_layout(tx.clone(), locale.clone())) //.background(B_WINDOW))
         .title("for-mqtt")

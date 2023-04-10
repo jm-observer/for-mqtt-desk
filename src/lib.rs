@@ -3,6 +3,7 @@
 // #![allow(unused_imports)]
 // #![allow(unused_variables)]
 // pub mod config;
+pub mod config;
 pub mod data;
 pub mod logic;
 pub mod mqtt;

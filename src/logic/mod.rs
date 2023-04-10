@@ -7,7 +7,7 @@ use crate::data::common::{Broker, QoS, SubscribeHis, SubscribeTopic};
 use crate::mqtt::data::MqttPublicInput;
 use crate::mqtt::Client;
 use crate::ui::ids::{
-    SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID,
+    SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SELECTOR_AUTO_SCROLL, SELECTOR_TABS_SELECTED, TABS_ID, TIPS,
 };
 
 use crate::util::hint::{
@@ -24,6 +24,7 @@ use for_mqtt_client::SubscribeAck;
 use log::{error, info, warn};
 use std::collections::HashMap;
 
+use druid::WidgetId;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -154,6 +155,11 @@ pub async fn deal_event(
             }
             AppEvent::ToPublish(input) => {
                 if let Err(e) = to_publish(&mqtt_clients, input).await {
+                    error!("{:?}", e);
+                }
+            }
+            AppEvent::OtherDisplayTips => {
+                if let Err(e) = event_sink.submit_command(TIPS, (), WidgetId::reserved(0)) {
                     error!("{:?}", e);
                 }
             }

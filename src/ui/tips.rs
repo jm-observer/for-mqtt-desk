@@ -21,7 +21,9 @@ pub fn tips_ui_builder(locale: Locale) -> impl Widget<AppData> {
 4. 左键双击订阅记录，即可取消订阅
 5. 左键双击tab颜色背景，即可重连该连接
 6. 右键双击订阅topic、发布topic、发布payload，即复制对应内容
-7. 当前git编译版本: {}-{}，编译时间：{}"#,
+7. 左上角的文件夹图标可以缩放左侧列表
+8. 右上角的笔记图标可以缩放详情页面
+9. 当前git编译版本: {}-{}，编译时间：{}"#,
                     branch, commit, build_date_time
                 )
             })
