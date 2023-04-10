@@ -450,7 +450,7 @@ impl AppData {
         Ok(())
     }
     pub fn click_broker(&mut self, id: usize) -> Result<()> {
-        self.select_broker(id);
+        self.select_broker_and_display(id);
         for (index, tab) in self.broker_tabs.iter().enumerate() {
             if *tab == id {
                 tx!(self.db.tx, AppEvent::UpdateToSelectTabs(index));
@@ -485,7 +485,7 @@ impl AppData {
         // }
         Ok(())
     }
-    fn select_broker(&mut self, id: usize) {
+    fn select_broker_and_display(&mut self, id: usize) {
         for broker in self.brokers.iter_mut() {
             if broker.id == id {
                 broker.selected = true;
@@ -494,6 +494,16 @@ impl AppData {
             }
         }
         self.display_broker_info = true;
+    }
+
+    fn select_broker(&mut self, id: usize) {
+        for broker in self.brokers.iter_mut() {
+            if broker.id == id {
+                broker.selected = true;
+            } else {
+                broker.selected = false;
+            }
+        }
     }
     pub fn touch_delete_broker_selected(&mut self) -> Result<()> {
         // let broker = self.get_selected_mut_broker()?;
