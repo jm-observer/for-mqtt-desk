@@ -321,9 +321,11 @@ impl PayloadTy {
     }
     pub fn to_bytes(&self, msg: &String) -> anyhow::Result<(Bytes, String)> {
         Ok(match self {
-            PayloadTy::Text | PayloadTy::Json => {
-                (Bytes::from(msg.as_bytes().to_vec()), msg.clone())
-            }
+            PayloadTy::Text => (Bytes::from(msg.as_bytes().to_vec()), msg.clone()),
+            PayloadTy::Json => (
+                Bytes::from(msg.as_bytes().to_vec()),
+                to_pretty_json_from_str(msg.as_str())?,
+            ),
             PayloadTy::Hex => {
                 let mut chars = msg.chars();
                 let mut hex_datas = Vec::with_capacity(chars.clone().count());
@@ -364,6 +366,11 @@ impl PayloadTy {
 
 fn to_pretty_json(data: &Arc<Bytes>) -> anyhow::Result<String> {
     let json = serde_json::from_slice::<Value>(data.as_ref())?;
+    Ok(serde_json::to_string_pretty(&json)?)
+}
+
+fn to_pretty_json_from_str(data: &str) -> anyhow::Result<String> {
+    let json = serde_json::from_str::<Value>(data)?;
     Ok(serde_json::to_string_pretty(&json)?)
 }
 

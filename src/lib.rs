@@ -1,4 +1,4 @@
-#![feature(type_alias_impl_trait)]
+#![feature(type_alias_impl_trait, impl_trait_in_assoc_type)]
 // #![allow(dead_code)]
 // #![allow(unused_imports)]
 // #![allow(unused_variables)]
