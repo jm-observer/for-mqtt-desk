@@ -45,7 +45,7 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
     tokio::spawn(async move {
         while let Ok(event) = eventloop.recv().await {
             let tx = tx.clone();
-            debug!("{:?}", event);
+            // debug!("{:?}", event);
             match event.as_ref() {
                 MqttEvent::ConnectSuccess(retain) => {
                     send_event(
@@ -73,13 +73,12 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
                 }
                 MqttEvent::Publish(msg) => {
                     let Publish {
-                        dup: _,
                         qos,
-                        retain: _,
                         topic,
                         payload,
                         ..
                     } = msg;
+                    debug!("recv publish: {} payload len = {}", topic, payload.len());
                     send_event(
                         tx,
                         AppEvent::ClientReceivePublic(

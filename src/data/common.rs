@@ -9,10 +9,11 @@ use bytes::Bytes;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::{Data, Lens};
-use log::{debug, warn};
+use log::{debug, error, warn};
 use pretty_hex::simple_hex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::string::FromUtf8Error;
 
 use crate::util::general_id;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -309,11 +310,18 @@ impl PayloadTy {
     pub fn format(&self, data: Arc<Bytes>) -> String {
         match self {
             PayloadTy::Text => String::from_utf8_lossy(data.as_ref()).to_string(),
-            PayloadTy::Json => match to_pretty_json(&data) {
-                Ok(json_str) => json_str,
+            PayloadTy::Json => match String::from_utf8(data.to_vec()) {
+                Ok(rs) => match serde_json::to_string_pretty(&rs) {
+                    Ok(rs) => rs,
+                    Err(err) => {
+                        error!("{:?}: {}", err, rs);
+                        rs
+                    }
+                },
                 Err(err) => {
-                    warn!("format to json error: {}", err.to_string());
-                    String::from_utf8_lossy(data.as_ref()).to_string()
+                    error!("{}", err.to_string());
+                    let rs = String::from_utf8_lossy(data.as_ref()).to_string();
+                    rs
                 }
             },
             PayloadTy::Hex => simple_hex(data.as_ref()),
@@ -364,10 +372,10 @@ impl PayloadTy {
     }
 }
 
-fn to_pretty_json(data: &Arc<Bytes>) -> anyhow::Result<String> {
-    let json = serde_json::from_slice::<Value>(data.as_ref())?;
-    Ok(serde_json::to_string_pretty(&json)?)
-}
+// fn to_pretty_json(data: &Arc<Bytes>) -> anyhow::Result<String> {
+//     let json = serde_json::from_slice::<Value>(data.as_ref())?;
+//     serde_json::Ok(serde_json::to_string_pretty(&json)?)
+// }
 
 fn to_pretty_json_from_str(data: &str) -> anyhow::Result<String> {
     let json = serde_json::from_str::<Value>(data)?;

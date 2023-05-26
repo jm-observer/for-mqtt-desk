@@ -51,6 +51,7 @@ fn main() -> Result<(), PlatformError> {
         home_path.clone(),
     )
     .module("sled", Info)
+    .module("for_mqtt_client::protocol::packet", Info)
     .config(fs, criterion, naming, cleanup, append)
     .log_to_write(Box::new(CustomWriter(tx.clone())))
     .build();
