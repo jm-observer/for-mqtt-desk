@@ -63,7 +63,7 @@ pub struct AppData {
 impl AppData {
     pub(crate) fn client_disconnect(&mut self, id: usize) -> Result<()> {
         let broker = self.find_mut_broker_by_id(id)?;
-        broker.disconnect();
+        broker.disconnect(false);
         Ok(())
     }
     fn send_event(&self, event: AppEvent) {
@@ -187,7 +187,7 @@ impl AppData {
     }
     pub fn touch_reconnect(&mut self) -> Result<()> {
         let broker = self.get_selected_mut_broker()?;
-        broker.disconnect();
+        broker.disconnect(false);
         broker.init_connection()?;
         let broker = broker.clone();
         self.disconnect(broker.id)?;
@@ -224,7 +224,7 @@ impl AppData {
     }
     pub(crate) fn touch_disconnect(&mut self) -> Result<()> {
         let broker = self.get_selected_mut_broker()?;
-        broker.disconnect();
+        broker.disconnect(false);
         let id = broker.id;
         self.disconnect(id)
     }
@@ -472,7 +472,7 @@ impl AppData {
     pub fn db_click_broker(&mut self, id: usize) -> Result<()> {
         // 若已存在，则跳转至该tag；重连。否则，新增tag，连接
         let broker = self.find_mut_broker_by_id(id)?;
-        broker.disconnect();
+        broker.disconnect(false);
         broker.init_connection()?;
         let broker = broker.clone();
         self.disconnect(broker.id)?;
@@ -511,7 +511,7 @@ impl AppData {
             self.get_selected_broker_index()
                 .ok_or(anyhow!("could not find broker selected"))?,
         );
-        broker.disconnect();
+        broker.disconnect(true);
         let id = broker.id;
         self.close_broker_tab(id)?;
         self.disconnect(id)?;
@@ -552,7 +552,7 @@ impl AppData {
 
     pub fn touch_close_broker_tab(&mut self, id: usize) -> Result<()> {
         self.close_broker_tab(id)?;
-        self.find_mut_broker_by_id(id)?.disconnect();
+        self.find_mut_broker_by_id(id)?.disconnect(true);
         self.disconnect(id)?;
         Ok(())
     }

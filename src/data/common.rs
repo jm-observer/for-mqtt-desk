@@ -9,11 +9,10 @@ use bytes::Bytes;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::{Data, Lens};
-use log::{debug, error, warn};
+use log::{debug, error};
 use pretty_hex::simple_hex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::string::FromUtf8Error;
 
 use crate::util::general_id;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -248,13 +247,15 @@ impl Broker {
         }
     }
 
-    pub fn disconnect(&mut self) {
+    pub fn disconnect(&mut self, clear: bool) {
         self.tab_status.try_connect = false;
         self.tab_status.connected = false;
         if !self.auto_connect {
             self.subscribe_topics.clear();
         }
-        self.msgs.clear();
+        if clear {
+            self.msgs.clear();
+        }
         self.unsubscribe_ing.clear();
     }
 }
