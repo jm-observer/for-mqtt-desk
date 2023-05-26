@@ -25,7 +25,7 @@ rand = "0.8.5"
 flexi_logger = { version = "0.24.0", features = ["specfile_without_notification", "specfile", "colors"], default-features = false }
 crossbeam-channel = "0.5.6"
 
-for-mqtt-client = "0.3.0"
+for-mqtt-client = "0.3.1"
 
 druid-widget-nursery = {git = "https://github.com/linebender/druid-widget-nursery.git"}
 
@@ -36,7 +36,7 @@ pretty-hex = "0.3.0"
 
 chrono = "0.4.23"
 
-piet = "0.6.2"
+#piet = "0.6.2"
 directories = "5.0.0"
 backtrace = "0.3.67"
 #[patch."https://github.com/jm-observer/for-mqtt-client.git"]
