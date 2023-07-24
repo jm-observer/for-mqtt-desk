@@ -9,7 +9,7 @@ use crate::ui::icons::{broker_info, broker_list, tips};
 use crate::ui::ids::TIPS;
 use crate::ui::tabs::init_brokers_tabs;
 use crossbeam_channel::Sender;
-use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
+use druid::theme::{BACKGROUND_LIGHT, BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Container, CrossAxisAlignment, Either, Flex, Label, Split, Svg};
 use druid::{Env, UnitPoint, Widget, WidgetExt};
 use log::debug;
@@ -26,6 +26,7 @@ pub mod ids;
 mod payload_ty;
 pub mod qos;
 pub mod tabs;
+pub mod theme_light;
 pub mod tips;
 
 pub fn init_layout(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData> {
@@ -45,6 +46,7 @@ pub fn init_layout(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData>
         .lens(AppData::display_history);
     let info = Svg::new(broker_info())
         .fix_size(25.0, 25.0)
+        .background(BACKGROUND_LIGHT)
         .on_click(|_ctx, data: &mut bool, _env| {
             debug!("info: {}", data);
             *data = !*data;
@@ -52,7 +54,8 @@ pub fn init_layout(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData>
         .lens(AppData::display_broker_info);
     let tips = Svg::new(tips())
         .fix_size(25.0, 25.0)
-        .padding((0.0, 5.0))
+        .background(BACKGROUND_LIGHT)
+        // .padding((0.0, 5.0))
         .on_click(|_ctx, _data: &mut AppData, _env| _ctx.submit_command(TIPS));
     let info = Flex::column()
         .with_child(info)

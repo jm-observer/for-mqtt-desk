@@ -18,6 +18,7 @@ use directories::UserDirs;
 use for_mqtt::config::Config;
 use for_mqtt::data::localized::{get_locale, Locale};
 use for_mqtt::data::AppEvent;
+use for_mqtt::ui::theme_light::update_env;
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
@@ -85,6 +86,7 @@ fn main() -> Result<(), PlatformError> {
     let launcher = AppLauncher::with_window(win)
         .configure_env(|_env: &mut Env, _data: &AppData| {
             // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
+            update_env(_env);
         })
         .delegate(Delegate(locale));
     let event_sink = launcher.get_external_handle();
