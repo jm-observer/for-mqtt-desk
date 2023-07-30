@@ -1,16 +1,15 @@
 use crate::data::click_ty::ClickTy;
 use crate::data::common::{Broker, Msg, PublicInput, SubscribeInput, SubscribeTopic};
 
-
 use crate::data::lens::{
     LensQoSAString, MsgMsgLens, MsgPayloadTyLens, MsgQosLens, MsgTimeLens, MsgTopicLens,
     SubscribeTopicPayloadLens,
 };
-use crate::data::{AppEvent};
+use crate::data::AppEvent;
 use crate::ui::auto_scroll::AutoScrollController;
 use crate::ui::common::{
-    error_display_widget, label_static, svg, RightClickToCopy, BUTTON_PADDING,
-    QOS_COMMON, QOS_GREEN, TOPIC,
+    error_display_widget, label_static, svg, topic, RightClickToCopy, BUTTON_PADDING, QOS_COMMON,
+    QOS_GREEN,
 };
 
 use crate::ui::icons::removed_icon;
@@ -19,7 +18,7 @@ use crate::ui::ids::{
     ID_SUBSCRIBE_TOPIC, SCROLL_MSG_ID, SCROLL_SUBSCRIBE_ID, SHOW_ERROR,
 };
 use crate::ui::payload_ty::{down_select_payload_ty, payload_ty_init};
-use crate::ui::qos::{down_select_qos};
+use crate::ui::qos::down_select_qos;
 use crate::ForError;
 
 use crate::data::localized::Locale;
@@ -28,7 +27,7 @@ use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
 use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Align, Button, Container, Either, Flex, List, Scroll, Split, TextBox};
-use druid::{LensExt};
+use druid::LensExt;
 use druid::{UnitPoint, Widget, WidgetExt};
 use log::{error, warn};
 
@@ -100,7 +99,7 @@ fn init_subscribe_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                     QOS_COMMON().lens(SubscribeTopic::qos.then(LensQoSAString)),
                 ))
                 .with_child(payload_ty_init(SubscribeTopicPayloadLens))
-                .with_child(TOPIC().lens(SubscribeTopic::topic))
+                .with_child(topic().lens(SubscribeTopic::topic))
                 .align_left()
                 .padding(2.0)
                 // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
@@ -151,7 +150,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                                         QOS_COMMON().lens(MsgQosLens),
                                     ))
                                     .with_child(payload_ty_init(MsgPayloadTyLens))
-                                    .with_flex_child(TOPIC().lens(MsgTopicLens), 1.0)
+                                    .with_flex_child(topic().lens(MsgTopicLens), 1.0)
                                     .expand_width(),
                             )
                             .with_child(
@@ -185,7 +184,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                                 Flex::row()
                                     .with_child(QOS_GREEN().lens(MsgQosLens))
                                     .with_child(payload_ty_init(MsgPayloadTyLens))
-                                    .with_flex_child(TOPIC().lens(MsgTopicLens), 1.0)
+                                    .with_flex_child(topic().lens(MsgTopicLens), 1.0)
                                     .expand_width(),
                             )
                             .with_child(

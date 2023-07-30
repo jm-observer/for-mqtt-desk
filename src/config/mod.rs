@@ -6,6 +6,12 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
     pub display_tips: bool,
+    pub theme: Theme,
+}
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
+pub enum Theme {
+    Dark,
+    Light,
 }
 
 impl Config {
@@ -24,6 +30,10 @@ impl Config {
         Ok(config)
     }
 
+    pub fn is_ligth(&self) -> bool {
+        self.theme == Theme::Light
+    }
+
     pub fn update(self, home_path: PathBuf) {
         let file_path = home_path.join("config.json");
         if let Err(e) = self._update(file_path) {
@@ -39,6 +49,9 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { display_tips: true }
+        Self {
+            display_tips: true,
+            theme: Theme::Light,
+        }
     }
 }

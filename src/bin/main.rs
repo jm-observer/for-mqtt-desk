@@ -72,7 +72,7 @@ fn main() -> Result<(), PlatformError> {
     let mut config = Config::init(home_path.clone());
     if config.display_tips {
         config.display_tips = false;
-        config.update(home_path.clone());
+        config.clone().update(home_path.clone());
         tx.send(AppEvent::OtherDisplayTips).unwrap();
     }
 
@@ -84,9 +84,11 @@ fn main() -> Result<(), PlatformError> {
     let mut data = db.read_app_data()?;
 
     let launcher = AppLauncher::with_window(win)
-        .configure_env(|_env: &mut Env, _data: &AppData| {
+        .configure_env(move |_env: &mut Env, _data: &AppData| {
             // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
-            update_env(_env);
+            if config.is_ligth() {
+                update_env(_env);
+            }
         })
         .delegate(Delegate(locale));
     let event_sink = launcher.get_external_handle();

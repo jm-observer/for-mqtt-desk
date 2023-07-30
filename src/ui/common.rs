@@ -13,7 +13,7 @@ use druid::{
 use log::info;
 use std::sync::Arc;
 
-pub const LABLE_WIDTH: f64 = 80.;
+pub const LABLE_WIDTH: f64 = 95.;
 pub const ERROR_LABLE_WIDTH: f64 = 180.;
 pub const TEXTBOX_WIDTH: f64 = 180.;
 pub const TEXTBOX_MULTI_WIDTH: f64 = 300.;
@@ -54,12 +54,12 @@ pub fn title<T: druid::Data>(text: impl Into<LabelText<T>>, unit: UnitPoint) -> 
         .fix_width(180.0)
     // .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
 }
-pub const QOS_COMMON: fn() -> Container<Arc<String>> = || {
+pub const QOS_COMMON: fn() -> SizedBox<AString> = || {
     Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
         .padding(1.0)
         .fix_width(15.0)
-        .background(GRAY)
-        .rounded(1.0)
+    // .background(GRAY)
+    // .rounded(1.0)
 };
 pub const QOS_GREEN: fn() -> Container<Arc<String>> = || {
     Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
@@ -69,15 +69,20 @@ pub const QOS_GREEN: fn() -> Container<Arc<String>> = || {
         .rounded(1.0)
 };
 
-pub const TOPIC: fn() -> Container<AString> = || {
+// pub const topic: fn() -> Padding<AString, SizedBox<AString>> = || {
+//
+//     // .background(GRAY)
+//     // .rounded(1.0)
+// };
+
+pub fn topic() -> impl Widget<AString> {
     Label::dynamic(|qos: &Arc<String>, _: &Env| format!("{}", qos))
         .controller(RightClickToCopy)
         .fix_width(150.0)
         .expand_width()
         .padding(1.0)
-        .background(GRAY)
-        .rounded(1.0)
-};
+    // .border(BORDER_DARK, 1.0)
+}
 
 pub fn error_display_widget<T: Data>(id: WidgetId) -> impl Widget<T> {
     ErrorController::new(

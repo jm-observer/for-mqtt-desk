@@ -7,7 +7,7 @@ use crate::ui::common::{GREEN, RED};
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
 use druid::widget::{Either, Label, TabInfo, TabsPolicy};
-use druid::{Data, Env};
+use druid::{Color, Data, Env};
 use druid::{Widget, WidgetExt};
 use log::{debug, error};
 
@@ -92,8 +92,12 @@ impl TabsPolicy for BrokersTabs {
                     false
                 }
             },
-            lable().background(GREEN).rounded(3.0),
-            lable().background(RED).rounded(3.0),
+            lable()
+                .background(Color::rgb8(0xc1, 0xff, 0xc1))
+                .rounded(3.0),
+            lable()
+                .background(Color::rgb8(0xFF, 0xff, 0xc1))
+                .rounded(3.0),
         )
     }
 }
