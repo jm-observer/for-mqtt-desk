@@ -218,12 +218,18 @@ fn save_button(save_tx_1: Sender<AppEvent>, locale: Locale) -> impl Widget<Broke
         if let Err(e) = save_tx_1.send(AppEvent::TouchSaveBroker) {
             error!("{:?}", e);
         }
+        if let Err(e) = save_tx_1.send(AppEvent::TouchClickBrokerInfo) {
+            error!("{:?}", e);
+        }
     })
 }
 
 fn disconnect_button(reconnect_tx_1: Sender<AppEvent>, locale: Locale) -> impl Widget<Broker> {
     Button::new(locale.disconnect).on_click(move |_ctx, _data: &mut Broker, _env| {
         if let Err(e) = reconnect_tx_1.send(AppEvent::TouchDisconnect) {
+            error!("{:?}", e);
+        }
+        if let Err(e) = reconnect_tx_1.send(AppEvent::TouchClickBrokerInfo) {
             error!("{:?}", e);
         }
     })
@@ -234,6 +240,9 @@ fn reconnect_button(reconnect_tx_1: Sender<AppEvent>, locale: Locale) -> impl Wi
         .on_click(move |_ctx, _data: &mut Broker, _env| {
             _ctx.set_focus(ID_BUTTON_RECONNECT);
             if let Err(e) = reconnect_tx_1.send(AppEvent::TouchReConnect) {
+                error!("{:?}", e);
+            }
+            if let Err(e) = reconnect_tx_1.send(AppEvent::TouchClickBrokerInfo) {
                 error!("{:?}", e);
             }
         })

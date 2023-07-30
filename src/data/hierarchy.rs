@@ -199,6 +199,7 @@ impl AppData {
         broker.init_connection()?;
         let broker = broker.clone();
         self.init_connection_by_broker(broker)?;
+        self.display_broker_info = false;
         Ok(())
     }
 

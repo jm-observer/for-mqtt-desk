@@ -8,7 +8,6 @@ use druid::theme::{BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Axis, Container, Controller, Tabs, TabsEdge, TabsTransition};
 use druid::{Env, Event, EventCtx, Widget, WidgetExt};
 
-mod broker_tab;
 mod brokers_tab;
 
 pub fn init_brokers_tabs(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData> {

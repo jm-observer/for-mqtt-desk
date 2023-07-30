@@ -8,11 +8,18 @@ pub struct Config {
     pub display_tips: bool,
     pub theme: Theme,
     pub payload_font_size: f64,
+    pub auto_retract: AutoRetract,
 }
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub enum Theme {
     Dark,
     Light,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
+pub enum AutoRetract {
+    Close,
+    Open(u64),
 }
 
 impl Config {
@@ -54,6 +61,13 @@ impl Default for Config {
             display_tips: true,
             theme: Theme::Light,
             payload_font_size: 14.0,
+            auto_retract: Default::default(),
         }
+    }
+}
+
+impl Default for AutoRetract {
+    fn default() -> Self {
+        Self::Open(30)
     }
 }

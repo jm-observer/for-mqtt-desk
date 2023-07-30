@@ -83,6 +83,7 @@ fn main() -> Result<(), PlatformError> {
     let mut db = ArcDb::init_db(tx.clone(), home_path.join("db"))?;
     let mut data = db.read_app_data()?;
 
+    let config_clone = config.clone();
     let launcher = AppLauncher::with_window(win)
         .configure_env(move |env: &mut Env, _data: &AppData| {
             // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
@@ -99,7 +100,7 @@ fn main() -> Result<(), PlatformError> {
     thread::Builder::new()
         .name("logic-worker".to_string())
         .spawn(move || {
-            if let Err(e) = deal_event(event_sink, rx, tx) {
+            if let Err(e) = deal_event(event_sink, rx, tx, config_clone.auto_retract) {
                 error!("{:?}", e);
             }
         })

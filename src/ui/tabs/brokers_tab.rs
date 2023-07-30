@@ -8,7 +8,7 @@ use crossbeam_channel::Sender;
 use druid::widget::{Either, Label, TabInfo, TabsPolicy};
 use druid::{Color, Data, Env};
 use druid::{Widget, WidgetExt};
-use log::{debug, error};
+use log::error;
 
 #[derive(Clone)]
 pub struct BrokersTabs(pub Sender<AppEvent>, pub Locale);
@@ -47,7 +47,6 @@ impl TabsPolicy for BrokersTabs {
     }
 
     fn tab_body(&self, _key: Self::Key, _data: &Self::Input) -> Self::BodyWidget {
-        debug!("tab_body");
         display_connection(self.0.clone(), self.1.clone()).lens(BrokerIdForTab(_key))
     }
 

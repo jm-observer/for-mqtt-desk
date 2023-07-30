@@ -12,7 +12,7 @@ use crossbeam_channel::Sender;
 use druid::theme::{BACKGROUND_DARK, BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Container, CrossAxisAlignment, Either, Flex, Label, Split, Svg};
 use druid::{Env, UnitPoint, Widget, WidgetExt};
-use log::debug;
+use log::error;
 
 pub mod auto_scroll;
 mod broker_info;
@@ -38,19 +38,26 @@ pub fn init_layout(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData>
         .fix_height(18.0)
         .padding((35.0, 5.0));
 
+    let tx_history = tx.clone();
     let history = Svg::new(broker_list())
         .fix_size(25.0, 25.0)
         .on_click(move |_ctx, data: &mut bool, _env| {
             *data = !*data;
+            if tx_history.send(AppEvent::TouchClickBrokerList).is_err() {
+                error!("fail to send event");
+            }
         })
         .background(BACKGROUND_DARK)
         .lens(AppData::display_history);
+    let tx_history = tx.clone();
     let info = Svg::new(broker_info())
         .fix_size(25.0, 25.0)
         .background(BACKGROUND_DARK)
-        .on_click(|_ctx, data: &mut bool, _env| {
-            debug!("info: {}", data);
+        .on_click(move |_ctx, data: &mut bool, _env| {
             *data = !*data;
+            if tx_history.send(AppEvent::TouchClickBrokerInfo).is_err() {
+                error!("fail to send event");
+            }
         })
         .lens(AppData::display_broker_info);
     let tips = Svg::new(tips())

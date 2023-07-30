@@ -60,6 +60,9 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                 {
                     error!("fail to send event")
                 }
+                if tx_click.send(AppEvent::TouchClickBrokerList).is_err() {
+                    error!("fail to send event");
+                }
             })
             .padding(1.0)
     };
@@ -84,9 +87,15 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
             1.0,
         )
         .with_child(
-            svg(removed_icon()).on_click(move |_ctx, _data: &mut Broker, _env| {
-                if let Err(_) = tx_removed_icon.send(AppEvent::TouchRemoveSubscribeHis(_data.id)) {
+            svg(removed_icon()).on_click(move |_ctx, data: &mut Broker, _env| {
+                if let Err(_) = tx_removed_icon.send(AppEvent::TouchRemoveSubscribeHis(data.id)) {
                     error!("fail to send event")
+                }
+                if tx_removed_icon
+                    .send(AppEvent::TouchClickBrokerList)
+                    .is_err()
+                {
+                    error!("fail to send event");
                 }
             }),
         )
@@ -95,6 +104,12 @@ fn init_subscribe_his_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                 if let Some(his) = data.subscribe_hises.iter().find(|x| x.selected) {
                     if let Err(_) =
                         tx_connect_icon.send(AppEvent::TouchSubscribeFromHis(his.clone()))
+                    {
+                        error!("fail to send event");
+                    }
+                    if tx_connect_icon
+                        .send(AppEvent::TouchClickBrokerList)
+                        .is_err()
                     {
                         error!("fail to send event");
                     }
@@ -154,6 +169,9 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
                     if let Err(_e) = data.tx.send(AppEvent::TouchClick(ClickTy::Broker(data.id))) {
                         error!("fail to send");
                     }
+                    if data.tx.send(AppEvent::TouchClickBrokerList).is_err() {
+                        error!("fail to send event");
+                    }
                 })
                 .background(SILVER),
             Flex::row()
@@ -163,6 +181,9 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 .on_click(|_ctx: &mut EventCtx, data: &mut Broker, _env: &Env| {
                     if let Err(_e) = data.tx.send(AppEvent::TouchClick(ClickTy::Broker(data.id))) {
                         error!("fail to send");
+                    }
+                    if data.tx.send(AppEvent::TouchClickBrokerList).is_err() {
+                        error!("fail to send event");
                     }
                 }),
         )
@@ -177,12 +198,18 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 if let Err(_) = data.db.tx.send(AppEvent::TouchAddBroker) {
                     error!("fail to send event")
                 }
+                if data.tx.send(AppEvent::TouchClickBrokerList).is_err() {
+                    error!("fail to send event");
+                }
             }),
         )
         .with_child(
             svg(modified_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::TouchEditBrokerSelected) {
                     error!("fail to send event")
+                }
+                if data.tx.send(AppEvent::TouchClickBrokerList).is_err() {
+                    error!("fail to send event");
                 }
             }),
         )
@@ -191,12 +218,18 @@ pub fn init_broker_list_1(_tx: Sender<AppEvent>) -> Flex<AppData> {
                 if let Err(_) = data.db.tx.send(AppEvent::TouchDeleteBrokerSelected) {
                     error!("fail to send event")
                 }
+                if data.tx.send(AppEvent::TouchClickBrokerList).is_err() {
+                    error!("fail to send event");
+                }
             }),
         )
         .with_child(
             svg(connect_icon()).on_click(move |_ctx, data: &mut AppData, _env| {
                 if let Err(_) = data.db.tx.send(AppEvent::TouchConnectBrokerSelected) {
                     error!("fail to send event")
+                }
+                if data.tx.send(AppEvent::TouchClickBrokerList).is_err() {
+                    error!("fail to send event");
                 }
             }),
         );

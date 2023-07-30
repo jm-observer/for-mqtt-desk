@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
     let output = Command::new("git")
         .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output()?;
-    println!("cargo:rerun-if-changed=.git/HEAD");
+    println!("cargo:rerun-if-changed=.git/refs/heads");
     println!(
         "cargo:rustc-env=GIT_BRANCH={}",
         String::from_utf8_lossy(output.stdout.as_slice())

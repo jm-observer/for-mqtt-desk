@@ -21,26 +21,94 @@ use crossbeam_channel::{Receiver, Sender};
 use custom_utils::rx;
 
 use for_mqtt_client::SubscribeAck;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use std::collections::HashMap;
 
+use crate::config::AutoRetract;
 use druid::WidgetId;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering::Relaxed;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::spawn;
 use tokio::time::sleep;
+
+static CLICK_INFO: AtomicUsize = AtomicUsize::new(0);
+static CLICK_LIST: AtomicUsize = AtomicUsize::new(0);
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 pub async fn deal_event(
     event_sink: druid::ExtEventSink,
     rx: Receiver<AppEvent>,
     tx: Sender<AppEvent>,
+    auto_retract: AutoRetract,
 ) -> Result<()> {
     let mut mqtt_clients: HashMap<usize, Client> = HashMap::new();
     let mut click_his: Option<ClickTy> = None;
+    let mut click_broker_info = CLICK_INFO.fetch_add(1, Relaxed);
+    let mut click_broker_list = CLICK_LIST.fetch_add(1, Relaxed);
+
+    debug!("{:?}", auto_retract);
+    if tx.send(AppEvent::TouchClickBrokerInfo).is_err() {
+        error!("fail to send event");
+    }
+    if tx.send(AppEvent::TouchClickBrokerList).is_err() {
+        error!("fail to send event");
+    }
     loop {
         // let event = ;
         // debug!("{:?}", event);
         match rx!(rx) {
+            // 点击info界面
+            AppEvent::TouchClickBrokerInfo => {
+                let info_tx = tx.clone();
+                click_broker_info = CLICK_INFO.fetch_add(1, Relaxed);
+                if let AutoRetract::Open(time) = auto_retract.clone() {
+                    spawn(async move {
+                        sleep(Duration::from_secs(time)).await;
+                        if info_tx
+                            .send(AppEvent::TimeoutClickBrokerInfo(click_broker_info))
+                            .is_err()
+                        {
+                            error!("fail to send event");
+                        }
+                    });
+                }
+            }
+            AppEvent::TimeoutClickBrokerInfo(id) => {
+                if click_broker_info == id {
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        if data.broker_tabs.len() > 0 {
+                            data.display_broker_info = false;
+                        }
+                    });
+                }
+            }
+            AppEvent::TouchClickBrokerList => {
+                click_broker_list = CLICK_LIST.fetch_add(1, Relaxed);
+
+                let info_tx = tx.clone();
+                if let AutoRetract::Open(time) = auto_retract.clone() {
+                    spawn(async move {
+                        sleep(Duration::from_secs(time)).await;
+                        if info_tx
+                            .send(AppEvent::TimeoutClickBrokerList(click_broker_list))
+                            .is_err()
+                        {
+                            error!("fail to send event");
+                        }
+                    });
+                }
+            }
+            AppEvent::TimeoutClickBrokerList(id) => {
+                if click_broker_list == id {
+                    event_sink.add_idle_callback(move |data: &mut AppData| {
+                        if data.broker_tabs.len() > 0 {
+                            data.display_history = false;
+                        }
+                    });
+                }
+            }
             AppEvent::TouchClickTab(broker_id) => touch_click_tab(&event_sink, broker_id),
             AppEvent::TouchAddBroker => touch_add_broker(&event_sink),
             AppEvent::TouchEditBrokerSelected => edit_broker(&event_sink),
