@@ -7,6 +7,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub display_tips: bool,
     pub theme: Theme,
+    pub payload_font_size: f64,
 }
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub enum Theme {
@@ -52,6 +53,7 @@ impl Default for Config {
         Self {
             display_tips: true,
             theme: Theme::Light,
+            payload_font_size: 14.0,
         }
     }
 }

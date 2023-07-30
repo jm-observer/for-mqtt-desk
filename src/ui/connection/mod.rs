@@ -22,6 +22,7 @@ use crate::ui::qos::down_select_qos;
 use crate::ForError;
 
 use crate::data::localized::Locale;
+use crate::ui::theme::PAYLOAD_FONT_SIZE;
 use crossbeam_channel::Sender;
 use druid::im::Vector;
 use druid::text::{EditableText, ValidationError};
@@ -155,6 +156,7 @@ fn init_msgs_list(tx: Sender<AppEvent>) -> impl Widget<Broker> {
                             )
                             .with_child(
                                 TextBox::multiline()
+                                    .with_font(PAYLOAD_FONT_SIZE)
                                     .controller(RightClickToCopy)
                                     .disabled_if(|_, _| true)
                                     // .fix_height(50.0)

@@ -3,7 +3,6 @@ use crate::data::hierarchy::AppData;
 use crate::data::lens::BrokerIdForTab;
 use crate::data::localized::Locale;
 use crate::data::AppEvent;
-use crate::ui::common::{GREEN, RED};
 use crate::ui::connection::display_connection;
 use crossbeam_channel::Sender;
 use druid::widget::{Either, Label, TabInfo, TabsPolicy};

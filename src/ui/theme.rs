@@ -1,5 +1,7 @@
 use druid::theme::*;
-use druid::{Color, Env};
+use druid::{Color, Env, FontDescriptor, Key};
+
+pub const PAYLOAD_FONT_SIZE: Key<FontDescriptor> = Key::new("payload.font.size");
 
 pub fn update_env(env: &mut Env) {
     env.set(WINDOW_BACKGROUND_COLOR, Color::rgb8(0xFF, 0xFF, 0xFF));

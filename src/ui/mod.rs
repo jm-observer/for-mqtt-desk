@@ -9,7 +9,7 @@ use crate::ui::icons::{broker_info, broker_list, tips};
 use crate::ui::ids::TIPS;
 use crate::ui::tabs::init_brokers_tabs;
 use crossbeam_channel::Sender;
-use druid::theme::{BACKGROUND_DARK, BACKGROUND_LIGHT, BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
+use druid::theme::{BACKGROUND_DARK, BORDER_LIGHT, TEXTBOX_BORDER_WIDTH};
 use druid::widget::{Container, CrossAxisAlignment, Either, Flex, Label, Split, Svg};
 use druid::{Env, UnitPoint, Widget, WidgetExt};
 use log::debug;
@@ -26,7 +26,7 @@ pub mod ids;
 mod payload_ty;
 pub mod qos;
 pub mod tabs;
-pub mod theme_light;
+pub mod theme;
 pub mod tips;
 
 pub fn init_layout(tx: Sender<AppEvent>, locale: Locale) -> impl Widget<AppData> {

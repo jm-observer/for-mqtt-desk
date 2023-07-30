@@ -1,8 +1,8 @@
 #![windows_subsystem = "windows"]
 
 use druid::{
-    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, Handled, PlatformError, Target,
-    WindowDesc,
+    commands, AppDelegate, AppLauncher, Command, DelegateCtx, Env, FontDescriptor, Handled,
+    PlatformError, Target, WindowDesc,
 };
 use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Naming};
 
@@ -18,7 +18,7 @@ use directories::UserDirs;
 use for_mqtt::config::Config;
 use for_mqtt::data::localized::{get_locale, Locale};
 use for_mqtt::data::AppEvent;
-use for_mqtt::ui::theme_light::update_env;
+use for_mqtt::ui::theme::{update_env, PAYLOAD_FONT_SIZE};
 use for_mqtt::util::custom_logger::CustomWriter;
 use for_mqtt::util::db::ArcDb;
 use log::error;
@@ -84,10 +84,14 @@ fn main() -> Result<(), PlatformError> {
     let mut data = db.read_app_data()?;
 
     let launcher = AppLauncher::with_window(win)
-        .configure_env(move |_env: &mut Env, _data: &AppData| {
+        .configure_env(move |env: &mut Env, _data: &AppData| {
             // env.set(WINDOW_BACKGROUND_COLOR, WHITE);
+            env.set(
+                PAYLOAD_FONT_SIZE,
+                FontDescriptor::default().with_size(config.payload_font_size),
+            );
             if config.is_ligth() {
-                update_env(_env);
+                update_env(env);
             }
         })
         .delegate(Delegate(locale));
