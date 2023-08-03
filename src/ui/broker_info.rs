@@ -170,12 +170,15 @@ pub fn display_credential(_id: usize) -> impl Widget<Broker> {
 
 pub fn display_signed_ty(id: usize, locale: Locale) -> impl Widget<Broker> {
     Either::new(
-        move |data: &Broker, _: &Env| data.signed_ty == SignedTy::Ca,
+        move |data: &Broker, _: &Env| {
+            data.signed_ty == SignedTy::Ca || data.signed_ty == SignedTy::Insecurity
+        },
         Flex::row()
             .with_child(label_static("ca-type", UnitPoint::RIGHT))
             .with_child(
                 RadioGroup::row(vec![
                     ("ca", SignedTy::Ca),
+                    ("insecurity", SignedTy::Insecurity),
                     ("self-signed", SignedTy::SelfSigned),
                 ])
                 .lens(Broker::signed_ty),
@@ -186,6 +189,7 @@ pub fn display_signed_ty(id: usize, locale: Locale) -> impl Widget<Broker> {
             .with_child(
                 RadioGroup::row(vec![
                     ("ca", SignedTy::Ca),
+                    ("insecurity", SignedTy::Insecurity),
                     ("self-signed", SignedTy::SelfSigned),
                 ])
                 .lens(Broker::signed_ty),

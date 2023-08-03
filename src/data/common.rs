@@ -401,4 +401,5 @@ pub enum Protocol {
 pub enum SignedTy {
     Ca,
     SelfSigned,
+    Insecurity,
 }

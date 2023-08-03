@@ -28,10 +28,11 @@ pub async fn init_connect(broker: Broker, tx: Sender<AppEvent>) -> Result<Client
     };
     let mut mqttoptions = MqttOptions::new(broker.client_id.clone(), broker.addr.as_str(), port)?;
     if broker.use_credentials {
-        mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
+        mqttoptions =
+            mqttoptions.set_credentials(broker.user_name.clone(), broker.password.clone());
     }
     let some = serde_json::from_str(broker.params.as_str())?;
-    mqttoptions = update_tls_option(update_option(mqttoptions, some), broker.clone());
+    mqttoptions = update_tls_option(update_option(mqttoptions.clone(), some), broker.clone());
     if broker.auto_connect {
         mqttoptions = mqttoptions.auto_reconnect();
     }
@@ -162,7 +163,7 @@ pub async fn mqtt_public(
         .await?)
 }
 
-fn update_option(mut option: MqttOptions, some: SomeMqttOption) -> MqttOptions {
+fn update_option(option: MqttOptions, some: SomeMqttOption) -> MqttOptions {
     let SomeMqttOption {
         keep_alive,
         clean_session,
@@ -171,12 +172,10 @@ fn update_option(mut option: MqttOptions, some: SomeMqttOption) -> MqttOptions {
         inflight: _,
         conn_timeout: _,
     } = some;
-    // .set_inflight(inflight)
-    // .set_connection_timeout(conn_timeout)
     option
         .set_clean_session(clean_session)
-        .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size);
-    option.set_keep_alive(keep_alive)
+        .set_max_packet_size(max_incoming_packet_size, max_outgoing_packet_size)
+        .set_keep_alive(keep_alive)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -211,6 +210,7 @@ fn update_tls_option(option: MqttOptions, value: Broker) -> MqttOptions {
             SignedTy::SelfSigned => {
                 TlsConfig::default().set_server_ca_pem_file(value.self_signed_ca.as_str().into())
             }
+            SignedTy::Insecurity => TlsConfig::default().insecurity(),
         };
         option.set_tls(tls_config)
     } else {
