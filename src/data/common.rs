@@ -312,13 +312,15 @@ impl PayloadTy {
         match self {
             PayloadTy::Text => String::from_utf8_lossy(data.as_ref()).to_string(),
             PayloadTy::Json => match String::from_utf8(data.to_vec()) {
-                Ok(rs) => match serde_json::to_string_pretty(&rs) {
-                    Ok(rs) => rs,
-                    Err(err) => {
-                        error!("{:?}: {}", err, rs);
-                        rs
-                    }
-                },
+                Ok(rs) => {
+                    let Ok(json) = serde_json::from_str::<Value>(rs.as_str()) else {
+                        return rs;
+                    };
+                    let Ok(json) = serde_json::to_string_pretty(&json) else {
+                        return rs;
+                    };
+                    json
+                }
                 Err(err) => {
                     error!("{}", err.to_string());
                     let rs = String::from_utf8_lossy(data.as_ref()).to_string();
