@@ -51,7 +51,8 @@ pub fn display_connection(tx: Sender<AppEvent>, locale: Locale) -> Container<Bro
             init_subscribe_input(tx.clone(), locale.clone()),
         )
         .split_point(0.65)
-        .bar_size(1.0),
+        .bar_size(1.0)
+        .draggable(true),
     )
     .rounded(8.0)
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
@@ -63,7 +64,8 @@ pub fn display_connection(tx: Sender<AppEvent>, locale: Locale) -> Container<Bro
             Align::centered(init_public_input(tx.clone(), locale.clone())),
         )
         .split_point(0.65)
-        .bar_size(1.0),
+        .bar_size(1.0)
+        .draggable(true),
     )
     .rounded(8.0)
     .border(BORDER_LIGHT, TEXTBOX_BORDER_WIDTH)
