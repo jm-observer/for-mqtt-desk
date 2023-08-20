@@ -114,7 +114,6 @@ impl ArcDb {
             self.ids.push_back(id);
             self.db.insert(BROKERS, serde_json::to_vec(&self.ids)?)?;
         }
-        debug!("{:?}", self.ids);
         self.db.insert(
             DbKey::broker_key(id).as_bytes()?,
             serde_json::to_vec(&broker)?,

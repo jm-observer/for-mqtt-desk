@@ -50,7 +50,6 @@ impl Formatter<Option<u16>> for MustInput {
         }
     }
     fn value(&self, input: &str) -> Result<Option<u16>, ValidationError> {
-        debug!("Value: {}", input);
         parse_to_port(input).map_err(|x| ValidationError::new(x))
     }
 }

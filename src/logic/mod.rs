@@ -390,15 +390,15 @@ async fn connect(
     tx: Sender<AppEvent>,
     broker: Broker,
 ) {
+    if let Some(old_client) = mqtt_clients.remove(&broker.id) {
+        if let Err(err) = old_client.disconnect().await {
+            error!("diconnect fail: {:?}", err);
+        };
+    };
     match init_connect(broker.clone(), tx.clone()).await {
         Ok(client) => {
             let id = broker.id;
             mqtt_clients.insert(id, client.clone());
-            // event_sink.add_idle_callback(move |data: &mut AppData| {
-            //     if let Err(e) = data.init_connection(id) {
-            //         error!("{:?}", e);
-            //     }
-            // });
         }
         Err(e) => {
             error!("{:?}", e);
